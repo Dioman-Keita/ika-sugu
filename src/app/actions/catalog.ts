@@ -102,18 +102,39 @@ export const getHomeCatalogAction = async () => {
   };
 };
 
-export const getShopProductsAction = async () => {
-  const products = await db.product.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      reviews: {
-        where: { status: ReviewStatus.APPROVED },
-        select: { rating: true },
-      },
-    },
-  });
+export const getShopProductsAction = async ({
+  page = 1,
+  pageSize = 9,
+}: {
+  page?: number;
+  pageSize?: number;
+}) => {
+  const safePageSize = Math.min(Math.max(Math.floor(pageSize), 1), 60);
+  const safePage = Math.max(Math.floor(page), 1);
+  const skip = (safePage - 1) * safePageSize;
 
-  return products.map(toUiProduct);
+  const [totalProducts, products] = await Promise.all([
+    db.product.count(),
+    db.product.findMany({
+      skip,
+      take: safePageSize,
+      orderBy: { createdAt: "desc" },
+      include: {
+        reviews: {
+          where: { status: ReviewStatus.APPROVED },
+          select: { rating: true },
+        },
+      },
+    }),
+  ]);
+
+  return {
+    products: products.map(toUiProduct),
+    totalProducts,
+    currentPage: safePage,
+    pageSize: safePageSize,
+    totalPages: Math.max(1, Math.ceil(totalProducts / safePageSize)),
+  };
 };
 
 export const getProductPageAction = async (productId: string) => {
