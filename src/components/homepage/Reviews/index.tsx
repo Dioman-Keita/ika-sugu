@@ -40,6 +40,18 @@ const Reviews = ({ data }: ReviewsProps) => {
   }, [api]);
 
   if (!isClient) return null;
+  if (data.length === 0) {
+    return (
+      <section className="max-w-frame mx-auto px-4 xl:px-0 py-8 md:py-10">
+        <h2 className={cn([integralCF.className, "text-[32px] md:text-5xl mb-4"])}>
+          OUR HAPPY CUSTOMERS
+        </h2>
+        <p className="text-black/60 text-sm sm:text-base">
+          No customer reviews yet.
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section className="overflow-hidden">

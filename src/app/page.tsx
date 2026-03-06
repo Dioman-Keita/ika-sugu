@@ -3,11 +3,11 @@ import Brands from "@/components/homepage/Brands";
 import DressStyle from "@/components/homepage/DressStyle";
 import Header from "@/components/homepage/Header";
 import Reviews from "@/components/homepage/Reviews";
-import { reviewsData } from "@/lib/data/reviews-data";
-import { getCatalogData } from "@/lib/server/catalog-data";
+import { getHomeCatalogAction } from "@/app/actions/catalog";
 
 export default async function Home() {
-  const { newArrivalsData, topSellingData } = await getCatalogData();
+  const { newArrivalsData, topSellingData, reviewsData } =
+    await getHomeCatalogAction();
 
   return (
     <>
