@@ -38,24 +38,33 @@ const ProductListSec = ({ title, data, viewAllLink }: ProductListSecProps) => {
         viewport={{ once: true }}
         transition={{ delay: 0.6, duration: 0.6 }}
       >
-        <Carousel
-          opts={{
-            align: "start",
-          }}
-          className="w-full mb-6 md:mb-9"
-        >
-          <CarouselContent className="mx-4 xl:mx-0 space-x-4 sm:space-x-5">
-            {data.map((product) => (
-              <CarouselItem
-                key={product.id}
-                className="w-full max-w-[198px] sm:max-w-[295px] pl-0"
-              >
-                <ProductCard data={product} />
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-        </Carousel>
-        {viewAllLink && (
+        {data.length === 0 && (
+          <div className="w-full py-10 mb-6 md:mb-9 text-center border border-black/10 rounded-[20px]">
+            <p className="text-black/60 text-sm sm:text-base">
+              No products available right now.
+            </p>
+          </div>
+        )}
+        {data.length > 0 && (
+          <Carousel
+            opts={{
+              align: "start",
+            }}
+            className="w-full mb-6 md:mb-9"
+          >
+            <CarouselContent className="mx-4 xl:mx-0 space-x-4 sm:space-x-5">
+              {data.map((product) => (
+                <CarouselItem
+                  key={product.id}
+                  className="w-full max-w-[198px] sm:max-w-[295px] pl-0"
+                >
+                  <ProductCard data={product} />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+          </Carousel>
+        )}
+        {viewAllLink && data.length > 0 && (
           <div className="w-full px-4 sm:px-0 text-center">
             <Link
               href={viewAllLink}

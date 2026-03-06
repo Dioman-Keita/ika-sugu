@@ -29,12 +29,12 @@ const calcTotalPrice = (unitPrice: number, quantity: number): number =>
   unitPrice * quantity;
 
 export type RemoveCartItem = {
-  id: number;
+  id: string;
   attributes: string[];
 };
 
 export type CartItem = {
-  id: number;
+  id: string;
   name: string;
   srcUrl: string;
   basePrice: number;

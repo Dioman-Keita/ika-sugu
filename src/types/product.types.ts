@@ -1,5 +1,5 @@
 export type Product = {
-  id: number;
+  id: string;
   title: string;
   srcUrl: string;
   gallery?: string[];

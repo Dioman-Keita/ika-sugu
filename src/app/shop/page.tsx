@@ -1,4 +1,5 @@
 import BreadcrumbShop from "@/components/shop-page/BreadcrumbShop";
+import React from "react";
 
 import {
   Select,
@@ -10,7 +11,7 @@ import {
 import MobileFilters from "@/components/shop-page/filters/MobileFilters";
 import Filters from "@/components/shop-page/filters";
 import { FiSliders } from "react-icons/fi";
-import { getCatalogData } from "@/lib/server/catalog-data";
+import { getShopProductsAction } from "@/app/actions/catalog";
 import ProductCard from "@/components/common/ProductCard";
 import {
   Pagination,
@@ -22,9 +23,33 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
-export default async function ShopPage() {
-  const { newArrivalsData, relatedProductData, topSellingData } =
-    await getCatalogData();
+const PAGE_SIZE = 9;
+
+const getPageParam = (value?: string | string[]): number => {
+  if (!value) return 1;
+  const raw = Array.isArray(value) ? value[0] : value;
+  const page = Number(raw);
+  return Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
+};
+
+const buildPageHref = (page: number) => `/shop?page=${page}`;
+
+export default async function ShopPage({
+  searchParams,
+}: {
+  searchParams?: { [key: string]: string | string[] | undefined };
+}) {
+  const requestedPage = getPageParam(searchParams?.page);
+  const { products, totalProducts, totalPages } = await getShopProductsAction({
+    page: requestedPage,
+    pageSize: PAGE_SIZE,
+  });
+  const currentPage = Math.min(requestedPage, totalPages);
+  const startProduct = totalProducts === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const endProduct = Math.min(currentPage * PAGE_SIZE, totalProducts);
+  const pageNumbers = Array.from({ length: totalPages }, (_, idx) => idx + 1).filter(
+    (page) => page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1
+  );
 
   return (
     <main className="pb-20">
@@ -47,7 +72,7 @@ export default async function ShopPage() {
               </div>
               <div className="flex flex-col sm:items-center sm:flex-row">
                 <span className="text-sm md:text-base text-black/60 mr-3">
-                  Showing 1-10 of 100 Products
+                  Showing {startProduct}-{endProduct} of {totalProducts} Products
                 </span>
                 <div className="flex items-center">
                   Sort by:{" "}
@@ -64,74 +89,55 @@ export default async function ShopPage() {
                 </div>
               </div>
             </div>
-            <div className="w-full grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
-              {[
-                ...relatedProductData.slice(1, 4),
-                ...newArrivalsData.slice(1, 4),
-                ...topSellingData.slice(1, 4),
-              ].map((product) => (
-                <ProductCard key={product.id} data={product} />
-              ))}
-            </div>
+            {products.length > 0 ? (
+              <div className="w-full grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
+                {products.map((product) => (
+                  <ProductCard key={product.id} data={product} />
+                ))}
+              </div>
+            ) : (
+              <div className="w-full py-10 text-center border border-black/10 rounded-[20px]">
+                <p className="text-black/60 text-sm sm:text-base">
+                  No products found.
+                </p>
+              </div>
+            )}
             <hr className="border-t-black/10" />
             <Pagination className="justify-between">
-              <PaginationPrevious href="#" className="border border-black/10" />
+              <PaginationPrevious
+                href={buildPageHref(Math.max(1, currentPage - 1))}
+                className="border border-black/10"
+              />
               <PaginationContent>
-                <PaginationItem>
-                  <PaginationLink
-                    href="#"
-                    className="text-black/50 font-medium text-sm"
-                    isActive
-                  >
-                    1
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink
-                    href="#"
-                    className="text-black/50 font-medium text-sm"
-                  >
-                    2
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem className="hidden lg:block">
-                  <PaginationLink
-                    href="#"
-                    className="text-black/50 font-medium text-sm"
-                  >
-                    3
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationEllipsis className="text-black/50 font-medium text-sm" />
-                </PaginationItem>
-                <PaginationItem className="hidden lg:block">
-                  <PaginationLink
-                    href="#"
-                    className="text-black/50 font-medium text-sm"
-                  >
-                    8
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem className="hidden sm:block">
-                  <PaginationLink
-                    href="#"
-                    className="text-black/50 font-medium text-sm"
-                  >
-                    9
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink
-                    href="#"
-                    className="text-black/50 font-medium text-sm"
-                  >
-                    10
-                  </PaginationLink>
-                </PaginationItem>
+                {pageNumbers.map((page, idx) => {
+                  const previous = pageNumbers[idx - 1];
+                  const showEllipsis = typeof previous === "number" && page - previous > 1;
+
+                  return (
+                    <React.Fragment key={page}>
+                      {showEllipsis && (
+                        <PaginationItem>
+                          <PaginationEllipsis className="text-black/50 font-medium text-sm" />
+                        </PaginationItem>
+                      )}
+                      <PaginationItem>
+                        <PaginationLink
+                          href={buildPageHref(page)}
+                          className="text-black/50 font-medium text-sm"
+                          isActive={page === currentPage}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    </React.Fragment>
+                  );
+                })}
               </PaginationContent>
 
-              <PaginationNext href="#" className="border border-black/10" />
+              <PaginationNext
+                href={buildPageHref(Math.min(totalPages, currentPage + 1))}
+                className="border border-black/10"
+              />
             </Pagination>
           </div>
         </div>
