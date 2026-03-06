@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "generate-prisma-client": "bunx prisma generate",
+    "build": "bun run generate-prisma-client && next build",
     "start": "next start",
     "lint": "next lint"
   },
