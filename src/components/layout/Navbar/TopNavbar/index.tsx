@@ -81,10 +81,10 @@ const TopNavbar = () => {
             href="/"
             className={cn([
               integralCF.className,
-              "text-2xl lg:text-[32px] mb-2 mr-3 lg:mr-10",
+              "text-2xl lg:text-[32px] mb-2 mr-3 lg:mr-10 whitespace-nowrap",
             ])}
           >
-            SHOP.CO
+            IKA SUGU
           </Link>
         </div>
         <NavigationMenu className="hidden md:flex mr-2 lg:mr-7">
@@ -131,7 +131,7 @@ const TopNavbar = () => {
             />
           </Link>
           <CartBtn />
-          <Link href="/#signin" className="p-1">
+          <Link href="/login" className="p-1">
             <Image
               priority
               src="/icons/user.svg"

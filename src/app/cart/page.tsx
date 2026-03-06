@@ -13,11 +13,46 @@ import React from "react";
 import { RootState } from "@/lib/store";
 import { useAppSelector } from "@/lib/hooks/redux";
 import Link from "next/link";
+import { CartItem } from "@/lib/features/carts/cartsSlice";
+
+type LegacyCartItem = CartItem & {
+  price?: number;
+  discount?: {
+    percentage?: number;
+  };
+};
+
+const getBasePrice = (item: LegacyCartItem): number => item.basePrice ?? item.price ?? 0;
+
+const getFinalPrice = (item: LegacyCartItem): number => {
+  if (typeof item.finalPrice === "number") return item.finalPrice;
+  const basePrice = getBasePrice(item);
+  const discountPercentage =
+    item.discountPercentage ?? item.discount?.percentage ?? 0;
+  return Math.round(basePrice - (basePrice * discountPercentage) / 100);
+};
 
 export default function CartPage() {
-  const { cart, totalPrice, adjustedTotalPrice } = useAppSelector(
-    (state: RootState) => state.carts
+  const { cart } = useAppSelector(
+    (state: RootState) => state.carts,
   );
+  const items = (cart?.items ?? []) as LegacyCartItem[];
+  const totalBasePrice = items.reduce(
+    (sum, item) => sum + getBasePrice(item) * item.quantity,
+    0,
+  );
+  const totalFinalPrice = items.reduce(
+    (sum, item) => sum + getFinalPrice(item) * item.quantity,
+    0,
+  );
+  const discountAmount = Math.max(
+    0,
+    Math.round(totalBasePrice - totalFinalPrice),
+  );
+  const discountPercentage =
+    totalBasePrice > 0
+      ? Math.round((discountAmount / totalBasePrice) * 100)
+      : 0;
 
   return (
     <main className="pb-20">
@@ -51,18 +86,16 @@ export default function CartPage() {
                 <div className="flex flex-col space-y-5">
                   <div className="flex items-center justify-between">
                     <span className="md:text-xl text-black/60">Subtotal</span>
-                    <span className="md:text-xl font-bold">${totalPrice}</span>
+                    <span className="md:text-xl font-bold">
+                      ${totalBasePrice ?? 0}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="md:text-xl text-black/60">
-                      Discount (-
-                      {Math.round(
-                        ((totalPrice - adjustedTotalPrice) / totalPrice) * 100
-                      )}
-                      %)
+                      Discount (-{discountPercentage}%)
                     </span>
                     <span className="md:text-xl font-bold text-red-600">
-                      -${Math.round(totalPrice - adjustedTotalPrice)}
+                      -${discountAmount ?? 0}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
@@ -75,7 +108,7 @@ export default function CartPage() {
                   <div className="flex items-center justify-between">
                     <span className="md:text-xl text-black">Total</span>
                     <span className="text-xl md:text-2xl font-bold">
-                      ${Math.round(adjustedTotalPrice)}
+                      ${Math.round(totalFinalPrice ?? 0)}
                     </span>
                   </div>
                 </div>

@@ -10,7 +10,7 @@ import {
 import MobileFilters from "@/components/shop-page/filters/MobileFilters";
 import Filters from "@/components/shop-page/filters";
 import { FiSliders } from "react-icons/fi";
-import { newArrivalsData, relatedProductData, topSellingData } from "../page";
+import { getCatalogData } from "@/lib/server/catalog-data";
 import ProductCard from "@/components/common/ProductCard";
 import {
   Pagination,
@@ -22,7 +22,10 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
-export default function ShopPage() {
+export default async function ShopPage() {
+  const { newArrivalsData, relatedProductData, topSellingData } =
+    await getCatalogData();
+
   return (
     <main className="pb-20">
       <div className="max-w-frame mx-auto px-4 xl:px-0">

@@ -1,0 +1,38 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Product {
+  id                 String   @id @default(cuid())
+  name               String
+  description        String
+  basePrice          Decimal  @db.Decimal(10, 2)
+  discountPercentage Int      @default(0)
+  finalPrice         Decimal  @db.Decimal(10, 2)
+  images             String[]
+  category           String
+  sizes              String[]
+  colors             String[]
+  stock              Int      @default(0)
+  createdAt          DateTime @default(now())
+}
+
+model Order {
+  id                  String   @id @default(cuid())
+  userId              String 
+  items               Json
+  total               Decimal  @db.Decimal(10, 2)
+  status              String   @default("PENDING")
+  createdAt           DateTime @default(now())
+}

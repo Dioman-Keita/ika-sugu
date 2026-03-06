@@ -74,7 +74,7 @@ const Footer = () => {
                   "text-[28px] lg:text-[32px] mb-6",
                 ])}
               >
-                SHOP.CO
+                IKA SUGU
               </h1>
               <p className="text-black/60 text-sm mb-9">
                 We have clothes that suits your style and which you’re proud to
@@ -103,7 +103,7 @@ const Footer = () => {
           <hr className="h-[1px] border-t-black/10 mb-6" />
           <div className="flex flex-col sm:flex-row justify-center sm:justify-between items-center mb-2">
             <p className="text-sm text-center sm:text-left text-black/60 mb-4 sm:mb-0 sm:mr-1">
-              Shop.co © Made by{" "}
+              Ika sugu © Made by{" "}
               <Link
                 href="https://github.com/mohammadoftadeh"
                 className="text-black font-medium"

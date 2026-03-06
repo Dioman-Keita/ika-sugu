@@ -15,11 +15,27 @@ import {
 import { useAppDispatch } from "@/lib/hooks/redux";
 
 type ProductCardProps = {
-  data: CartItem;
+  data: CartItem & {
+    price?: number;
+    discount?: {
+      percentage?: number;
+    };
+  };
 };
 
 const ProductCard = ({ data }: ProductCardProps) => {
   const dispatch = useAppDispatch();
+  const basePrice = data.basePrice ?? data.price ?? 0;
+  const finalPrice =
+    typeof data.finalPrice === "number"
+      ? data.finalPrice
+      : Math.round(
+          basePrice -
+            (basePrice * (data.discountPercentage ?? data.discount?.percentage ?? 0)) /
+              100,
+        );
+  const discountPercentage =
+    data.discountPercentage ?? data.discount?.percentage ?? 0;
 
   return (
     <div className="flex items-start space-x-4">
@@ -75,41 +91,18 @@ const ProductCard = ({ data }: ProductCardProps) => {
         </div>
         <div className="flex items-center flex-wrap justify-between">
           <div className="flex items-center space-x-[5px] xl:space-x-2.5">
-            {data.discount.percentage > 0 ? (
-              <span className="font-bold text-black text-xl xl:text-2xl">
-                {`$${Math.round(
-                  data.price - (data.price * data.discount.percentage) / 100
-                )}`}
-              </span>
-            ) : data.discount.amount > 0 ? (
-              <span className="font-bold text-black text-xl xl:text-2xl">
-                {`$${data.price - data.discount.amount}`}
-              </span>
-            ) : (
-              <span className="font-bold text-black text-xl xl:text-2xl">
-                ${data.price}
-              </span>
-            )}
-            {data.discount.percentage > 0 && (
+            <span className="font-bold text-black text-xl xl:text-2xl">
+              ${finalPrice}
+            </span>
+            {discountPercentage > 0 && (
               <span className="font-bold text-black/40 line-through text-xl xl:text-2xl">
-                ${data.price}
+                ${basePrice}
               </span>
             )}
-            {data.discount.amount > 0 && (
-              <span className="font-bold text-black/40 line-through text-xl xl:text-2xl">
-                ${data.price}
-              </span>
-            )}
-            {data.discount.percentage > 0 ? (
+            {discountPercentage > 0 && (
               <span className="font-medium text-[10px] xl:text-xs py-1.5 px-3.5 rounded-full bg-[#FF3333]/10 text-[#FF3333]">
-                {`-${data.discount.percentage}%`}
+                {`-${discountPercentage}%`}
               </span>
-            ) : (
-              data.discount.amount > 0 && (
-                <span className="font-medium text-[10px] xl:text-xs py-1.5 px-3.5 rounded-full bg-[#FF3333]/10 text-[#FF3333]">
-                  {`-$${data.discount.amount}`}
-                </span>
-              )
             )}
           </div>
           <CartCounter

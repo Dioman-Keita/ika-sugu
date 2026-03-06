@@ -1,14 +1,10 @@
-export type Discount = {
-  amount: number;
-  percentage: number;
-};
-
 export type Product = {
   id: number;
   title: string;
   srcUrl: string;
   gallery?: string[];
-  price: number;
-  discount: Discount;
+  basePrice: number;
+  discountPercentage: number;
+  finalPrice: number;
   rating: number;
 };

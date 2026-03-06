@@ -22,9 +22,10 @@ const AddToCartBtn = ({ data }: { data: Product & { quantity: number } }) => {
             id: data.id,
             name: data.title,
             srcUrl: data.srcUrl,
-            price: data.price,
+            basePrice: data.basePrice,
+            finalPrice: data.finalPrice,
             attributes: [sizeSelection, colorSelection.name],
-            discount: data.discount,
+            discountPercentage: data.discountPercentage,
             quantity: data.quantity,
           })
         )
