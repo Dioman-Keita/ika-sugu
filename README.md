@@ -1,4 +1,4 @@
-# FORK SOURCE (IMPORTANT): https://github.com/mohammadoftadeh/next-ecommerce-shopco
+> This is a personal fork of [mohammadoftadeh/next-ecommerce-shopco](https://github.com/mohammadoftadeh/next-ecommerce-shopco) by Dioman Keita. It adds custom features while keeping compatibility with upstream.
 
 [![Ika sugu Screenshot](https://github.com/mohammadoftadeh/repo-assets/blob/main/shopco-cover.png?raw=true)](https://next-ecommerce-shopco.vercel.app/)
 
