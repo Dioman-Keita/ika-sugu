@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useMemo, useState } from "react";
 import PhotoSection from "./PhotoSection";
 import { Product } from "@/types/product.types";
 import { integralCF } from "@/styles/fonts";
@@ -9,11 +11,94 @@ import SizeSelection from "./SizeSelection";
 import AddToCardSection from "./AddToCardSection";
 
 const Header = ({ data }: { data: Product }) => {
+  const activeVariants = useMemo(
+    () => data.variants.filter((variant) => variant.isActive),
+    [data.variants]
+  );
+
+  const colorOptions = useMemo(() => {
+    const map = new Map<string, { name: string; hex?: string | null; stock: number }>();
+
+    activeVariants.forEach((variant) => {
+      const existing = map.get(variant.colorName);
+      if (!existing) {
+        map.set(variant.colorName, {
+          name: variant.colorName,
+          hex: variant.colorHex,
+          stock: Math.max(0, variant.stock),
+        });
+        return;
+      }
+
+      map.set(variant.colorName, {
+        ...existing,
+        stock: existing.stock + Math.max(0, variant.stock),
+        hex: existing.hex ?? variant.colorHex,
+      });
+    });
+
+    return Array.from(map.values()).map((entry) => ({
+      name: entry.name,
+      hex: entry.hex,
+      isAvailable: entry.stock > 0,
+    }));
+  }, [activeVariants]);
+
+  const defaultColor = colorOptions.find((color) => color.isAvailable)?.name ?? colorOptions[0]?.name ?? "";
+  const [selectedColor, setSelectedColor] = useState(defaultColor);
+  useEffect(() => {
+    if (!selectedColor || !colorOptions.some((color) => color.name === selectedColor)) {
+      setSelectedColor(defaultColor);
+    }
+  }, [selectedColor, colorOptions, defaultColor]);
+
+  const sizeOptions = useMemo(() => {
+    const map = new Map<string, number>();
+    activeVariants
+      .filter((variant) => variant.colorName === selectedColor)
+      .forEach((variant) => {
+        map.set(variant.size, (map.get(variant.size) ?? 0) + Math.max(0, variant.stock));
+      });
+
+    return Array.from(map.entries()).map(([name, stock]) => ({
+      name,
+      stock,
+      isAvailable: stock > 0,
+    }));
+  }, [activeVariants, selectedColor]);
+
+  const fallbackSize = sizeOptions.find((size) => size.isAvailable)?.name ?? sizeOptions[0]?.name ?? "";
+  const [selectedSize, setSelectedSize] = useState(fallbackSize);
+  useEffect(() => {
+    if (!selectedSize || !sizeOptions.some((size) => size.name === selectedSize)) {
+      setSelectedSize(fallbackSize);
+    }
+  }, [selectedSize, sizeOptions, fallbackSize]);
+
+  const selectedVariant = useMemo(
+    () =>
+      activeVariants.find(
+        (variant) =>
+          variant.colorName === selectedColor && variant.size === selectedSize
+      ) ??
+      activeVariants.find((variant) => variant.colorName === selectedColor) ??
+      activeVariants[0],
+    [activeVariants, selectedColor, selectedSize]
+  );
+
+  const photos =
+    selectedVariant?.images && selectedVariant.images.length > 0
+      ? selectedVariant.images
+      : data.gallery && data.gallery.length > 0
+        ? data.gallery
+        : [data.srcUrl];
+  const selectedVariantStock = selectedVariant?.stock ?? 0;
+
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
-          <PhotoSection data={data} />
+          <PhotoSection data={data} photos={photos} />
         </div>
         <div>
           <h1
@@ -58,11 +143,44 @@ const Header = ({ data }: { data: Product }) => {
             a soft and breathable fabric, it offers superior comfort and style.
           </p>
           <hr className="h-[1px] border-t-black/10 mb-5" />
-          <ColorSelection />
+          <ColorSelection
+            colors={colorOptions}
+            selectedColor={selectedColor}
+            onSelect={(colorName) => {
+              setSelectedColor(colorName);
+              const nextSize =
+                activeVariants.find(
+                  (variant) =>
+                    variant.colorName === colorName && variant.stock > 0
+                )?.size ??
+                activeVariants.find(
+                  (variant) => variant.colorName === colorName
+                )?.size;
+              if (nextSize) setSelectedSize(nextSize);
+            }}
+          />
           <hr className="h-[1px] border-t-black/10 my-5" />
-          <SizeSelection />
+          <SizeSelection
+            sizes={sizeOptions}
+            selectedSize={selectedSize}
+            onSelect={setSelectedSize}
+          />
+          {selectedVariantStock <= 0 && (
+            <p className="text-sm text-[#FF3333] mt-3">
+              This variant is currently out of stock.
+            </p>
+          )}
           <hr className="hidden md:block h-[1px] border-t-black/10 my-5" />
-          <AddToCardSection data={data} />
+          <AddToCardSection
+            data={{
+              ...data,
+              srcUrl: photos[0] ?? data.srcUrl,
+            }}
+            selectedColor={selectedColor}
+            selectedSize={selectedSize}
+            selectedVariantId={selectedVariant?.id}
+            maxQuantity={selectedVariantStock}
+          />
         </div>
       </div>
     </>
