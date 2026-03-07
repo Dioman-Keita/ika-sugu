@@ -2,16 +2,27 @@
 
 import { Product } from "@/types/product.types";
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
-const PhotoSection = ({ data }: { data: Product }) => {
-  const [selected, setSelected] = useState<string>(data.srcUrl);
+const PhotoSection = ({
+  data,
+  photos,
+}: {
+  data: Product;
+  photos: string[];
+}) => {
+  const normalizedPhotos = photos.length > 0 ? photos : [data.srcUrl];
+  const [selected, setSelected] = useState<string>(normalizedPhotos[0]);
+
+  useEffect(() => {
+    setSelected(photos[0] ?? data.srcUrl);
+  }, [photos, data.srcUrl]);
 
   return (
     <div className="flex flex-col-reverse lg:flex-row lg:space-x-3.5">
-      {data?.gallery && data.gallery.length > 0 && (
+      {normalizedPhotos.length > 0 && (
         <div className="flex lg:flex-col space-x-3 lg:space-x-0 lg:space-y-3.5 w-full lg:w-fit items-center lg:justify-start justify-center">
-          {data.gallery.map((photo, index) => (
+          {normalizedPhotos.map((photo, index) => (
             <button
               key={index}
               type="button"

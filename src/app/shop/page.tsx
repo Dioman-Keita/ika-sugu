@@ -32,14 +32,38 @@ const getPageParam = (value?: string | string[]): number => {
   return Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
 };
 
-const buildPageHref = (page: number) => `/shop?page=${page}`;
+const sectionTitles: Record<string, string> = {
+  "men-clothes": "Men's Clothes",
+  "women-clothes": "Women's Clothes",
+  "kids-clothes": "Kids Clothes",
+  "bag-shoes": "Bags and Shoes",
+  "on-sale": "On Sale",
+  "new-arrivals": "New Arrivals",
+  brands: "Brands",
+};
 
 export default async function ShopPage({
   searchParams,
 }: {
   searchParams?: { [key: string]: string | string[] | undefined };
 }) {
+  const buildPageHref = (page: number): string => {
+    const params = new URLSearchParams();
+    Object.entries(searchParams ?? {}).forEach(([key, value]) => {
+      if (!value || key === "page") return;
+      const firstValue = Array.isArray(value) ? value[0] : value;
+      params.set(key, firstValue);
+    });
+    params.set("page", String(page));
+    return `/shop?${params.toString()}`;
+  };
+
   const requestedPage = getPageParam(searchParams?.page);
+  const sectionParam = Array.isArray(searchParams?.section)
+    ? searchParams?.section[0]
+    : searchParams?.section;
+  const pageTitle =
+    (sectionParam && sectionTitles[sectionParam]) || "Casual";
   const { products, totalProducts, totalPages } = await getShopProductsAction({
     page: requestedPage,
     pageSize: PAGE_SIZE,
@@ -67,7 +91,7 @@ export default async function ShopPage({
           <div className="flex flex-col w-full space-y-5">
             <div className="flex flex-col lg:flex-row lg:justify-between">
               <div className="flex items-center justify-between">
-                <h1 className="font-bold text-2xl md:text-[32px]">Casual</h1>
+                <h1 className="font-bold text-2xl md:text-[32px]">{pageTitle}</h1>
                 <MobileFilters />
               </div>
               <div className="flex flex-col sm:items-center sm:flex-row">

@@ -20,17 +20,30 @@ const getAverageRating = (ratings: Array<{ rating: number }>): number => {
 
 const toUiProduct = (product: {
   id: string;
+  slug: string;
   name: string;
-  images: string[];
   basePrice: { toNumber: () => number };
   discountPercentage: number;
   finalPrice: { toNumber: () => number };
   reviews: Array<{ rating: number }>;
+  variants: Array<{
+    id: string;
+    colorName: string;
+    colorHex: string | null;
+    size: string;
+    images: string[];
+    stock: number;
+    isActive: boolean;
+  }>;
 }): Product => ({
+  variants: product.variants,
   id: product.id,
+  slug: product.slug,
   title: product.name,
-  srcUrl: product.images[0] ?? "/images/pic1.png",
-  gallery: product.images,
+  srcUrl:
+    product.variants.find((variant) => variant.images.length > 0)?.images[0] ??
+    "/images/pic1.png",
+  gallery: product.variants.find((variant) => variant.images.length > 0)?.images ?? [],
   basePrice: product.basePrice.toNumber(),
   discountPercentage: product.discountPercentage,
   finalPrice: product.finalPrice.toNumber(),
@@ -57,6 +70,10 @@ export const getHomeCatalogAction = async () => {
       take: 4,
       orderBy: { createdAt: "desc" },
       include: {
+        variants: {
+          where: { isActive: true },
+          orderBy: [{ colorName: "asc" }, { size: "asc" }],
+        },
         reviews: {
           where: { status: ReviewStatus.APPROVED },
           select: { rating: true },
@@ -81,6 +98,10 @@ export const getHomeCatalogAction = async () => {
     ? await db.product.findMany({
         where: { id: { in: topSellingIds.map((item) => item.productId) } },
         include: {
+          variants: {
+            where: { isActive: true },
+            orderBy: [{ colorName: "asc" }, { size: "asc" }],
+          },
           reviews: {
             where: { status: ReviewStatus.APPROVED },
             select: { rating: true },
@@ -120,6 +141,10 @@ export const getShopProductsAction = async ({
       take: safePageSize,
       orderBy: { createdAt: "desc" },
       include: {
+        variants: {
+          where: { isActive: true },
+          orderBy: [{ colorName: "asc" }, { size: "asc" }],
+        },
         reviews: {
           where: { status: ReviewStatus.APPROVED },
           select: { rating: true },
@@ -141,6 +166,10 @@ export const getProductPageAction = async (productId: string) => {
   const product = await db.product.findUnique({
     where: { id: productId },
     include: {
+      variants: {
+        where: { isActive: true },
+        orderBy: [{ colorName: "asc" }, { size: "asc" }],
+      },
       reviews: {
         where: { status: ReviewStatus.APPROVED },
         include: { user: { select: { name: true } } },
@@ -159,6 +188,10 @@ export const getProductPageAction = async (productId: string) => {
     take: 4,
     orderBy: { createdAt: "desc" },
     include: {
+      variants: {
+        where: { isActive: true },
+        orderBy: [{ colorName: "asc" }, { size: "asc" }],
+      },
       reviews: {
         where: { status: ReviewStatus.APPROVED },
         select: { rating: true },

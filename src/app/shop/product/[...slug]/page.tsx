@@ -3,17 +3,23 @@ import BreadcrumbProduct from "@/components/product-page/BreadcrumbProduct";
 import Header from "@/components/product-page/Header";
 import Tabs from "@/components/product-page/Tabs";
 import { getProductPageAction } from "@/app/actions/catalog";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 export default async function ProductPage({
   params,
 }: {
   params: { slug: string[] };
 }) {
-  const productData = await getProductPageAction(params.slug[0]);
+  const productId = params.slug[0];
+  const requestedSlug = params.slug[1];
+  const productData = await getProductPageAction(productId);
 
   if (!productData?.product.title) {
     notFound();
+  }
+
+  if (!requestedSlug || requestedSlug !== productData.product.slug) {
+    redirect(`/shop/product/${productId}/${productData.product.slug}`);
   }
 
   return (
