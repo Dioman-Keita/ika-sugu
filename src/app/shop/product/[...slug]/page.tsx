@@ -8,10 +8,11 @@ import { notFound, redirect } from "next/navigation";
 export default async function ProductPage({
   params,
 }: {
-  params: { slug: string[] };
+  params: Promise<{ slug: string[] }>;
 }) {
-  const productId = params.slug[0];
-  const requestedSlug = params.slug[1];
+  const resolvedParams = await params;
+  const productId = resolvedParams.slug[0];
+  const requestedSlug = resolvedParams.slug[1];
   const productData = await getProductPageAction(productId);
 
   if (!productData?.product.title) {

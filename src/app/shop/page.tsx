@@ -45,11 +45,13 @@ const sectionTitles: Record<string, string> = {
 export default async function ShopPage({
   searchParams,
 }: {
-  searchParams?: { [key: string]: string | string[] | undefined };
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const resolvedSearchParams = (await searchParams) ?? {};
+
   const buildPageHref = (page: number): string => {
     const params = new URLSearchParams();
-    Object.entries(searchParams ?? {}).forEach(([key, value]) => {
+    Object.entries(resolvedSearchParams).forEach(([key, value]) => {
       if (!value || key === "page") return;
       const firstValue = Array.isArray(value) ? value[0] : value;
       params.set(key, firstValue);
@@ -58,10 +60,10 @@ export default async function ShopPage({
     return `/shop?${params.toString()}`;
   };
 
-  const requestedPage = getPageParam(searchParams?.page);
-  const sectionParam = Array.isArray(searchParams?.section)
-    ? searchParams?.section[0]
-    : searchParams?.section;
+  const requestedPage = getPageParam(resolvedSearchParams.page);
+  const sectionParam = Array.isArray(resolvedSearchParams.section)
+    ? resolvedSearchParams.section[0]
+    : resolvedSearchParams.section;
   const pageTitle =
     (sectionParam && sectionTitles[sectionParam]) || "Casual";
   const { products, totalProducts, totalPages } = await getShopProductsAction({

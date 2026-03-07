@@ -2,7 +2,7 @@
 
 import { Product } from "@/types/product.types";
 import Image from "next/image";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 const PhotoSection = ({
   data,
@@ -13,10 +13,6 @@ const PhotoSection = ({
 }) => {
   const normalizedPhotos = photos.length > 0 ? photos : [data.srcUrl];
   const [selected, setSelected] = useState<string>(normalizedPhotos[0]);
-
-  useEffect(() => {
-    setSelected(photos[0] ?? data.srcUrl);
-  }, [photos, data.srcUrl]);
 
   return (
     <div className="flex flex-col-reverse lg:flex-row lg:space-x-3.5">
