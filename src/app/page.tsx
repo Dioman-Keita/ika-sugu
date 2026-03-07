@@ -8,8 +8,7 @@ import { getHomeCatalogAction } from "@/app/actions/catalog";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const { newArrivalsData, topSellingData, reviewsData } =
-    await getHomeCatalogAction();
+  const { newArrivalsData, topSellingData, reviewsData } = await getHomeCatalogAction();
 
   return (
     <>
@@ -22,7 +21,7 @@ export default async function Home() {
           viewAllLink="/shop#new-arrivals"
         />
         <div className="max-w-frame mx-auto px-4 xl:px-0">
-          <hr className="h-[1px] border-t-black/10 my-10 sm:my-16" />
+          <hr className="h-px border-t-black/10 my-10 sm:my-16" />
         </div>
         <div className="mb-[50px] sm:mb-20">
           <ProductListSec

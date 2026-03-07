@@ -26,7 +26,7 @@ export default async function ProductPage({
   return (
     <main>
       <div className="max-w-frame mx-auto px-4 xl:px-0">
-        <hr className="h-[1px] border-t-black/10 mb-5 sm:mb-6" />
+        <hr className="h-px border-t-black/10 mb-5 sm:mb-6" />
         <BreadcrumbProduct title={productData.product.title ?? "product"} />
         <section className="mb-11">
           <Header data={productData.product} />
@@ -34,10 +34,7 @@ export default async function ProductPage({
         <Tabs reviews={productData.reviews} />
       </div>
       <div className="mb-[50px] sm:mb-20">
-        <ProductListSec
-          title="You might also like"
-          data={productData.relatedProducts}
-        />
+        <ProductListSec title="You might also like" data={productData.relatedProducts} />
       </div>
     </main>
   );
