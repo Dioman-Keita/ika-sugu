@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import PhotoSection from "./PhotoSection";
 import { Product } from "@/types/product.types";
 import { integralCF } from "@/styles/fonts";
@@ -46,16 +46,15 @@ const Header = ({ data }: { data: Product }) => {
 
   const defaultColor = colorOptions.find((color) => color.isAvailable)?.name ?? colorOptions[0]?.name ?? "";
   const [selectedColor, setSelectedColor] = useState(defaultColor);
-  useEffect(() => {
-    if (!selectedColor || !colorOptions.some((color) => color.name === selectedColor)) {
-      setSelectedColor(defaultColor);
-    }
-  }, [selectedColor, colorOptions, defaultColor]);
+  const resolvedColor =
+    selectedColor && colorOptions.some((color) => color.name === selectedColor)
+      ? selectedColor
+      : defaultColor;
 
   const sizeOptions = useMemo(() => {
     const map = new Map<string, number>();
     activeVariants
-      .filter((variant) => variant.colorName === selectedColor)
+      .filter((variant) => variant.colorName === resolvedColor)
       .forEach((variant) => {
         map.set(variant.size, (map.get(variant.size) ?? 0) + Math.max(0, variant.stock));
       });
@@ -65,25 +64,24 @@ const Header = ({ data }: { data: Product }) => {
       stock,
       isAvailable: stock > 0,
     }));
-  }, [activeVariants, selectedColor]);
+  }, [activeVariants, resolvedColor]);
 
   const fallbackSize = sizeOptions.find((size) => size.isAvailable)?.name ?? sizeOptions[0]?.name ?? "";
   const [selectedSize, setSelectedSize] = useState(fallbackSize);
-  useEffect(() => {
-    if (!selectedSize || !sizeOptions.some((size) => size.name === selectedSize)) {
-      setSelectedSize(fallbackSize);
-    }
-  }, [selectedSize, sizeOptions, fallbackSize]);
+  const resolvedSize =
+    selectedSize && sizeOptions.some((size) => size.name === selectedSize)
+      ? selectedSize
+      : fallbackSize;
 
   const selectedVariant = useMemo(
     () =>
       activeVariants.find(
         (variant) =>
-          variant.colorName === selectedColor && variant.size === selectedSize
+          variant.colorName === resolvedColor && variant.size === resolvedSize
       ) ??
-      activeVariants.find((variant) => variant.colorName === selectedColor) ??
+      activeVariants.find((variant) => variant.colorName === resolvedColor) ??
       activeVariants[0],
-    [activeVariants, selectedColor, selectedSize]
+    [activeVariants, resolvedColor, resolvedSize]
   );
 
   const photos =
@@ -98,7 +96,11 @@ const Header = ({ data }: { data: Product }) => {
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
-          <PhotoSection data={data} photos={photos} />
+          <PhotoSection
+            key={`${selectedVariant?.id ?? data.id}-photos`}
+            data={data}
+            photos={photos}
+          />
         </div>
         <div>
           <h1
@@ -145,7 +147,7 @@ const Header = ({ data }: { data: Product }) => {
           <hr className="h-[1px] border-t-black/10 mb-5" />
           <ColorSelection
             colors={colorOptions}
-            selectedColor={selectedColor}
+            selectedColor={resolvedColor}
             onSelect={(colorName) => {
               setSelectedColor(colorName);
               const nextSize =
@@ -162,7 +164,7 @@ const Header = ({ data }: { data: Product }) => {
           <hr className="h-[1px] border-t-black/10 my-5" />
           <SizeSelection
             sizes={sizeOptions}
-            selectedSize={selectedSize}
+            selectedSize={resolvedSize}
             onSelect={setSelectedSize}
           />
           {selectedVariantStock <= 0 && (
@@ -172,12 +174,13 @@ const Header = ({ data }: { data: Product }) => {
           )}
           <hr className="hidden md:block h-[1px] border-t-black/10 my-5" />
           <AddToCardSection
+            key={`${selectedVariant?.id ?? data.id}-cart`}
             data={{
               ...data,
               srcUrl: photos[0] ?? data.srcUrl,
             }}
-            selectedColor={selectedColor}
-            selectedSize={selectedSize}
+            selectedColor={resolvedColor}
+            selectedSize={resolvedSize}
             selectedVariantId={selectedVariant?.id}
             maxQuantity={selectedVariantStock}
           />

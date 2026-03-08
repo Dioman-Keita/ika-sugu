@@ -8,10 +8,11 @@ import { notFound, redirect } from "next/navigation";
 export default async function ProductPage({
   params,
 }: {
-  params: { slug: string[] };
+  params: Promise<{ slug: string[] }>;
 }) {
-  const productId = params.slug[0];
-  const requestedSlug = params.slug[1];
+  const resolvedParams = await params;
+  const productId = resolvedParams.slug[0];
+  const requestedSlug = resolvedParams.slug[1];
   const productData = await getProductPageAction(productId);
 
   if (!productData?.product.title) {
@@ -25,7 +26,7 @@ export default async function ProductPage({
   return (
     <main>
       <div className="max-w-frame mx-auto px-4 xl:px-0">
-        <hr className="h-[1px] border-t-black/10 mb-5 sm:mb-6" />
+        <hr className="h-px border-t-black/10 mb-5 sm:mb-6" />
         <BreadcrumbProduct title={productData.product.title ?? "product"} />
         <section className="mb-11">
           <Header data={productData.product} />
@@ -33,10 +34,7 @@ export default async function ProductPage({
         <Tabs reviews={productData.reviews} />
       </div>
       <div className="mb-[50px] sm:mb-20">
-        <ProductListSec
-          title="You might also like"
-          data={productData.relatedProducts}
-        />
+        <ProductListSec title="You might also like" data={productData.relatedProducts} />
       </div>
     </main>
   );

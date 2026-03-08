@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/pagination";
 
 const PAGE_SIZE = 9;
+export const dynamic = "force-dynamic";
 
 const getPageParam = (value?: string | string[]): number => {
   if (!value) return 1;
@@ -45,11 +46,13 @@ const sectionTitles: Record<string, string> = {
 export default async function ShopPage({
   searchParams,
 }: {
-  searchParams?: { [key: string]: string | string[] | undefined };
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const resolvedSearchParams = (await searchParams) ?? {};
+
   const buildPageHref = (page: number): string => {
     const params = new URLSearchParams();
-    Object.entries(searchParams ?? {}).forEach(([key, value]) => {
+    Object.entries(resolvedSearchParams).forEach(([key, value]) => {
       if (!value || key === "page") return;
       const firstValue = Array.isArray(value) ? value[0] : value;
       params.set(key, firstValue);
@@ -58,12 +61,11 @@ export default async function ShopPage({
     return `/shop?${params.toString()}`;
   };
 
-  const requestedPage = getPageParam(searchParams?.page);
-  const sectionParam = Array.isArray(searchParams?.section)
-    ? searchParams?.section[0]
-    : searchParams?.section;
-  const pageTitle =
-    (sectionParam && sectionTitles[sectionParam]) || "Casual";
+  const requestedPage = getPageParam(resolvedSearchParams.page);
+  const sectionParam = Array.isArray(resolvedSearchParams.section)
+    ? resolvedSearchParams.section[0]
+    : resolvedSearchParams.section;
+  const pageTitle = (sectionParam && sectionTitles[sectionParam]) || "Casual";
   const { products, totalProducts, totalPages } = await getShopProductsAction({
     page: requestedPage,
     pageSize: PAGE_SIZE,
@@ -72,13 +74,13 @@ export default async function ShopPage({
   const startProduct = totalProducts === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
   const endProduct = Math.min(currentPage * PAGE_SIZE, totalProducts);
   const pageNumbers = Array.from({ length: totalPages }, (_, idx) => idx + 1).filter(
-    (page) => page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1
+    (page) => page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1,
   );
 
   return (
     <main className="pb-20">
       <div className="max-w-frame mx-auto px-4 xl:px-0">
-        <hr className="h-[1px] border-t-black/10 mb-5 sm:mb-6" />
+        <hr className="h-px border-t-black/10 mb-5 sm:mb-6" />
         <BreadcrumbShop />
         <div className="flex md:space-x-5 items-start">
           <div className="hidden md:block min-w-[295px] max-w-[295px] border border-black/10 rounded-[20px] px-5 md:px-6 py-5 space-y-5 md:space-y-6">
@@ -121,9 +123,7 @@ export default async function ShopPage({
               </div>
             ) : (
               <div className="w-full py-10 text-center border border-black/10 rounded-[20px]">
-                <p className="text-black/60 text-sm sm:text-base">
-                  No products found.
-                </p>
+                <p className="text-black/60 text-sm sm:text-base">No products found.</p>
               </div>
             )}
             <hr className="border-t-black/10" />
@@ -135,7 +135,8 @@ export default async function ShopPage({
               <PaginationContent>
                 {pageNumbers.map((page, idx) => {
                   const previous = pageNumbers[idx - 1];
-                  const showEllipsis = typeof previous === "number" && page - previous > 1;
+                  const showEllipsis =
+                    typeof previous === "number" && page - previous > 1;
 
                   return (
                     <React.Fragment key={page}>
