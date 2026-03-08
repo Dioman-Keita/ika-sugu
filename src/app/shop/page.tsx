@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/pagination";
 
 const PAGE_SIZE = 9;
+export const dynamic = "force-dynamic";
 
 const getPageParam = (value?: string | string[]): number => {
   if (!value) return 1;
