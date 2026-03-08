@@ -7,8 +7,18 @@ export default defineConfig([
   ...nextTypeScript,
   {
     rules: {
-      "@typescript-eslint/no-explicit-any": "off",
       "react/display-name": "off",
+    },
+  },
+  {
+    files: [
+      "src/components/storage/index.tsx",
+      "src/components/ui/SpinnerbLoader/index.tsx",
+      "src/components/ui/input-group.tsx",
+      "src/lib/utils.ts",
+    ],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
     },
   },
   globalIgnores([
