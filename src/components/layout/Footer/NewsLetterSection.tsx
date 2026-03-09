@@ -7,7 +7,7 @@ import React from "react";
 
 const NewsLetterSection = () => {
   return (
-    <div className="relative grid grid-cols-1 md:grid-cols-2 py-9 md:py-11 px-6 md:px-16 max-w-frame mx-auto bg-black rounded-[20px]">
+    <div className="relative grid grid-cols-1 md:grid-cols-2 py-9 md:py-11 px-6 md:px-16 max-w-frame mx-auto bg-black dark:bg-zinc-800 rounded-[20px]">
       <p
         className={cn([
           integralCF.className,
@@ -18,7 +18,7 @@ const NewsLetterSection = () => {
       </p>
       <div className="flex items-center">
         <div className="flex flex-col w-full max-w-[349px] mx-auto">
-          <InputGroup className="flex bg-white mb-[14px]">
+          <InputGroup className="flex bg-white dark:bg-zinc-700 mb-[14px]">
             <InputGroup.Text>
               <Image
                 priority
@@ -26,19 +26,19 @@ const NewsLetterSection = () => {
                 height={20}
                 width={20}
                 alt="email"
-                className="min-w-5 min-h-5"
+                className="min-w-5 min-h-5 dark:invert"
               />
             </InputGroup.Text>
             <InputGroup.Input
               type="email"
               name="email"
               placeholder="Enter your email address"
-              className="bg-transparent placeholder:text-black/40 placeholder:text-sm sm:placeholder:text-base"
+              className="bg-transparent placeholder:text-black/40 dark:placeholder:text-white/40 dark:text-white placeholder:text-sm sm:placeholder:text-base"
             />
           </InputGroup>
           <Button
             variant="secondary"
-            className="text-sm sm:text-base font-medium bg-white h-12 rounded-full px-4 py-3"
+            className="text-sm sm:text-base font-medium bg-white dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600 h-12 rounded-full px-4 py-3"
             aria-label="Subscribe to Newsletter"
             type="button"
           >

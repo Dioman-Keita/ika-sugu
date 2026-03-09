@@ -41,8 +41,8 @@ const Tabs = ({ reviews }: { reviews: Review[] }) => {
             type="button"
             className={cn([
               active === tab.id
-                ? "border-black border-b-2 font-medium"
-                : "border-b border-black/10 text-black/60 font-normal",
+                ? "border-foreground border-b-2 font-medium"
+                : "border-b border-border text-muted-foreground font-normal",
               "p-5 sm:p-6 rounded-none flex-1",
             ])}
             onClick={() => setActive(tab.id)}

@@ -24,34 +24,64 @@ model User {
 }
 
 model Category {
-  id          String    @id @default(cuid())
-  name        String
-  slug        String    @unique
-  description String?
-  createdAt   DateTime  @default(now())
-  products    Product[]
+  id           String                @id @default(cuid())
+  name         String
+  slug         String                @unique
+  description  String?
+  createdAt    DateTime              @default(now())
+  products     Product[]
+  translations CategoryTranslation[]
 
   @@index([name])
 }
 
+model CategoryTranslation {
+  id          String   @id @default(cuid())
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  locale      String   // e.g. "fr", "en"
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([categoryId, locale])
+  @@index([categoryId])
+}
+
 model Product {
-  id                 String      @id @default(cuid())
+  id                 String               @id @default(cuid())
   name               String
-  slug               String      @unique
+  slug               String               @unique
   description        String
-  basePrice          Decimal     @db.Decimal(10, 2)
-  discountPercentage Int         @default(0)
-  finalPrice         Decimal     @db.Decimal(10, 2)
+  basePrice          Decimal              @db.Decimal(10, 2)
+  discountPercentage Int                  @default(0)
+  finalPrice         Decimal              @db.Decimal(10, 2)
   variants           ProductVariant[]
   categoryId         String
-  category           Category    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  category           Category             @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   orderItems         OrderItem[]
   reviews            Review[]
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
+  translations       ProductTranslation[]
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
 
   @@index([categoryId])
   @@index([createdAt])
+}
+
+model ProductTranslation {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  locale      String   // e.g. "fr", "en"
+  name        String
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([productId, locale])
+  @@index([productId])
 }
 
 model ProductVariant {

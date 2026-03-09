@@ -65,34 +65,32 @@ const toUiReview = (review: {
 });
 
 export const getHomeCatalogAction = async () => {
-  const [newArrivalsRaw, topSellingIds, homeReviewsRaw] = await Promise.all([
-    db.product.findMany({
-      take: 4,
-      orderBy: { createdAt: "desc" },
-      include: {
-        variants: {
-          where: { isActive: true },
-          orderBy: [{ colorName: "asc" }, { size: "asc" }],
-        },
-        reviews: {
-          where: { status: ReviewStatus.APPROVED },
-          select: { rating: true },
-        },
+  const newArrivalsRaw = await db.product.findMany({
+    take: 4,
+    orderBy: { createdAt: "desc" },
+    include: {
+      variants: {
+        where: { isActive: true },
+        orderBy: [{ colorName: "asc" }, { size: "asc" }],
       },
-    }),
-    db.orderItem.groupBy({
-      by: ["productId"],
-      _sum: { quantity: true },
-      orderBy: { _sum: { quantity: "desc" } },
-      take: 4,
-    }),
-    db.review.findMany({
-      where: { status: ReviewStatus.APPROVED },
-      orderBy: { createdAt: "desc" },
-      take: 6,
-      include: { user: { select: { name: true } } },
-    }),
-  ]);
+      reviews: {
+        where: { status: ReviewStatus.APPROVED },
+        select: { rating: true },
+      },
+    },
+  });
+  const topSellingIds = await db.orderItem.groupBy({
+    by: ["productId"],
+    _sum: { quantity: true },
+    orderBy: { _sum: { quantity: "desc" } },
+    take: 4,
+  });
+  const homeReviewsRaw = await db.review.findMany({
+    where: { status: ReviewStatus.APPROVED },
+    orderBy: { createdAt: "desc" },
+    take: 6,
+    include: { user: { select: { name: true } } },
+  });
 
   const topSellingRaw = topSellingIds.length
     ? await db.product.findMany({
@@ -134,24 +132,22 @@ export const getShopProductsAction = async ({
   const safePage = Math.max(Math.floor(page), 1);
   const skip = (safePage - 1) * safePageSize;
 
-  const [totalProducts, products] = await Promise.all([
-    db.product.count(),
-    db.product.findMany({
-      skip,
-      take: safePageSize,
-      orderBy: { createdAt: "desc" },
-      include: {
-        variants: {
-          where: { isActive: true },
-          orderBy: [{ colorName: "asc" }, { size: "asc" }],
-        },
-        reviews: {
-          where: { status: ReviewStatus.APPROVED },
-          select: { rating: true },
-        },
+  const totalProducts = await db.product.count();
+  const products = await db.product.findMany({
+    skip,
+    take: safePageSize,
+    orderBy: { createdAt: "desc" },
+    include: {
+      variants: {
+        where: { isActive: true },
+        orderBy: [{ colorName: "asc" }, { size: "asc" }],
       },
-    }),
-  ]);
+      reviews: {
+        where: { status: ReviewStatus.APPROVED },
+        select: { rating: true },
+      },
+    },
+  });
 
   return {
     products: products.map(toUiProduct),

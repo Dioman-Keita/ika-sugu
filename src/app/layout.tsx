@@ -22,15 +22,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={satoshi.className}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${satoshi.className} bg-background text-foreground`}>
         <HolyLoader color="#f06262ff" />
-        <TopBanner />
         <Providers>
+          <TopBanner />
           <TopNavbar />
           {children}
+          <Footer />
         </Providers>
-        <Footer />
       </body>
     </html>
   );

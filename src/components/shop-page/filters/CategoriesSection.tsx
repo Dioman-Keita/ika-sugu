@@ -1,5 +1,4 @@
 import Link from "next/link";
-import React from "react";
 import { MdKeyboardArrowRight } from "react-icons/md";
 
 type Category = {
@@ -8,31 +7,16 @@ type Category = {
 };
 
 const categoriesData: Category[] = [
-  {
-    title: "T-shirts",
-    slug: "/shop?category=t-shirts",
-  },
-  {
-    title: "Shorts",
-    slug: "/shop?category=shorts",
-  },
-  {
-    title: "Shirts",
-    slug: "/shop?category=shirts",
-  },
-  {
-    title: "Hoodie",
-    slug: "/shop?category=hoodie",
-  },
-  {
-    title: "Jeans",
-    slug: "/shop?category=jeans",
-  },
+  { title: "T-shirts", slug: "/shop?category=t-shirts" },
+  { title: "Shorts", slug: "/shop?category=shorts" },
+  { title: "Shirts", slug: "/shop?category=shirts" },
+  { title: "Hoodie", slug: "/shop?category=hoodie" },
+  { title: "Jeans", slug: "/shop?category=jeans" },
 ];
 
 const CategoriesSection = () => {
   return (
-    <div className="flex flex-col space-y-0.5 text-black/60">
+    <div className="flex flex-col space-y-0.5 text-muted-foreground">
       {categoriesData.map((category, idx) => (
         <Link
           key={idx}

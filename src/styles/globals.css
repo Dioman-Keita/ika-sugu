@@ -1,4 +1,4 @@
-@config "../../tailwind.config.ts";
+@config "../../tailwind.config.mjs";
 @import "tailwindcss";
 
 :root {
@@ -84,4 +84,29 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+@layer base {
+  :root {
+    --surface-product: #F0EEED;
+    --surface-hero: #F2F0F1;
+    --surface-section: #F0F0F0;
+    --surface-card: #ffffff;
+    --surface-brand: #000000;
+  }
+  .dark {
+    --surface-product: #262932;
+    --surface-hero: #13151a;
+    --surface-section: #1a1d26;
+    --surface-card: #27272a;
+    --surface-brand: #18181b;
+  }
+}
+
+@theme inline {
+  --color-surface-product: var(--surface-product);
+  --color-surface-hero: var(--surface-hero);
+  --color-surface-section: var(--surface-section);
+  --color-surface-card: var(--surface-card);
+  --color-surface-brand: var(--surface-brand);
 }
