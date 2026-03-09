@@ -20,7 +20,9 @@ async function main() {
   await prisma.review.deleteMany();
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
+  await prisma.productTranslation.deleteMany();
   await prisma.product.deleteMany();
+  await prisma.categoryTranslation.deleteMany();
   await prisma.category.deleteMany();
   await prisma.user.deleteMany();
 
@@ -31,6 +33,11 @@ async function main() {
           name: "Fashion",
           slug: "fashion",
           description: "Everyday clothing essentials",
+          translations: {
+            create: [
+              { locale: "fr", name: "Mode", description: "Vêtements du quotidien" },
+            ],
+          },
         },
       }),
       prisma.category.create({
@@ -38,6 +45,11 @@ async function main() {
           name: "Shoes",
           slug: "shoes",
           description: "Sneakers and casual shoes",
+          translations: {
+            create: [
+              { locale: "fr", name: "Chaussures", description: "Baskets et chaussures décontractées" },
+            ],
+          },
         },
       }),
       prisma.category.create({
@@ -45,6 +57,11 @@ async function main() {
           name: "Accessories",
           slug: "accessories",
           description: "Belts, bags and small accessories",
+          translations: {
+            create: [
+              { locale: "fr", name: "Accessoires", description: "Ceintures, sacs et petits accessoires" },
+            ],
+          },
         },
       }),
     ]);
@@ -128,6 +145,15 @@ async function main() {
             },
           ],
         },
+        translations: {
+          create: [
+            {
+              locale: "fr",
+              name: "T-shirt à bandes décoratives",
+              description: "T-shirt en coton doux pour un usage quotidien.",
+            },
+          ],
+        },
         categoryId: fashionCategory.id,
       },
     }),
@@ -168,6 +194,15 @@ async function main() {
               size: "36",
               images: ["/images/pic2.png"],
               stock: 0,
+            },
+          ],
+        },
+        translations: {
+          create: [
+            {
+              locale: "fr",
+              name: "Jean coupe slim",
+              description: "Jean en denim stretch à coupe ajustée.",
             },
           ],
         },
@@ -242,6 +277,15 @@ async function main() {
             },
           ],
         },
+        translations: {
+          create: [
+            {
+              locale: "fr",
+              name: "Baskets Urban Runner",
+              description: "Baskets légères pour marcher en ville.",
+            },
+          ],
+        },
         categoryId: shoesCategory.id,
       },
     }),
@@ -296,6 +340,15 @@ async function main() {
               size: "L",
               images: ["/images/pic7.png"],
               stock: 7,
+            },
+          ],
+        },
+        translations: {
+          create: [
+            {
+              locale: "fr",
+              name: "Ceinture en cuir",
+              description: "Ceinture classique en cuir véritable.",
             },
           ],
         },

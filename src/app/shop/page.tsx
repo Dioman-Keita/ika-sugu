@@ -80,13 +80,13 @@ export default async function ShopPage({
   return (
     <main className="pb-20">
       <div className="max-w-frame mx-auto px-4 xl:px-0">
-        <hr className="h-px border-t-black/10 mb-5 sm:mb-6" />
+        <hr className="h-px border-t-black/10 dark:border-t-white/10 mb-5 sm:mb-6" />
         <BreadcrumbShop />
         <div className="flex md:space-x-5 items-start">
-          <div className="hidden md:block min-w-[295px] max-w-[295px] border border-black/10 rounded-[20px] px-5 md:px-6 py-5 space-y-5 md:space-y-6">
+          <div className="hidden md:block min-w-73.75 max-w-73.75 border border-border rounded-[20px] px-5 md:px-6 py-5 space-y-5 md:space-y-6">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-black text-xl">Filters</span>
-              <FiSliders className="text-2xl text-black/40" />
+              <span className="font-bold text-foreground text-xl">Filters</span>
+              <FiSliders className="text-2xl text-foreground/40" />
             </div>
             <Filters />
           </div>
@@ -97,13 +97,13 @@ export default async function ShopPage({
                 <MobileFilters />
               </div>
               <div className="flex flex-col sm:items-center sm:flex-row">
-                <span className="text-sm md:text-base text-black/60 mr-3">
+                <span className="text-sm md:text-base text-muted-foreground mr-3">
                   Showing {startProduct}-{endProduct} of {totalProducts} Products
                 </span>
                 <div className="flex items-center">
                   Sort by:{" "}
                   <Select defaultValue="most-popular">
-                    <SelectTrigger className="font-medium text-sm px-1.5 sm:text-base w-fit text-black bg-transparent shadow-none border-none">
+                    <SelectTrigger className="font-medium text-sm px-1.5 sm:text-base w-fit text-foreground bg-transparent shadow-none border-none">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -122,15 +122,17 @@ export default async function ShopPage({
                 ))}
               </div>
             ) : (
-              <div className="w-full py-10 text-center border border-black/10 rounded-[20px]">
-                <p className="text-black/60 text-sm sm:text-base">No products found.</p>
+              <div className="w-full py-10 text-center border border-border rounded-[20px]">
+                <p className="text-muted-foreground text-sm sm:text-base">
+                  No products found.
+                </p>
               </div>
             )}
-            <hr className="border-t-black/10" />
+            <hr className="border-t-border" />
             <Pagination className="justify-between">
               <PaginationPrevious
                 href={buildPageHref(Math.max(1, currentPage - 1))}
-                className="border border-black/10"
+                className="border border-border"
               />
               <PaginationContent>
                 {pageNumbers.map((page, idx) => {
@@ -142,13 +144,13 @@ export default async function ShopPage({
                     <React.Fragment key={page}>
                       {showEllipsis && (
                         <PaginationItem>
-                          <PaginationEllipsis className="text-black/50 font-medium text-sm" />
+                          <PaginationEllipsis className="text-muted-foreground font-medium text-sm" />
                         </PaginationItem>
                       )}
                       <PaginationItem>
                         <PaginationLink
                           href={buildPageHref(page)}
-                          className="text-black/50 font-medium text-sm"
+                          className="text-muted-foreground font-medium text-sm"
                           isActive={page === currentPage}
                         >
                           {page}
@@ -158,10 +160,9 @@ export default async function ShopPage({
                   );
                 })}
               </PaginationContent>
-
               <PaginationNext
                 href={buildPageHref(Math.min(totalPages, currentPage + 1))}
-                className="border border-black/10"
+                className="border border-border"
               />
             </Pagination>
           </div>

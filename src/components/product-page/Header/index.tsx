@@ -116,21 +116,21 @@ const Header = ({ data }: { data: Product }) => {
               initialValue={data.rating}
               allowFraction
               SVGclassName="inline-block"
-              emptyClassName="fill-gray-50"
+              emptyClassName="fill-foreground/10"
               size={25}
               readonly
             />
-            <span className="text-black text-xs sm:text-sm ml-[11px] sm:ml-[13px] pb-0.5 sm:pb-0">
+            <span className="text-foreground text-xs sm:text-sm ml-[11px] sm:ml-[13px] pb-0.5 sm:pb-0">
               {data.rating.toFixed(1)}
-              <span className="text-black/60">/5</span>
+              <span className="text-foreground/60">/5</span>
             </span>
           </div>
           <div className="flex items-center space-x-2.5 sm:space-x-3 mb-5">
-            <span className="font-bold text-black text-2xl sm:text-[32px]">
+            <span className="font-bold text-foreground text-2xl sm:text-[32px]">
               ${data.finalPrice}
             </span>
             {data.discountPercentage > 0 && (
-              <span className="font-bold text-black/40 line-through text-2xl sm:text-[32px]">
+              <span className="font-bold text-foreground/40 line-through text-2xl sm:text-[32px]">
                 ${data.basePrice}
               </span>
             )}
@@ -140,11 +140,11 @@ const Header = ({ data }: { data: Product }) => {
               </span>
             )}
           </div>
-          <p className="text-sm sm:text-base text-black/60 mb-5">
+          <p className="text-sm sm:text-base text-muted-foreground mb-5">
             This graphic t-shirt which is perfect for any occasion. Crafted from
             a soft and breathable fabric, it offers superior comfort and style.
           </p>
-          <hr className="h-[1px] border-t-black/10 mb-5" />
+          <hr className="h-[1px] border-t-border mb-5" />
           <ColorSelection
             colors={colorOptions}
             selectedColor={resolvedColor}
@@ -161,7 +161,7 @@ const Header = ({ data }: { data: Product }) => {
               if (nextSize) setSelectedSize(nextSize);
             }}
           />
-          <hr className="h-[1px] border-t-black/10 my-5" />
+          <hr className="h-[1px] border-t-border my-5" />
           <SizeSelection
             sizes={sizeOptions}
             selectedSize={resolvedSize}
@@ -172,7 +172,7 @@ const Header = ({ data }: { data: Product }) => {
               This variant is currently out of stock.
             </p>
           )}
-          <hr className="hidden md:block h-[1px] border-t-black/10 my-5" />
+          <hr className="hidden md:block h-[1px] border-t-border my-5" />
           <AddToCardSection
             key={`${selectedVariant?.id ?? data.id}-cart`}
             data={{

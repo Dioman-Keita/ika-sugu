@@ -47,7 +47,7 @@ const faqsData: FaqItem[] = [
 const FaqContent = () => {
   return (
     <section>
-      <h3 className="text-xl sm:text-2xl font-bold text-black mb-5 sm:mb-6">
+      <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-5 sm:mb-6">
         Frequently asked questions
       </h3>
       <Accordion type="single" collapsible>

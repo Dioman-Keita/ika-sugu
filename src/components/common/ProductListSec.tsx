@@ -1,12 +1,7 @@
-import React from "react";
 import * as motion from "framer-motion/client";
 import { cn } from "@/lib/utils";
 import { integralCF } from "@/styles/fonts";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-} from "@/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import ProductCard from "./ProductCard";
 import { Product } from "@/types/product.types";
 import Link from "next/link";
@@ -39,8 +34,8 @@ const ProductListSec = ({ title, data, viewAllLink }: ProductListSecProps) => {
         transition={{ delay: 0.6, duration: 0.6 }}
       >
         {data.length === 0 && (
-          <div className="w-full py-10 mb-6 md:mb-9 text-center border border-black/10 rounded-[20px]">
-            <p className="text-black/60 text-sm sm:text-base">
+          <div className="w-full py-10 mb-6 md:mb-9 text-center border border-border rounded-[20px]">
+            <p className="text-muted-foreground text-sm sm:text-base">
               No products available right now.
             </p>
           </div>
@@ -68,7 +63,7 @@ const ProductListSec = ({ title, data, viewAllLink }: ProductListSecProps) => {
           <div className="w-full px-4 sm:px-0 text-center">
             <Link
               href={viewAllLink}
-              className="w-full inline-block sm:w-[218px] px-[54px] py-4 border rounded-full hover:bg-black hover:text-white text-black transition-all font-medium text-sm sm:text-base border-black/10"
+              className="w-full inline-block sm:w-[218px] px-[54px] py-4 border rounded-full hover:bg-foreground hover:text-background text-foreground transition-all font-medium text-sm sm:text-base border-border"
             >
               View All
             </Link>

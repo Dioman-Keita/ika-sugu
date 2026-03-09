@@ -4,7 +4,6 @@ import { addToCart } from "@/lib/features/carts/cartsSlice";
 import { useAppDispatch } from "@/lib/hooks/redux";
 import { cn } from "@/lib/utils";
 import { Product } from "@/types/product.types";
-import React from "react";
 
 const AddToCartBtn = ({
   data,
@@ -25,8 +24,8 @@ const AddToCartBtn = ({
       type="button"
       disabled={isDisabled}
       className={cn(
-        "bg-black w-full ml-3 sm:ml-5 rounded-full h-11 md:h-[52px] text-sm sm:text-base text-white hover:bg-black/80 transition-all",
-        isDisabled && "bg-black/40 cursor-not-allowed hover:bg-black/40"
+        "bg-foreground text-background w-full ml-3 sm:ml-5 rounded-full h-11 md:h-[52px] text-sm sm:text-base hover:bg-foreground/80 transition-all",
+        isDisabled && "bg-foreground/40 cursor-not-allowed hover:bg-foreground/40",
       )}
       onClick={() =>
         dispatch(
@@ -41,7 +40,7 @@ const AddToCartBtn = ({
             attributes: [data.selectedSize, data.selectedColor],
             discountPercentage: data.discountPercentage,
             quantity: data.quantity,
-          })
+          }),
         )
       }
     >

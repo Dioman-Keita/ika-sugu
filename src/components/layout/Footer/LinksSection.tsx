@@ -1,119 +1,60 @@
+"use client";
+
 import React from "react";
-import { FooterLinks } from "./footer.types";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-
-const footerLinksData: FooterLinks[] = [
-  {
-    id: 1,
-    title: "company",
-    children: [
-      {
-        id: 11,
-        label: "about",
-        url: "#",
-      },
-      {
-        id: 12,
-        label: "features",
-        url: "#",
-      },
-      {
-        id: 13,
-        label: "works",
-        url: "#",
-      },
-      {
-        id: 14,
-        label: "career",
-        url: "#",
-      },
-    ],
-  },
-  {
-    id: 2,
-    title: "help",
-    children: [
-      {
-        id: 21,
-        label: "customer support",
-        url: "#",
-      },
-      {
-        id: 22,
-        label: "delivery details",
-        url: "#",
-      },
-      {
-        id: 23,
-        label: "terms & conditions",
-        url: "#",
-      },
-      {
-        id: 24,
-        label: "privacy policy",
-        url: "#",
-      },
-    ],
-  },
-  {
-    id: 3,
-    title: "faq",
-    children: [
-      {
-        id: 31,
-        label: "account",
-        url: "#",
-      },
-      {
-        id: 32,
-        label: "manage deliveries",
-        url: "#",
-      },
-      {
-        id: 33,
-        label: "orders",
-        url: "#",
-      },
-      {
-        id: 34,
-        label: "payments",
-        url: "#",
-      },
-    ],
-  },
-  {
-    id: 4,
-    title: "resources",
-    children: [
-      {
-        id: 41,
-        label: "Free eBooks",
-        url: "#",
-      },
-      {
-        id: 42,
-        label: "development tutorial",
-        url: "#",
-      },
-      {
-        id: 43,
-        label: "How to - Blog",
-        url: "#",
-      },
-      {
-        id: 44,
-        label: "youtube playlist",
-        url: "#",
-      },
-    ],
-  },
-];
+import { useUiPreferences } from "@/lib/ui-preferences";
+import { FooterLinks } from "./footer.types";
 
 const LinksSection = () => {
+  const { t } = useUiPreferences();
+
+  const translatedData: FooterLinks[] = [
+    {
+      id: 1,
+      title: t("footer.company"),
+      children: [
+        { id: 11, label: t("footer.about"), url: "#" },
+        { id: 12, label: t("footer.features"), url: "#" },
+        { id: 13, label: t("footer.works"), url: "#" },
+        { id: 14, label: t("footer.career"), url: "#" },
+      ],
+    },
+    {
+      id: 2,
+      title: t("footer.help"),
+      children: [
+        { id: 21, label: t("footer.customerSupport"), url: "#" },
+        { id: 22, label: t("footer.deliveryDetails"), url: "#" },
+        { id: 23, label: t("footer.terms"), url: "#" },
+        { id: 24, label: t("footer.privacy"), url: "#" },
+      ],
+    },
+    {
+      id: 3,
+      title: t("footer.faq"),
+      children: [
+        { id: 31, label: t("footer.account"), url: "#" },
+        { id: 32, label: t("footer.manageDeliveries"), url: "#" },
+        { id: 33, label: t("footer.orders"), url: "#" },
+        { id: 34, label: t("footer.payments"), url: "#" },
+      ],
+    },
+    {
+      id: 4,
+      title: t("footer.resources"),
+      children: [
+        { id: 41, label: t("footer.freeEbooks"), url: "#" },
+        { id: 42, label: t("footer.devTutorial"), url: "#" },
+        { id: 43, label: t("footer.howToBlog"), url: "#" },
+        { id: 44, label: t("footer.youtube"), url: "#" },
+      ],
+    },
+  ];
+
   return (
     <>
-      {footerLinksData.map((item) => (
+      {translatedData.map((item) => (
         <section className="flex flex-col mt-5" key={item.id}>
           <h3 className="font-medium text-sm md:text-base uppercase tracking-widest mb-6">
             {item.title}
@@ -124,7 +65,7 @@ const LinksSection = () => {
               key={link.id}
               className={cn([
                 link.id !== 41 && link.id !== 43 && "capitalize",
-                "text-black/60 text-sm md:text-base mb-4 w-fit",
+                "text-black/60 dark:text-white/70 text-sm md:text-base mb-4 w-fit",
               ])}
             >
               {link.label}

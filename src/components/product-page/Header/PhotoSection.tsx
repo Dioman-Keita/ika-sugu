@@ -2,15 +2,9 @@
 
 import { Product } from "@/types/product.types";
 import Image from "next/image";
-import React, { useState } from "react";
+import { useState } from "react";
 
-const PhotoSection = ({
-  data,
-  photos,
-}: {
-  data: Product;
-  photos: string[];
-}) => {
+const PhotoSection = ({ data, photos }: { data: Product; photos: string[] }) => {
   const normalizedPhotos = photos.length > 0 ? photos : [data.srcUrl];
   const [selected, setSelected] = useState<string>(normalizedPhotos[0]);
 
@@ -22,7 +16,7 @@ const PhotoSection = ({
             <button
               key={index}
               type="button"
-              className="bg-[#F0EEED] rounded-[13px] xl:rounded-[20px] w-full max-w-[111px] xl:max-w-[152px] max-h-[106px] xl:max-h-[167px] xl:min-h-[167px] aspect-square overflow-hidden"
+              className="bg-surface-product rounded-[13px] xl:rounded-[20px] w-full max-w-27.75 xl:max-w-38 max-h-26.5 xl:max-h-41.75 xl:min-h-41.75 aspect-square overflow-hidden"
               onClick={() => setSelected(photo)}
             >
               <Image
@@ -38,7 +32,7 @@ const PhotoSection = ({
         </div>
       )}
 
-      <div className="flex items-center justify-center bg-[#F0EEED] rounded-[13px] sm:rounded-[20px] w-full sm:w-96 md:w-full mx-auto h-full max-h-[530px] min-h-[330px] lg:min-h-[380px] xl:min-h-[530px] overflow-hidden mb-3 lg:mb-0">
+      <div className="flex items-center justify-center bg-surface-product rounded-[13px] sm:rounded-[20px] w-full sm:w-96 md:w-full mx-auto h-full max-h-132.5 min-h-82.5 lg:min-h-95 xl:min-h-132.5 overflow-hidden mb-3 lg:mb-0">
         <Image
           src={selected}
           width={444}
