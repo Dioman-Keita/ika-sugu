@@ -9,7 +9,7 @@ import HolyLoader from "holy-loader";
 import Providers from "./providers";
 import { cookies } from "next/headers";
 import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
-import { Locale } from "@/lib/i18n/messages";
+import { Locale, parseLocale } from "@/lib/i18n/locale";
 
 export const metadata: Metadata = {
   title: "Ika sugu",
@@ -27,8 +27,9 @@ export default async function RootLayout({
 }>) {
   const cookieStore = await cookies();
   const cookieLocale = cookieStore.get(LOCALE_COOKIE_KEY)?.value;
-  const initialLocale =
-    cookieLocale === "en" || cookieLocale === "fr" ? (cookieLocale as Locale) : undefined;
+  const initialLocale: Locale | undefined = cookieLocale
+    ? parseLocale(cookieLocale)
+    : undefined;
   const htmlLang = initialLocale ?? "en";
 
   return (

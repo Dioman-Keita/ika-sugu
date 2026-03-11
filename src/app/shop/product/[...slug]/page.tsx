@@ -6,7 +6,7 @@ import { getProductPageAction } from "@/app/actions/catalog";
 import { notFound, redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
-import { Locale } from "@/lib/i18n/messages";
+import { Locale, parseLocale } from "@/lib/i18n/locale";
 
 export default async function ProductPage({
   params,
@@ -14,7 +14,7 @@ export default async function ProductPage({
   params: Promise<{ slug: string[] }>;
 }) {
   const cookieStore = await cookies();
-  const locale = (cookieStore.get(LOCALE_COOKIE_KEY)?.value as Locale) || "en";
+  const locale: Locale = parseLocale(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
 
   const resolvedParams = await params;
   const productId = resolvedParams.slug[0];

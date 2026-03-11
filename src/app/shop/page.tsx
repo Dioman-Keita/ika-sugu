@@ -24,7 +24,8 @@ import {
 } from "@/components/ui/pagination";
 import { cookies } from "next/headers";
 import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
-import { Locale, messages } from "@/lib/i18n/messages";
+import { messages } from "@/lib/i18n/messages";
+import { Locale, parseLocale } from "@/lib/i18n/locale";
 
 const PAGE_SIZE = 9;
 export const dynamic = "force-dynamic";
@@ -53,7 +54,7 @@ export default async function ShopPage({
 }) {
   const resolvedSearchParams = (await searchParams) ?? {};
   const cookieStore = await cookies();
-  const locale = (cookieStore.get(LOCALE_COOKIE_KEY)?.value as Locale) || "en";
+  const locale: Locale = parseLocale(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
 
   const buildPageHref = (page: number): string => {
     const params = new URLSearchParams();

@@ -6,13 +6,13 @@ import Reviews from "@/components/homepage/Reviews";
 import { getHomeCatalogAction } from "@/app/actions/catalog";
 import { cookies } from "next/headers";
 import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
-import { Locale } from "@/lib/i18n/messages";
+import { Locale, parseLocale } from "@/lib/i18n/locale";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const cookieStore = await cookies();
-  const locale = (cookieStore.get(LOCALE_COOKIE_KEY)?.value as Locale) || "en";
+  const locale: Locale = parseLocale(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
 
   const { newArrivalsData, topSellingData, reviewsData } =
     await getHomeCatalogAction(locale);

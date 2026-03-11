@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { getCategoriesAction } from "@/app/actions/catalog";
-import type { Locale } from "@/lib/i18n/messages";
+import { parseLocale } from "@/lib/i18n/locale";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const rawLocale = url.searchParams.get("locale");
-  const locale: Locale = rawLocale === "fr" ? "fr" : "en";
+  const locale = parseLocale(url.searchParams.get("locale"));
 
   const categories = await getCategoriesAction(locale);
 

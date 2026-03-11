@@ -1,10 +1,11 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { Locale, messages } from "./i18n/messages";
+import { messages } from "./i18n/messages";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { LOCALE_COOKIE_KEY } from "./ui-preferences-keys";
+import { Locale, parseLocale } from "./i18n/locale";
 
 type ThemeMode = "light" | "dark";
 
@@ -24,7 +25,7 @@ const getInitialLocale = (): Locale => {
   if (typeof window === "undefined") return "en";
   const savedLocale =
     Cookies.get(LOCALE_COOKIE_KEY) || localStorage.getItem(LOCALE_COOKIE_KEY);
-  return savedLocale === "fr" ? "fr" : "en";
+  return parseLocale(savedLocale);
 };
 
 const getInitialTheme = (): ThemeMode => {

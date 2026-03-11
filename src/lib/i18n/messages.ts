@@ -1,4 +1,5 @@
-export type Locale = "en" | "fr";
+export type { Locale } from "./locale";
+import type { Locale } from "./locale";
 
 export type Messages = Record<string, string>;
 
