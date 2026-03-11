@@ -63,7 +63,7 @@ const ResTopNavbar = ({ data }: { data: NavMenu }) => {
                         {item.label}
                       </AccordionTrigger>
                       <AccordionContent className="p-4 pb-0 border-l flex flex-col">
-                        {item.children.map((itemChild, idx) => (
+                        {item.children.map((itemChild) => (
                           <SheetClose
                             key={itemChild.id}
                             asChild

@@ -12,13 +12,12 @@ type LegacyCartItem = CartItem & {
   discount?: { percentage?: number };
 };
 
-const getBasePrice = (item: LegacyCartItem): number =>
-  item.basePrice ?? (item as any).price ?? 0;
+const getBasePrice = (item: LegacyCartItem): number => item.basePrice ?? item.price ?? 0;
 
 const getFinalPrice = (item: LegacyCartItem): number => {
   if (typeof item.finalPrice === "number") return item.finalPrice;
   const base = getBasePrice(item);
-  const pct = item.discountPercentage ?? (item as any).discount?.percentage ?? 0;
+  const pct = item.discountPercentage ?? item.discount?.percentage ?? 0;
   return Math.round(base - (base * pct) / 100);
 };
 

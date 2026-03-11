@@ -10,11 +10,10 @@ import {
 import { IoMdCheckmark } from "react-icons/io";
 import { cn } from "@/lib/utils";
 import { useUiPreferences } from "@/lib/ui-preferences";
-import { translateAttribute } from "@/lib/i18n/messages";
 
 const ColorsSection = () => {
   const [selected, setSelected] = useState<string>("bg-green-600");
-  const { t, locale } = useUiPreferences();
+  const { t } = useUiPreferences();
 
   return (
     <Accordion type="single" collapsible defaultValue="filter-colors">

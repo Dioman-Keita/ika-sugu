@@ -40,7 +40,7 @@ const Field = ({
   </div>
 );
 
-const ShippingForm = ({ onSubmit, isSubmitting }: ShippingFormProps) => {
+const ShippingForm = ({ onSubmit }: ShippingFormProps) => {
   const [form, setForm] = useState<FormData>({
     firstName: "",
     lastName: "",

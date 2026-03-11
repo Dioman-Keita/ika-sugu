@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { integralCF } from "@/styles/fonts";
 import { useAppSelector } from "@/lib/hooks/redux";
@@ -28,7 +27,6 @@ type LegacyCartItem = CartItem & {
 };
 
 export default function CheckoutPage() {
-  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const { t } = useUiPreferences();
@@ -36,16 +34,7 @@ export default function CheckoutPage() {
   const { cart } = useAppSelector((state: RootState) => state.carts);
   const items = (cart?.items ?? []) as LegacyCartItem[];
 
-  const handleSubmit = async (formData: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone: string;
-    address: string;
-    city: string;
-    country: string;
-    zip: string;
-  }) => {
+  const handleSubmit = async () => {
     setIsSubmitting(true);
     // Simulate order processing
     await new Promise((res) => setTimeout(res, 1200));
