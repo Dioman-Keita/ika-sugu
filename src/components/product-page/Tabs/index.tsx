@@ -4,32 +4,35 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import React, { useState } from "react";
 import ProductDetailsContent from "./ProductDetailsContent";
+import { useUiPreferences } from "@/lib/ui-preferences";
 import ReviewsContent from "./ReviewsContent";
 import FaqContent from "./FaqContent";
 import { Review } from "@/types/review.types";
+import type { SpecItem } from "./ProductDetails";
 
 type TabBtn = {
   id: number;
   label: string;
 };
 
-const tabBtnData: TabBtn[] = [
-  {
-    id: 1,
-    label: "Product Details",
-  },
-  {
-    id: 2,
-    label: "Rating & Reviews",
-  },
-  {
-    id: 3,
-    label: "FAQs",
-  },
-];
-
-const Tabs = ({ reviews }: { reviews: Review[] }) => {
+const Tabs = ({ reviews, specs }: { reviews: Review[]; specs?: SpecItem[] }) => {
   const [active, setActive] = useState<number>(1);
+  const { t } = useUiPreferences();
+
+  const tabBtnData: TabBtn[] = [
+    {
+      id: 1,
+      label: t("product.tabs.details"),
+    },
+    {
+      id: 2,
+      label: t("product.tabs.reviews"),
+    },
+    {
+      id: 3,
+      label: t("product.tabs.faq"),
+    },
+  ];
 
   return (
     <div>
@@ -52,7 +55,7 @@ const Tabs = ({ reviews }: { reviews: Review[] }) => {
         ))}
       </div>
       <div className="mb-12 sm:mb-16">
-        {active === 1 && <ProductDetailsContent />}
+        {active === 1 && <ProductDetailsContent specs={specs} />}
         {active === 2 && <ReviewsContent reviews={reviews} />}
         {active === 3 && <FaqContent />}
       </div>

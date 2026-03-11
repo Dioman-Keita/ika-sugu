@@ -4,8 +4,9 @@ import * as React from "react";
 import * as SliderPrimitive from "@radix-ui/react-slider";
 import { cn } from "@/lib/utils";
 
-interface SliderProps
-  extends React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root> {
+interface SliderProps extends React.ComponentPropsWithoutRef<
+  typeof SliderPrimitive.Root
+> {
   min: number;
   max: number;
   step?: number;
@@ -18,16 +19,8 @@ const Slider = React.forwardRef<
   SliderProps
 >(
   (
-    {
-      className,
-      min,
-      max,
-      step = 1,
-      defaultValue = [min, max],
-      label,
-      ...props
-    },
-    ref
+    { className, min, max, step = 1, defaultValue = [min, max], label, ...props },
+    ref,
   ) => {
     const [values, setValues] = React.useState<[number, number]>(defaultValue);
 
@@ -41,7 +34,7 @@ const Slider = React.forwardRef<
           ref={ref}
           className={cn(
             "relative flex w-full touch-none select-none items-center",
-            className
+            className,
           )}
           min={min}
           max={max}
@@ -80,7 +73,7 @@ const Slider = React.forwardRef<
         </SliderPrimitive.Root>
       </div>
     );
-  }
+  },
 );
 
 Slider.displayName = SliderPrimitive.Root.displayName;

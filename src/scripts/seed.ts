@@ -1,10 +1,6 @@
 import "dotenv/config";
 
-import {
-  OrderStatus,
-  Prisma,
-  ReviewStatus,
-} from "../generated/prisma/client";
+import { OrderStatus, Prisma, ReviewStatus } from "../generated/prisma/client";
 import db from "../lib/db";
 
 const prisma = db;
@@ -26,45 +22,50 @@ async function main() {
   await prisma.category.deleteMany();
   await prisma.user.deleteMany();
 
-  const [fashionCategory, shoesCategory, accessoriesCategory] =
-    await Promise.all([
-      prisma.category.create({
-        data: {
-          name: "Fashion",
-          slug: "fashion",
-          description: "Everyday clothing essentials",
-          translations: {
-            create: [
-              { locale: "fr", name: "Mode", description: "Vêtements du quotidien" },
-            ],
-          },
+  const [fashionCategory, shoesCategory, accessoriesCategory] = await Promise.all([
+    prisma.category.create({
+      data: {
+        name: "Fashion",
+        slug: "fashion",
+        description: "Everyday clothing essentials",
+        translations: {
+          create: [{ locale: "fr", name: "Mode", description: "Vêtements du quotidien" }],
         },
-      }),
-      prisma.category.create({
-        data: {
-          name: "Shoes",
-          slug: "shoes",
-          description: "Sneakers and casual shoes",
-          translations: {
-            create: [
-              { locale: "fr", name: "Chaussures", description: "Baskets et chaussures décontractées" },
-            ],
-          },
+      },
+    }),
+    prisma.category.create({
+      data: {
+        name: "Shoes",
+        slug: "shoes",
+        description: "Sneakers and casual shoes",
+        translations: {
+          create: [
+            {
+              locale: "fr",
+              name: "Chaussures",
+              description: "Baskets et chaussures décontractées",
+            },
+          ],
         },
-      }),
-      prisma.category.create({
-        data: {
-          name: "Accessories",
-          slug: "accessories",
-          description: "Belts, bags and small accessories",
-          translations: {
-            create: [
-              { locale: "fr", name: "Accessoires", description: "Ceintures, sacs et petits accessoires" },
-            ],
-          },
+      },
+    }),
+    prisma.category.create({
+      data: {
+        name: "Accessories",
+        slug: "accessories",
+        description: "Belts, bags and small accessories",
+        translations: {
+          create: [
+            {
+              locale: "fr",
+              name: "Accessoires",
+              description: "Ceintures, sacs et petits accessoires",
+            },
+          ],
         },
-      }),
-    ]);
+      },
+    }),
+  ]);
 
   const [alice, bob, claire] = await Promise.all([
     prisma.user.create({
@@ -148,9 +149,26 @@ async function main() {
         translations: {
           create: [
             {
+              locale: "en",
+              name: "T-shirt with Tape Details",
+              description: "Soft cotton t-shirt for daily wear.",
+              specs: {
+                material: "100% Cotton",
+                care: "Machine wash warm, tumble dry",
+                fit: "Regular fit",
+                pattern: "Solid",
+              },
+            },
+            {
               locale: "fr",
               name: "T-shirt à bandes décoratives",
               description: "T-shirt en coton doux pour un usage quotidien.",
+              specs: {
+                material: "100% coton",
+                care: "Lavage en machine a chaud, seche-linge",
+                fit: "Coupe reguliere",
+                pattern: "Uni",
+              },
             },
           ],
         },
@@ -200,9 +218,26 @@ async function main() {
         translations: {
           create: [
             {
+              locale: "en",
+              name: "Skinny Fit Jeans",
+              description: "Stretch denim jeans with slim cut.",
+              specs: {
+                material: "98% Cotton, 2% Elastane",
+                care: "Machine wash cold, hang dry",
+                fit: "Skinny fit",
+                pattern: "Solid",
+              },
+            },
+            {
               locale: "fr",
               name: "Jean coupe slim",
               description: "Jean en denim stretch à coupe ajustée.",
+              specs: {
+                material: "98% coton, 2% elastane",
+                care: "Lavage en machine a froid, secher a l'air",
+                fit: "Coupe slim",
+                pattern: "Uni",
+              },
             },
           ],
         },
@@ -222,56 +257,56 @@ async function main() {
             {
               colorName: "White",
               colorHex: "#F5F5F5",
-              size: "40",
+              size: "S",
               images: ["/images/pic6.png"],
               stock: 4,
             },
             {
               colorName: "White",
               colorHex: "#F5F5F5",
-              size: "41",
+              size: "M",
               images: ["/images/pic6.png"],
               stock: 7,
             },
             {
               colorName: "White",
               colorHex: "#F5F5F5",
-              size: "42",
+              size: "L",
               images: ["/images/pic6.png"],
               stock: 3,
             },
             {
               colorName: "White",
               colorHex: "#F5F5F5",
-              size: "43",
+              size: "XL",
               images: ["/images/pic6.png"],
               stock: 0,
             },
             {
               colorName: "Gray",
               colorHex: "#8C9198",
-              size: "40",
+              size: "S",
               images: ["/images/pic6.png"],
               stock: 5,
             },
             {
               colorName: "Gray",
               colorHex: "#8C9198",
-              size: "41",
+              size: "M",
               images: ["/images/pic6.png"],
               stock: 4,
             },
             {
               colorName: "Gray",
               colorHex: "#8C9198",
-              size: "42",
+              size: "L",
               images: ["/images/pic6.png"],
               stock: 6,
             },
             {
               colorName: "Gray",
               colorHex: "#8C9198",
-              size: "43",
+              size: "XL",
               images: ["/images/pic6.png"],
               stock: 0,
             },
@@ -280,9 +315,26 @@ async function main() {
         translations: {
           create: [
             {
+              locale: "en",
+              name: "Urban Runner Sneakers",
+              description: "Lightweight sneakers for city walking.",
+              specs: {
+                material: "Mesh and synthetic",
+                care: "Wipe clean with damp cloth",
+                fit: "True to size",
+                pattern: "Color block",
+              },
+            },
+            {
               locale: "fr",
               name: "Baskets Urban Runner",
               description: "Baskets légères pour marcher en ville.",
+              specs: {
+                material: "Mesh et synthetique",
+                care: "Nettoyer avec un chiffon humide",
+                fit: "Taille normale",
+                pattern: "Bicolore",
+              },
             },
           ],
         },
@@ -346,9 +398,26 @@ async function main() {
         translations: {
           create: [
             {
+              locale: "en",
+              name: "Leather Belt",
+              description: "Classic genuine leather belt.",
+              specs: {
+                material: "Genuine leather",
+                care: "Wipe clean, condition leather",
+                fit: "Adjustable",
+                pattern: "Solid",
+              },
+            },
+            {
               locale: "fr",
               name: "Ceinture en cuir",
               description: "Ceinture classique en cuir véritable.",
+              specs: {
+                material: "Cuir veritable",
+                care: "Essuyer, nourrir le cuir",
+                fit: "Ajustable",
+                pattern: "Uni",
+              },
             },
           ],
         },
@@ -366,12 +435,8 @@ async function main() {
   const aliceLine1Vat = calcVatAmount(aliceLine1Total, vatFashion);
   const aliceLine2Total = toMoney(new Prisma.Decimal(jeans.finalPrice).mul(1));
   const aliceLine2Vat = calcVatAmount(aliceLine2Total, vatFashion);
-  const aliceSubtotal = toMoney(
-    new Prisma.Decimal(aliceLine1Total).add(aliceLine2Total)
-  );
-  const aliceTaxTotal = toMoney(
-    new Prisma.Decimal(aliceLine1Vat).add(aliceLine2Vat)
-  );
+  const aliceSubtotal = toMoney(new Prisma.Decimal(aliceLine1Total).add(aliceLine2Total));
+  const aliceTaxTotal = toMoney(new Prisma.Decimal(aliceLine1Vat).add(aliceLine2Vat));
   const aliceTotal = toMoney(new Prisma.Decimal(aliceSubtotal).add(aliceTaxTotal));
 
   await prisma.order.create({
@@ -408,9 +473,7 @@ async function main() {
   const bobLine1Vat = calcVatAmount(bobLine1Total, vatFashion);
   const bobLine2Total = toMoney(new Prisma.Decimal(belt.finalPrice).mul(3));
   const bobLine2Vat = calcVatAmount(bobLine2Total, vatAccessories);
-  const bobSubtotal = toMoney(
-    new Prisma.Decimal(bobLine1Total).add(bobLine2Total)
-  );
+  const bobSubtotal = toMoney(new Prisma.Decimal(bobLine1Total).add(bobLine2Total));
   const bobTaxTotal = toMoney(new Prisma.Decimal(bobLine1Vat).add(bobLine2Vat));
   const bobTotal = toMoney(new Prisma.Decimal(bobSubtotal).add(bobTaxTotal));
 

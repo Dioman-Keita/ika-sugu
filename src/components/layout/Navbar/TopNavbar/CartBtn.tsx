@@ -5,9 +5,11 @@ import { RootState } from "@/lib/store";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
+import { useUiPreferences } from "@/lib/ui-preferences";
 
 const CartBtn = () => {
   const { cart } = useAppSelector((state: RootState) => state.carts);
+  const { t } = useUiPreferences();
 
   return (
     <Link href="/cart" className="relative mr-[14px] p-1">
@@ -16,7 +18,7 @@ const CartBtn = () => {
         src="/icons/cart.svg"
         height={100}
         width={100}
-        alt="cart"
+        alt={t("nav.cart")}
         className="max-w-[22px] max-h-[22px] dark:invert"
       />
       {cart && cart.totalQuantities > 0 && (

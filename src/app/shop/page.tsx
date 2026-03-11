@@ -22,6 +22,9 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { cookies } from "next/headers";
+import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
+import { Locale, messages } from "@/lib/i18n/messages";
 
 const PAGE_SIZE = 9;
 export const dynamic = "force-dynamic";
@@ -34,13 +37,13 @@ const getPageParam = (value?: string | string[]): number => {
 };
 
 const sectionTitles: Record<string, string> = {
-  "men-clothes": "Men's Clothes",
-  "women-clothes": "Women's Clothes",
-  "kids-clothes": "Kids Clothes",
-  "bag-shoes": "Bags and Shoes",
-  "on-sale": "On Sale",
-  "new-arrivals": "New Arrivals",
-  brands: "Brands",
+  "men-clothes": "nav.men",
+  "women-clothes": "nav.women",
+  "kids-clothes": "nav.kids",
+  "bag-shoes": "nav.bagsShoes",
+  "on-sale": "nav.onSale",
+  "new-arrivals": "nav.newArrivals",
+  brands: "nav.brands",
 };
 
 export default async function ShopPage({
@@ -49,6 +52,8 @@ export default async function ShopPage({
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const resolvedSearchParams = (await searchParams) ?? {};
+  const cookieStore = await cookies();
+  const locale = (cookieStore.get(LOCALE_COOKIE_KEY)?.value as Locale) || "en";
 
   const buildPageHref = (page: number): string => {
     const params = new URLSearchParams();
@@ -65,10 +70,16 @@ export default async function ShopPage({
   const sectionParam = Array.isArray(resolvedSearchParams.section)
     ? resolvedSearchParams.section[0]
     : resolvedSearchParams.section;
-  const pageTitle = (sectionParam && sectionTitles[sectionParam]) || "Casual";
+
+  const sectionKey = (sectionParam && sectionTitles[sectionParam]) || null;
+  const pageTitle = sectionKey
+    ? messages[locale][sectionKey] || sectionKey
+    : messages[locale]["nav.shop"];
+
   const { products, totalProducts, totalPages } = await getShopProductsAction({
     page: requestedPage,
     pageSize: PAGE_SIZE,
+    locale,
   });
   const currentPage = Math.min(requestedPage, totalPages);
   const startProduct = totalProducts === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
@@ -85,31 +96,42 @@ export default async function ShopPage({
         <div className="flex md:space-x-5 items-start">
           <div className="hidden md:block min-w-73.75 max-w-73.75 border border-border rounded-[20px] px-5 md:px-6 py-5 space-y-5 md:space-y-6">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-foreground text-xl">Filters</span>
+              <span className="font-bold text-foreground text-xl">
+                {messages[locale]["shop.filters"]}
+              </span>
               <FiSliders className="text-2xl text-foreground/40" />
             </div>
-            <Filters />
+            <Filters locale={locale} />
           </div>
           <div className="flex flex-col w-full space-y-5">
             <div className="flex flex-col lg:flex-row lg:justify-between">
               <div className="flex items-center justify-between">
                 <h1 className="font-bold text-2xl md:text-[32px]">{pageTitle}</h1>
-                <MobileFilters />
+                <MobileFilters locale={locale} />
               </div>
               <div className="flex flex-col sm:items-center sm:flex-row">
                 <span className="text-sm md:text-base text-muted-foreground mr-3">
-                  Showing {startProduct}-{endProduct} of {totalProducts} Products
+                  {messages[locale]["shop.showing"]
+                    .replace("{start}", String(startProduct))
+                    .replace("{end}", String(endProduct))
+                    .replace("{total}", String(totalProducts))}
                 </span>
                 <div className="flex items-center">
-                  Sort by:{" "}
+                  {messages[locale]["shop.sortBy"]}
                   <Select defaultValue="most-popular">
                     <SelectTrigger className="font-medium text-sm px-1.5 sm:text-base w-fit text-foreground bg-transparent shadow-none border-none">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="most-popular">Most Popular</SelectItem>
-                      <SelectItem value="low-price">Low Price</SelectItem>
-                      <SelectItem value="high-price">High Price</SelectItem>
+                      <SelectItem value="most-popular">
+                        {messages[locale]["shop.mostPopular"]}
+                      </SelectItem>
+                      <SelectItem value="low-price">
+                        {messages[locale]["shop.lowPrice"]}
+                      </SelectItem>
+                      <SelectItem value="high-price">
+                        {messages[locale]["shop.highPrice"]}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -124,7 +146,7 @@ export default async function ShopPage({
             ) : (
               <div className="w-full py-10 text-center border border-border rounded-[20px]">
                 <p className="text-muted-foreground text-sm sm:text-base">
-                  No products found.
+                  {messages[locale]["shop.noProducts"]}
                 </p>
               </div>
             )}
@@ -133,6 +155,8 @@ export default async function ShopPage({
               <PaginationPrevious
                 href={buildPageHref(Math.max(1, currentPage - 1))}
                 className="border border-border"
+                label={messages[locale]["pagination.previous"]}
+                ariaLabel={messages[locale]["pagination.goToPreviousPage"]}
               />
               <PaginationContent>
                 {pageNumbers.map((page, idx) => {
@@ -163,6 +187,8 @@ export default async function ShopPage({
               <PaginationNext
                 href={buildPageHref(Math.min(totalPages, currentPage + 1))}
                 className="border border-border"
+                label={messages[locale]["pagination.next"]}
+                ariaLabel={messages[locale]["pagination.goToNextPage"]}
               />
             </Pagination>
           </div>

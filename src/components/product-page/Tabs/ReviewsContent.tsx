@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import React from "react";
 import {
@@ -10,14 +12,17 @@ import {
 import ReviewCard from "@/components/common/ReviewCard";
 import { Review } from "@/types/review.types";
 import Link from "next/link";
+import { useUiPreferences } from "@/lib/ui-preferences";
 
 const ReviewsContent = ({ reviews }: { reviews: Review[] }) => {
+  const { t } = useUiPreferences();
+
   return (
     <section>
       <div className="flex items-center justify-between flex-col sm:flex-row mb-5 sm:mb-6">
         <div className="flex items-center mb-4 sm:mb-0">
           <h3 className="text-xl sm:text-2xl font-bold text-foreground mr-2">
-            All Reviews
+            {t("product.reviews.allReviews")}
           </h3>
           <span className="text-sm sm:text-base text-muted-foreground">
             ({reviews.length})
@@ -29,9 +34,11 @@ const ReviewsContent = ({ reviews }: { reviews: Review[] }) => {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="latest">Latest</SelectItem>
-              <SelectItem value="most-relevant">Most Relevant</SelectItem>
-              <SelectItem value="oldest">Oldest</SelectItem>
+              <SelectItem value="latest">{t("product.reviews.sort.latest")}</SelectItem>
+              <SelectItem value="most-relevant">
+                {t("product.reviews.sort.mostRelevant")}
+              </SelectItem>
+              <SelectItem value="oldest">{t("product.reviews.sort.oldest")}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -39,7 +46,7 @@ const ReviewsContent = ({ reviews }: { reviews: Review[] }) => {
             type="button"
             className="sm:min-w-[166px] px-4 py-3 sm:px-5 sm:py-4 rounded-full bg-foreground text-background font-medium text-xs sm:text-base h-12"
           >
-            Write a Review
+            {t("product.reviews.writeReview")}
           </Button>
         </div>
       </div>
@@ -55,14 +62,14 @@ const ReviewsContent = ({ reviews }: { reviews: Review[] }) => {
               href="#"
               className="inline-block w-[230px] px-11 py-4 border rounded-full hover:bg-foreground hover:text-background text-foreground transition-all font-medium text-sm sm:text-base border-border"
             >
-              Load More Reviews
+              {t("product.reviews.loadMore")}
             </Link>
           </div>
         </>
       ) : (
         <div className="w-full py-10 text-center border border-border rounded-[20px]">
           <p className="text-muted-foreground text-sm sm:text-base">
-            No reviews for this product yet.
+            {t("product.reviews.empty")}
           </p>
         </div>
       )}

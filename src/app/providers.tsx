@@ -6,16 +6,18 @@ import { makeStore } from "../lib/store";
 import { PersistGate } from "redux-persist/integration/react";
 import SpinnerbLoader from "@/components/ui/SpinnerbLoader";
 import { UiPreferencesProvider } from "@/lib/ui-preferences";
+import { Locale } from "@/lib/i18n/messages";
 
 type Props = {
   children: React.ReactNode;
+  initialLocale?: Locale;
 };
 
-const Providers = ({ children }: Props) => {
+const Providers = ({ children, initialLocale }: Props) => {
   const { store, persistor } = makeStore();
 
   return (
-    <UiPreferencesProvider>
+    <UiPreferencesProvider initialLocale={initialLocale}>
       <Provider store={store}>
         <PersistGate
           loading={

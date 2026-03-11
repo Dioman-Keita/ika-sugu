@@ -4,11 +4,18 @@ import DressStyle from "@/components/homepage/DressStyle";
 import Header from "@/components/homepage/Header";
 import Reviews from "@/components/homepage/Reviews";
 import { getHomeCatalogAction } from "@/app/actions/catalog";
+import { cookies } from "next/headers";
+import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
+import { Locale } from "@/lib/i18n/messages";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const { newArrivalsData, topSellingData, reviewsData } = await getHomeCatalogAction();
+  const cookieStore = await cookies();
+  const locale = (cookieStore.get(LOCALE_COOKIE_KEY)?.value as Locale) || "en";
+
+  const { newArrivalsData, topSellingData, reviewsData } =
+    await getHomeCatalogAction(locale);
 
   return (
     <>
@@ -16,7 +23,7 @@ export default async function Home() {
       <Brands />
       <main className="my-[50px] sm:my-[72px]">
         <ProductListSec
-          title="NEW ARRIVALS"
+          titleKey="home.arrivals"
           data={newArrivalsData}
           viewAllLink="/shop#new-arrivals"
         />
@@ -25,7 +32,7 @@ export default async function Home() {
         </div>
         <div className="mb-[50px] sm:mb-20">
           <ProductListSec
-            title="top selling"
+            titleKey="home.topSelling"
             data={topSellingData}
             viewAllLink="/shop#top-selling"
           />

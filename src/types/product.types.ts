@@ -12,8 +12,10 @@ export type Product = {
   id: string;
   slug: string;
   title: string;
+  description: string;
   srcUrl: string;
   gallery?: string[];
+  specs?: Array<{ labelKey: string; value: string }>;
   variants: ProductVariant[];
   basePrice: number;
   discountPercentage: number;

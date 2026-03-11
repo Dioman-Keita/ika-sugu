@@ -4,9 +4,33 @@ import db from "@/lib/db";
 import { Product } from "@/types/product.types";
 import { Review } from "@/types/review.types";
 import { ReviewStatus } from "@/generated/prisma/client";
+import { Locale } from "@/lib/i18n/messages";
 
-const formatReviewDate = (date: Date): string =>
-  date.toLocaleDateString("en-US", {
+type ProductSpecsJson = Partial<Record<"material" | "care" | "fit" | "pattern", string>>;
+
+const labelKeyBySpecKey: Record<keyof ProductSpecsJson, string> = {
+  material: "product.specs.material",
+  care: "product.specs.care",
+  fit: "product.specs.fit",
+  pattern: "product.specs.pattern",
+};
+
+const toUiSpecs = (raw: unknown): Array<{ labelKey: string; value: string }> => {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return [];
+  const obj = raw as Record<string, unknown>;
+
+  const items: Array<{ labelKey: string; value: string }> = [];
+  (Object.keys(labelKeyBySpecKey) as Array<keyof ProductSpecsJson>).forEach((key) => {
+    const value = obj[key];
+    if (typeof value === "string" && value.trim().length > 0) {
+      items.push({ labelKey: labelKeyBySpecKey[key], value: value.trim() });
+    }
+  });
+  return items;
+};
+
+const formatReviewDate = (date: Date, locale: Locale = "en"): string =>
+  date.toLocaleDateString(locale === "en" ? "en-US" : "fr-FR", {
     month: "long",
     day: "numeric",
     year: "numeric",
@@ -18,57 +42,102 @@ const getAverageRating = (ratings: Array<{ rating: number }>): number => {
   return Math.round(avg * 10) / 10;
 };
 
-const toUiProduct = (product: {
-  id: string;
-  slug: string;
-  name: string;
-  basePrice: { toNumber: () => number };
-  discountPercentage: number;
-  finalPrice: { toNumber: () => number };
-  reviews: Array<{ rating: number }>;
-  variants: Array<{
-    id: string;
-    colorName: string;
-    colorHex: string | null;
-    size: string;
-    images: string[];
-    stock: number;
-    isActive: boolean;
-  }>;
-}): Product => ({
-  variants: product.variants,
-  id: product.id,
-  slug: product.slug,
-  title: product.name,
-  srcUrl:
-    product.variants.find((variant) => variant.images.length > 0)?.images[0] ??
-    "/images/pic1.png",
-  gallery: product.variants.find((variant) => variant.images.length > 0)?.images ?? [],
-  basePrice: product.basePrice.toNumber(),
-  discountPercentage: product.discountPercentage,
-  finalPrice: product.finalPrice.toNumber(),
-  rating: getAverageRating(product.reviews),
-});
+const isTransientDbError = (err: unknown): boolean => {
+  if (!err || typeof err !== "object") return false;
+  const maybe = err as { code?: unknown; message?: unknown };
+  const code = typeof maybe.code === "string" ? maybe.code : "";
+  const message = typeof maybe.message === "string" ? maybe.message : "";
+  return (
+    ["P1001", "P1008", "P1017", "P2037"].includes(code) ||
+    message.toLowerCase().includes("connection timeout") ||
+    message.toLowerCase().includes("can't reach database server")
+  );
+};
 
-const toUiReview = (review: {
-  id: string;
-  content: string;
-  rating: number;
-  createdAt: Date;
-  user: { name: string };
-}): Review => ({
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const withDbRetry = async <T>(fn: () => Promise<T>): Promise<T> => {
+  try {
+    return await fn();
+  } catch (err) {
+    if (!isTransientDbError(err)) throw err;
+    await sleep(250);
+    return await fn();
+  }
+};
+
+const toUiProduct = (
+  product: {
+    id: string;
+    slug: string;
+    name: string;
+    description: string;
+    basePrice: { toNumber: () => number };
+    discountPercentage: number;
+    finalPrice: { toNumber: () => number };
+    reviews?: Array<{ rating: number }>;
+    variants: Array<{
+      id: string;
+      colorName: string;
+      colorHex: string | null;
+      size: string;
+      images: string[];
+      stock: number;
+      isActive: boolean;
+    }>;
+    translations?: Array<{
+      locale: string;
+      name: string;
+      description: string;
+      specs?: unknown;
+    }>;
+  },
+  locale: Locale = "en",
+): Product => {
+  // Try to find the specific translation for the requested locale
+  const translation = product.translations?.find((t) => t.locale === locale);
+
+  return {
+    variants: product.variants,
+    id: product.id,
+    slug: product.slug,
+    title: translation?.name ?? product.name,
+    description: translation?.description ?? product.description,
+    specs: translation?.specs ? toUiSpecs(translation.specs) : [],
+    srcUrl:
+      product.variants.find((variant) => variant.images.length > 0)?.images[0] ??
+      "/images/pic1.png",
+    gallery: product.variants.find((variant) => variant.images.length > 0)?.images ?? [],
+    basePrice: product.basePrice.toNumber(),
+    discountPercentage: product.discountPercentage,
+    finalPrice: product.finalPrice.toNumber(),
+    rating: getAverageRating(product.reviews ?? []),
+  };
+};
+
+const toUiReview = (
+  review: {
+    id: string;
+    content: string;
+    rating: number;
+    createdAt: Date;
+    user: { name: string };
+  },
+  locale: Locale = "en",
+): Review => ({
   id: review.id,
   user: review.user.name,
   content: review.content,
   rating: review.rating,
-  date: formatReviewDate(review.createdAt),
+  date: formatReviewDate(review.createdAt, locale),
 });
 
-export const getHomeCatalogAction = async () => {
+export const getHomeCatalogAction = async (locale: Locale = "en") => {
   const newArrivalsRaw = await db.product.findMany({
     take: 4,
     orderBy: { createdAt: "desc" },
     include: {
+      translations: { where: { locale } },
       variants: {
         where: { isActive: true },
         orderBy: [{ colorName: "asc" }, { size: "asc" }],
@@ -96,6 +165,7 @@ export const getHomeCatalogAction = async () => {
     ? await db.product.findMany({
         where: { id: { in: topSellingIds.map((item) => item.productId) } },
         include: {
+          translations: { where: { locale } },
           variants: {
             where: { isActive: true },
             orderBy: [{ colorName: "asc" }, { size: "asc" }],
@@ -112,56 +182,100 @@ export const getHomeCatalogAction = async () => {
   const topSellingData = topSellingIds
     .map((item) => topSellingMap.get(item.productId))
     .filter((product): product is NonNullable<typeof product> => Boolean(product))
-    .map(toUiProduct);
+    .map((product) => toUiProduct(product, locale));
 
   return {
-    newArrivalsData: newArrivalsRaw.map(toUiProduct),
+    newArrivalsData: newArrivalsRaw.map((product) => toUiProduct(product, locale)),
     topSellingData,
-    reviewsData: homeReviewsRaw.map(toUiReview),
+    reviewsData: homeReviewsRaw.map((review) => toUiReview(review, locale)),
   };
 };
 
 export const getShopProductsAction = async ({
   page = 1,
   pageSize = 9,
+  locale = "en",
 }: {
   page?: number;
   pageSize?: number;
+  locale?: Locale;
 }) => {
   const safePageSize = Math.min(Math.max(Math.floor(pageSize), 1), 60);
   const safePage = Math.max(Math.floor(page), 1);
   const skip = (safePage - 1) * safePageSize;
 
-  const totalProducts = await db.product.count();
-  const products = await db.product.findMany({
-    skip,
-    take: safePageSize,
-    orderBy: { createdAt: "desc" },
-    include: {
-      variants: {
-        where: { isActive: true },
-        orderBy: [{ colorName: "asc" }, { size: "asc" }],
-      },
-      reviews: {
-        where: { status: ReviewStatus.APPROVED },
-        select: { rating: true },
-      },
-    },
-  });
+  try {
+    const [totalProducts, products] = await withDbRetry(() =>
+      Promise.all([
+        db.product.count(),
+        db.product.findMany({
+          skip,
+          take: safePageSize,
+          orderBy: { createdAt: "desc" },
+          include: {
+            translations: { where: { locale } },
+            variants: {
+              where: { isActive: true },
+              orderBy: [{ colorName: "asc" }, { size: "asc" }],
+              take: 1,
+            },
+          },
+        }),
+      ]),
+    );
 
-  return {
-    products: products.map(toUiProduct),
-    totalProducts,
-    currentPage: safePage,
-    pageSize: safePageSize,
-    totalPages: Math.max(1, Math.ceil(totalProducts / safePageSize)),
-  };
+    const ratingByProductId = products.length
+      ? new Map(
+          (
+            await withDbRetry(() =>
+              db.review.groupBy({
+                by: ["productId"],
+                where: {
+                  status: ReviewStatus.APPROVED,
+                  productId: { in: products.map((product) => product.id) },
+                },
+                _avg: { rating: true },
+              }),
+            )
+          ).map((row) => [row.productId, row._avg.rating ?? 0]),
+        )
+      : new Map<string, number>();
+
+    return {
+      products: products.map((product) =>
+        toUiProduct(
+          {
+            ...(product as unknown as Parameters<typeof toUiProduct>[0]),
+            reviews: ratingByProductId.has(product.id)
+              ? [{ rating: ratingByProductId.get(product.id) ?? 0 }]
+              : [],
+          },
+          locale,
+        ),
+      ),
+      totalProducts,
+      currentPage: safePage,
+      pageSize: safePageSize,
+      totalPages: Math.max(1, Math.ceil(totalProducts / safePageSize)),
+    };
+  } catch (err) {
+    if (!isTransientDbError(err)) throw err;
+    console.error("getShopProductsAction: transient DB error", err);
+    return {
+      products: [],
+      totalProducts: 0,
+      currentPage: safePage,
+      pageSize: safePageSize,
+      totalPages: 1,
+    };
+  }
 };
 
-export const getProductPageAction = async (productId: string) => {
+export const getProductPageAction = async (productId: string, locale: Locale = "en") => {
   const product = await db.product.findUnique({
     where: { id: productId },
     include: {
+      translations: { where: { locale } },
       variants: {
         where: { isActive: true },
         orderBy: [{ colorName: "asc" }, { size: "asc" }],
@@ -184,6 +298,7 @@ export const getProductPageAction = async (productId: string) => {
     take: 4,
     orderBy: { createdAt: "desc" },
     include: {
+      translations: { where: { locale } },
       variants: {
         where: { isActive: true },
         orderBy: [{ colorName: "asc" }, { size: "asc" }],
@@ -196,11 +311,38 @@ export const getProductPageAction = async (productId: string) => {
   });
 
   return {
-    product: toUiProduct({
-      ...product,
-      reviews: product.reviews.map((review) => ({ rating: review.rating })),
-    }),
-    relatedProducts: relatedRaw.map(toUiProduct),
-    reviews: product.reviews.map(toUiReview),
+    product: toUiProduct(
+      {
+        ...product,
+        reviews: product.reviews.map((review) => ({ rating: review.rating })),
+      },
+      locale,
+    ),
+    relatedProducts: relatedRaw.map((product) => toUiProduct(product, locale)),
+    reviews: product.reviews.map((review) => toUiReview(review, locale)),
   };
+};
+
+export const getCategoriesAction = async (locale: Locale = "en") => {
+  try {
+    const categories = await withDbRetry(() =>
+      db.category.findMany({
+        include: {
+          translations: {
+            where: { locale },
+          },
+        },
+      }),
+    );
+
+    return categories.map((category) => ({
+      id: category.id,
+      slug: category.slug,
+      name: category.translations?.[0]?.name ?? category.name,
+    }));
+  } catch (err) {
+    if (!isTransientDbError(err)) throw err;
+    console.error("getCategoriesAction: transient DB error", err);
+    return [];
+  }
 };

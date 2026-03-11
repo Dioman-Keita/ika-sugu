@@ -12,6 +12,7 @@ import { TbBasketExclamation } from "react-icons/tb";
 import React from "react";
 import { RootState } from "@/lib/store";
 import { useAppSelector } from "@/lib/hooks/redux";
+import { useUiPreferences } from "@/lib/ui-preferences";
 import Link from "next/link";
 import { CartItem } from "@/lib/features/carts/cartsSlice";
 
@@ -27,15 +28,13 @@ const getBasePrice = (item: LegacyCartItem): number => item.basePrice ?? item.pr
 const getFinalPrice = (item: LegacyCartItem): number => {
   if (typeof item.finalPrice === "number") return item.finalPrice;
   const basePrice = getBasePrice(item);
-  const discountPercentage =
-    item.discountPercentage ?? item.discount?.percentage ?? 0;
+  const discountPercentage = item.discountPercentage ?? item.discount?.percentage ?? 0;
   return Math.round(basePrice - (basePrice * discountPercentage) / 100);
 };
 
 export default function CartPage() {
-  const { cart } = useAppSelector(
-    (state: RootState) => state.carts,
-  );
+  const { cart } = useAppSelector((state: RootState) => state.carts);
+  const { t } = useUiPreferences();
   const items = (cart?.items ?? []) as LegacyCartItem[];
   const totalBasePrice = items.reduce(
     (sum, item) => sum + getBasePrice(item) * item.quantity,
@@ -45,14 +44,9 @@ export default function CartPage() {
     (sum, item) => sum + getFinalPrice(item) * item.quantity,
     0,
   );
-  const discountAmount = Math.max(
-    0,
-    Math.round(totalBasePrice - totalFinalPrice),
-  );
+  const discountAmount = Math.max(0, Math.round(totalBasePrice - totalFinalPrice));
   const discountPercentage =
-    totalBasePrice > 0
-      ? Math.round((discountAmount / totalBasePrice) * 100)
-      : 0;
+    totalBasePrice > 0 ? Math.round((discountAmount / totalBasePrice) * 100) : 0;
 
   return (
     <main className="pb-20">
@@ -66,17 +60,15 @@ export default function CartPage() {
                 "font-bold text-[32px] md:text-[40px] text-foreground uppercase mb-5 md:mb-6",
               ])}
             >
-              your cart
+              {t("cart.title")}
             </h2>
             <div className="flex flex-col lg:flex-row space-y-5 lg:space-y-0 lg:space-x-5 items-start">
               {/* Cart items */}
               <div className="w-full p-3.5 md:px-6 flex-col space-y-4 md:space-y-6 rounded-[20px] border border-border">
-                {cart?.items.map((product, idx, arr) => (
+                {cart?.items.map((product: CartItem, idx: number, arr: CartItem[]) => (
                   <React.Fragment key={idx}>
                     <ProductCard data={product} />
-                    {arr.length - 1 !== idx && (
-                      <hr className="border-t-border" />
-                    )}
+                    {arr.length - 1 !== idx && <hr className="border-t-border" />}
                   </React.Fragment>
                 ))}
               </div>
@@ -84,18 +76,20 @@ export default function CartPage() {
               {/* Order Summary */}
               <div className="w-full lg:max-w-[505px] p-5 md:px-6 flex-col space-y-4 md:space-y-6 rounded-[20px] border border-border">
                 <h6 className="text-xl md:text-2xl font-bold text-foreground">
-                  Order Summary
+                  {t("checkout.orderSummary")}
                 </h6>
                 <div className="flex flex-col space-y-5">
                   <div className="flex items-center justify-between">
-                    <span className="md:text-xl text-muted-foreground">Subtotal</span>
+                    <span className="md:text-xl text-muted-foreground">
+                      {t("checkout.subtotal")}
+                    </span>
                     <span className="md:text-xl font-bold text-foreground">
                       ${totalBasePrice ?? 0}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="md:text-xl text-muted-foreground">
-                      Discount (-{discountPercentage}%)
+                      {t("checkout.discount")} (-{discountPercentage}%)
                     </span>
                     <span className="md:text-xl font-bold text-red-500">
                       -${discountAmount ?? 0}
@@ -103,13 +97,17 @@ export default function CartPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="md:text-xl text-muted-foreground">
-                      Delivery Fee
+                      {t("checkout.delivery")}
                     </span>
-                    <span className="md:text-xl font-bold text-foreground">Free</span>
+                    <span className="md:text-xl font-bold text-foreground">
+                      {t("checkout.free")}
+                    </span>
                   </div>
                   <hr className="border-t-border" />
                   <div className="flex items-center justify-between">
-                    <span className="md:text-xl text-foreground">Total</span>
+                    <span className="md:text-xl text-foreground">
+                      {t("checkout.total")}
+                    </span>
                     <span className="text-xl md:text-2xl font-bold text-foreground">
                       ${Math.round(totalFinalPrice ?? 0)}
                     </span>
@@ -123,7 +121,7 @@ export default function CartPage() {
                     <InputGroup.Input
                       type="text"
                       name="code"
-                      placeholder="Add promo code"
+                      placeholder={t("cart.promoCodePlaceholder")}
                       className="bg-transparent placeholder:text-foreground/40 text-foreground"
                     />
                   </InputGroup>
@@ -131,15 +129,18 @@ export default function CartPage() {
                     type="button"
                     className="bg-foreground text-background rounded-full w-full max-w-[119px] h-[48px]"
                   >
-                    Apply
+                    {t("cart.apply")}
                   </Button>
                 </div>
                 <Button
                   type="button"
                   className="text-sm md:text-base font-medium bg-foreground text-background rounded-full w-full py-4 h-[54px] md:h-[60px] group"
+                  asChild
                 >
-                  Go to Checkout{" "}
-                  <FaArrowRight className="text-xl ml-2 group-hover:translate-x-1 transition-all" />
+                  <Link href="/checkout">
+                    {t("cart.goToCheckout")}{" "}
+                    <FaArrowRight className="text-xl ml-2 group-hover:translate-x-1 transition-all" />
+                  </Link>
                 </Button>
               </div>
             </div>
@@ -147,9 +148,9 @@ export default function CartPage() {
         ) : (
           <div className="flex items-center flex-col text-muted-foreground mt-32">
             <TbBasketExclamation strokeWidth={1} className="text-6xl" />
-            <span className="block mb-4">Your shopping cart is empty.</span>
+            <span className="block mb-4">{t("cart.empty")}</span>
             <Button className="rounded-full w-24" asChild>
-              <Link href="/shop">Shop</Link>
+              <Link href="/shop">{t("cart.shop")}</Link>
             </Button>
           </div>
         )}

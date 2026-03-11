@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 import Rating from "../ui/Rating";
 import { IoEllipsisHorizontal } from "react-icons/io5";
@@ -5,6 +6,7 @@ import { Button } from "../ui/button";
 import { IoIosCheckmarkCircle } from "react-icons/io";
 import { Review } from "@/types/review.types";
 import { cn } from "@/lib/utils";
+import { useUiPreferences } from "@/lib/ui-preferences";
 
 type ReviewCardProps = {
   blurChild?: React.ReactNode;
@@ -21,6 +23,8 @@ const ReviewCard = ({
   data,
   className,
 }: ReviewCardProps) => {
+  const { t } = useUiPreferences();
+
   return (
     <div
       className={cn([
@@ -50,7 +54,7 @@ const ReviewCard = ({
       <p className="text-sm sm:text-base text-muted-foreground">{data.content}</p>
       {isDate && (
         <p className="text-muted-foreground text-sm font-medium mt-4 sm:mt-6">
-          Posted on {data.date}
+          {t("product.reviews.postedOn")} {data.date}
         </p>
       )}
     </div>

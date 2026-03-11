@@ -1,15 +1,20 @@
+"use client";
 import CategoriesSection from "@/components/shop-page/filters/CategoriesSection";
 import ColorsSection from "@/components/shop-page/filters/ColorsSection";
 import DressStyleSection from "@/components/shop-page/filters/DressStyleSection";
 import PriceSection from "@/components/shop-page/filters/PriceSection";
 import SizeSection from "@/components/shop-page/filters/SizeSection";
 import { Button } from "@/components/ui/button";
+import { Locale } from "@/lib/i18n/messages";
+import { useUiPreferences } from "@/lib/ui-preferences";
 
-const Filters = () => {
+const Filters = ({ locale = "en" }: { locale?: Locale }) => {
+  const { t } = useUiPreferences();
+
   return (
     <>
       <hr className="border-t-border" />
-      <CategoriesSection />
+      <CategoriesSection locale={locale} />
       <hr className="border-t-border" />
       <PriceSection />
       <hr className="border-t-border" />
@@ -22,7 +27,7 @@ const Filters = () => {
         type="button"
         className="bg-foreground text-background w-full rounded-full text-sm font-medium py-4 h-12"
       >
-        Apply Filter
+        {t("shop.applyFilter")}
       </Button>
     </>
   );
