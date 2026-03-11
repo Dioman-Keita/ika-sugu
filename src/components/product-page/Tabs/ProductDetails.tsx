@@ -1,37 +1,30 @@
+"use client";
+
 import React from "react";
+import { useUiPreferences } from "@/lib/ui-preferences";
 
 export type SpecItem = {
-  label: string;
+  labelKey: string;
   value: string;
 };
 
-const specsData: SpecItem[] = [
-  {
-    label: " Material composition",
-    value: "100% Cotton",
-  },
-  {
-    label: "Care instructions",
-    value: "Machine wash warm, tumble dry",
-  },
-  {
-    label: "Fit type",
-    value: "Classic Fit",
-  },
-  {
-    label: "Pattern",
-    value: "Solid",
-  },
+const fallbackSpecs: SpecItem[] = [
+  { labelKey: "product.specs.material", value: "100% Cotton" },
+  { labelKey: "product.specs.care", value: "Machine wash warm, tumble dry" },
+  { labelKey: "product.specs.fit", value: "Classic Fit" },
+  { labelKey: "product.specs.pattern", value: "Solid" },
 ];
 
-const ProductDetails = () => {
+const ProductDetails = ({ specs }: { specs?: SpecItem[] }) => {
+  const { t } = useUiPreferences();
+  const data = specs && specs.length > 0 ? specs : fallbackSpecs;
   return (
     <>
-      {specsData.map((item, i) => (
+      {data.map((item, i) => (
         <div className="grid grid-cols-3" key={i}>
           <div>
             <p className="text-sm py-3 w-full leading-7 lg:py-4 pr-2 text-muted-foreground">
-              {item.label}
+              {t(item.labelKey)}
             </p>
           </div>
           <div className="col-span-2 py-3 lg:py-4 border-b">

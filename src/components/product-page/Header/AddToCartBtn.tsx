@@ -4,6 +4,7 @@ import { addToCart } from "@/lib/features/carts/cartsSlice";
 import { useAppDispatch } from "@/lib/hooks/redux";
 import { cn } from "@/lib/utils";
 import { Product } from "@/types/product.types";
+import { useUiPreferences } from "@/lib/ui-preferences";
 
 const AddToCartBtn = ({
   data,
@@ -17,6 +18,7 @@ const AddToCartBtn = ({
   };
 }) => {
   const dispatch = useAppDispatch();
+  const { t } = useUiPreferences();
   const isDisabled = Boolean(data.disabled);
 
   return (
@@ -44,7 +46,7 @@ const AddToCartBtn = ({
         )
       }
     >
-      {isDisabled ? "Out of Stock" : "Add to Cart"}
+      {isDisabled ? t("product.outOfStock") : t("product.addToCart")}
     </button>
   );
 };

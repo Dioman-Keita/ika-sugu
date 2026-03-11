@@ -1,3 +1,4 @@
+"use client";
 import {
   Accordion,
   AccordionContent,
@@ -5,13 +6,16 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Slider } from "@/components/ui/slider";
+import { useUiPreferences } from "@/lib/ui-preferences";
 
 const PriceSection = () => {
+  const { t } = useUiPreferences();
+
   return (
     <Accordion type="single" collapsible defaultValue="filter-price">
       <AccordionItem value="filter-price" className="border-none">
         <AccordionTrigger className="text-foreground font-bold text-xl hover:no-underline p-0 py-0.5">
-          Price
+          {t("shop.price")}
         </AccordionTrigger>
         <AccordionContent className="pt-4" contentClassName="overflow-visible">
           <Slider defaultValue={[50, 200]} min={0} max={250} step={1} label="$" />

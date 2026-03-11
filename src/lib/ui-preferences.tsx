@@ -1,7 +1,11 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { Locale, messages } from "./i18n/messages";
+import { messages } from "./i18n/messages";
+import Cookies from "js-cookie";
+import { useRouter } from "next/navigation";
+import { LOCALE_COOKIE_KEY } from "./ui-preferences-keys";
+import { Locale, parseLocale } from "./i18n/locale";
 
 type ThemeMode = "light" | "dark";
 
@@ -15,13 +19,13 @@ type UiPreferencesContextValue = {
 
 const UiPreferencesContext = createContext<UiPreferencesContextValue | null>(null);
 
-const LOCALE_STORAGE_KEY = "ui-locale";
 const THEME_STORAGE_KEY = "ui-theme";
 
 const getInitialLocale = (): Locale => {
   if (typeof window === "undefined") return "en";
-  const savedLocale = localStorage.getItem(LOCALE_STORAGE_KEY);
-  return savedLocale === "fr" ? "fr" : "en";
+  const savedLocale =
+    Cookies.get(LOCALE_COOKIE_KEY) || localStorage.getItem(LOCALE_COOKIE_KEY);
+  return parseLocale(savedLocale);
 };
 
 const getInitialTheme = (): ThemeMode => {
@@ -31,14 +35,38 @@ const getInitialTheme = (): ThemeMode => {
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 };
 
-export const UiPreferencesProvider = ({ children }: { children: React.ReactNode }) => {
-  const [locale, setLocale] = useState<Locale>(getInitialLocale);
+export const UiPreferencesProvider = ({
+  children,
+  initialLocale,
+}: {
+  children: React.ReactNode;
+  initialLocale?: Locale;
+}) => {
+  const [locale, setLocaleState] = useState<Locale>(
+    () => initialLocale ?? getInitialLocale(),
+  );
   const [theme, setTheme] = useState<ThemeMode>(getInitialTheme);
+  const router = useRouter();
+
+  const setLocale = (newLocale: Locale) => {
+    setLocaleState(newLocale);
+    localStorage.setItem(LOCALE_COOKIE_KEY, newLocale);
+    Cookies.set(LOCALE_COOKIE_KEY, newLocale, { expires: 365, path: "/" });
+    document.documentElement.lang = newLocale;
+    router.refresh();
+  };
 
   useEffect(() => {
-    localStorage.setItem(LOCALE_STORAGE_KEY, locale);
     document.documentElement.lang = locale;
   }, [locale]);
+
+  useEffect(() => {
+    if (initialLocale) return;
+    if (Cookies.get(LOCALE_COOKIE_KEY)) return;
+    if (locale !== "fr") return;
+    Cookies.set(LOCALE_COOKIE_KEY, locale, { expires: 365, path: "/" });
+    router.refresh();
+  }, [initialLocale, locale, router]);
 
   useEffect(() => {
     localStorage.setItem(THEME_STORAGE_KEY, theme);
@@ -53,6 +81,7 @@ export const UiPreferencesProvider = ({ children }: { children: React.ReactNode 
       setTheme,
       t: (key) => messages[locale][key] ?? key,
     }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [locale, theme],
   );
 

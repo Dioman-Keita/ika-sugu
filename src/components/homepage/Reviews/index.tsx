@@ -16,6 +16,7 @@ import { FaArrowLeft, FaArrowRight } from "react-icons/fa6";
 import { useIsClient, useMediaQuery } from "usehooks-ts";
 import ReviewCard from "@/components/common/ReviewCard";
 import { Review } from "@/types/review.types";
+import { useUiPreferences } from "@/lib/ui-preferences";
 
 type ReviewsProps = { data: Review[] };
 
@@ -25,6 +26,7 @@ const Reviews = ({ data }: ReviewsProps) => {
   const [count, setCount] = React.useState(0);
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const isClient = useIsClient();
+  const { t } = useUiPreferences();
 
   React.useEffect(() => {
     if (!api) {
@@ -44,10 +46,10 @@ const Reviews = ({ data }: ReviewsProps) => {
     return (
       <section className="max-w-frame mx-auto px-4 xl:px-0 py-10 md:py-14">
         <h2 className={cn([integralCF.className, "text-[32px] md:text-5xl mb-4"])}>
-          OUR HAPPY CUSTOMERS
+          {t("home.reviewsTitle")}
         </h2>
         <p className="text-muted-foreground text-sm sm:text-base">
-          No customer reviews yet.
+          {t("home.noReviews")}
         </p>
       </section>
     );
@@ -80,7 +82,7 @@ const Reviews = ({ data }: ReviewsProps) => {
                 "text-[32px] leading-9 md:text-5xl capitalize mr-auto",
               ])}
             >
-              OUR HAPPY CUSTOMERS
+              {t("home.reviewsTitle")}
             </motion.h2>
             <div className="flex items-center space-x-1 ml-2">
               <CarouselPrevious variant="ghost" className="text-2xl">

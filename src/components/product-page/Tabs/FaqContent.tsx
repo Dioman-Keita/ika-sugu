@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import {
   Accordion,
@@ -5,58 +7,55 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { useUiPreferences } from "@/lib/ui-preferences";
 
 type FaqItem = {
-  question: string;
-  answer: string;
+  questionKey: string;
+  answerKey: string;
 };
 
 const faqsData: FaqItem[] = [
   {
-    question: "What is the material of the t-shirt?",
-    answer:
-      "Provide details about the fabric type (e.g., cotton, polyester, blend), weight, and any specific features.",
+    questionKey: "product.faq.q1",
+    answerKey: "product.faq.a1",
   },
   {
-    question: "What are the care instructions for the t-shirt?",
-    answer:
-      "Outline recommended washing, drying, and ironing methods to maintain quality and longevity.",
+    questionKey: "product.faq.q2",
+    answerKey: "product.faq.a2",
   },
   {
-    question: "What is the design or print on the t-shirt made of?",
-    answer:
-      "Explain the material used for the design (e.g., vinyl, screen print, embroidery) and its durability.",
+    questionKey: "product.faq.q3",
+    answerKey: "product.faq.a3",
   },
   {
-    question: "Is the t-shirt unisex or designed for specific genders?",
-    answer:
-      "Indicate whether the shirt is suitable for both men and women or targeted towards a particular gender.",
+    questionKey: "product.faq.q4",
+    answerKey: "product.faq.a4",
   },
   {
-    question: "What are the shipping options and costs?",
-    answer:
-      "Provide information about shipping methods, estimated delivery times, and associated fees.",
+    questionKey: "product.faq.q5",
+    answerKey: "product.faq.a5",
   },
   {
-    question: "What is the return policy for the t-shirt?",
-    answer:
-      "Outline the return window, conditions, and refund or exchange procedures.",
+    questionKey: "product.faq.q6",
+    answerKey: "product.faq.a6",
   },
 ];
 
 const FaqContent = () => {
+  const { t } = useUiPreferences();
+
   return (
     <section>
       <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-5 sm:mb-6">
-        Frequently asked questions
+        {t("product.faq.title")}
       </h3>
       <Accordion type="single" collapsible>
         {faqsData.map((faq, idx) => (
           <AccordionItem key={idx} value={`item-${idx + 1}`}>
             <AccordionTrigger className="text-left">
-              {faq.question}
+              {t(faq.questionKey)}
             </AccordionTrigger>
-            <AccordionContent>{faq.answer}</AccordionContent>
+            <AccordionContent>{t(faq.answerKey)}</AccordionContent>
           </AccordionItem>
         ))}
       </Accordion>

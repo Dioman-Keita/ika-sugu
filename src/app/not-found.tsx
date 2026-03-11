@@ -11,7 +11,7 @@ export default function NotFound() {
         <h1
           className={cn(
             integralCF.className,
-            "text-[100px] xs:text-[130px] md:text-[160px] leading-none font-bold text-black select-none"
+            "text-[100px] xs:text-[130px] md:text-[160px] leading-none font-bold text-black select-none",
           )}
         >
           404
@@ -24,7 +24,7 @@ export default function NotFound() {
         <h2
           className={cn(
             integralCF.className,
-            "text-xl md:text-2xl font-bold text-black mb-4"
+            "text-xl md:text-2xl font-bold text-black mb-4",
           )}
         >
           Page Not Found
@@ -32,8 +32,7 @@ export default function NotFound() {
 
         {/* Description */}
         <p className="text-sm md:text-base text-black/50 max-w-[360px] mx-auto mb-10 leading-relaxed">
-          Oops! The page you&apos;re looking for doesn&apos;t exist or has been
-          moved.
+          Oops! The page you&apos;re looking for doesn&apos;t exist or has been moved.
         </p>
 
         {/* CTA */}

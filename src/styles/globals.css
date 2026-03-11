@@ -88,9 +88,9 @@
 
 @layer base {
   :root {
-    --surface-product: #F0EEED;
-    --surface-hero: #F2F0F1;
-    --surface-section: #F0F0F0;
+    --surface-product: #f0eeed;
+    --surface-hero: #f2f0f1;
+    --surface-section: #f0f0f0;
     --surface-card: #ffffff;
     --surface-brand: #000000;
   }

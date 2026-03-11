@@ -8,6 +8,7 @@
     "generate-prisma-client": "bunx prisma generate",
     "build": "bun run generate-prisma-client && next build --webpack",
     "start": "next start",
+    "seed": "bun run src/scripts/seed.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -31,6 +32,7 @@
     "embla-carousel-react": "^8.2.1",
     "framer-motion": "^11.5.4",
     "holy-loader": "^2.3.7",
+    "js-cookie": "^3.0.5",
     "lucide-react": "^0.438.0",
     "next": "16.1.6",
     "pg": "^8.20.0",
@@ -46,7 +48,9 @@
     "vaul": "^0.9.4"
   },
   "devDependencies": {
+    "@react-grab/mcp": "^0.1.27",
     "@tailwindcss/postcss": "4.1.16",
+    "@types/js-cookie": "^3.0.6",
     "@types/node": "^20",
     "@types/pg": "^8.18.0",
     "@types/react": "^19",
@@ -56,6 +60,7 @@
     "postcss": "^8",
     "prettier": "3.8.1",
     "prisma": "^7.4.2",
+    "react-grab": "^0.1.27",
     "tailwindcss": "4.2.1",
     "typescript": "^5"
   }

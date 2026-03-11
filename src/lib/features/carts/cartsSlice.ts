@@ -15,13 +15,10 @@ type LegacyCartPricing = {
 const resolveBasePrice = (item: Partial<CartItem> & LegacyCartPricing): number =>
   item.basePrice ?? item.price ?? 0;
 
-const resolveFinalPrice = (
-  item: Partial<CartItem> & LegacyCartPricing
-): number => {
+const resolveFinalPrice = (item: Partial<CartItem> & LegacyCartPricing): number => {
   if (typeof item.finalPrice === "number") return item.finalPrice;
   const basePrice = resolveBasePrice(item);
-  const discountPercentage =
-    item.discountPercentage ?? item.discount?.percentage ?? 0;
+  const discountPercentage = item.discountPercentage ?? item.discount?.percentage ?? 0;
   return Math.round(basePrice - (basePrice * discountPercentage) / 100);
 };
 
@@ -87,7 +84,7 @@ export const cartsSlice = createSlice({
       const isItemInCart = state.cart.items.find(
         (item) =>
           action.payload.id === item.id &&
-          compareArrays(action.payload.attributes, item.attributes)
+          compareArrays(action.payload.attributes, item.attributes),
       );
 
       if (isItemInCart) {
@@ -96,10 +93,7 @@ export const cartsSlice = createSlice({
           items: state.cart.items.map((eachCartItem) => {
             if (
               eachCartItem.id === action.payload.id
-                ? !compareArrays(
-                    eachCartItem.attributes,
-                    isItemInCart.attributes
-                  )
+                ? !compareArrays(eachCartItem.attributes, isItemInCart.attributes)
                 : eachCartItem.id !== action.payload.id
             )
               return eachCartItem;
@@ -138,7 +132,7 @@ export const cartsSlice = createSlice({
       const isItemInCart = state.cart.items.find(
         (item) =>
           action.payload.id === item.id &&
-          compareArrays(action.payload.attributes, item.attributes)
+          compareArrays(action.payload.attributes, item.attributes),
       );
 
       if (isItemInCart) {
@@ -148,10 +142,7 @@ export const cartsSlice = createSlice({
             .map((eachCartItem) => {
               if (
                 eachCartItem.id === action.payload.id
-                  ? !compareArrays(
-                      eachCartItem.attributes,
-                      isItemInCart.attributes
-                    )
+                  ? !compareArrays(eachCartItem.attributes, isItemInCart.attributes)
                   : eachCartItem.id !== action.payload.id
               )
                 return eachCartItem;
@@ -171,16 +162,13 @@ export const cartsSlice = createSlice({
           state.totalFinalPrice - calcTotalPrice(resolveFinalPrice(isItemInCart), 1);
       }
     },
-    remove: (
-      state,
-      action: PayloadAction<RemoveCartItem & { quantity: number }>
-    ) => {
+    remove: (state, action: PayloadAction<RemoveCartItem & { quantity: number }>) => {
       if (!state.cart) return;
 
       const isItemInCart = state.cart.items.find(
         (item) =>
           action.payload.id === item.id &&
-          compareArrays(action.payload.attributes, item.attributes)
+          compareArrays(action.payload.attributes, item.attributes),
       );
 
       if (!isItemInCart) return;

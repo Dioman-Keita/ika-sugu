@@ -8,7 +8,12 @@ const prismaClientSingleton = () => {
     throw new Error("DATABASE_URL is not set");
   }
 
-  const pool = new Pool({ connectionString });
+  const pool = new Pool({
+    connectionString,
+    // Fail fast instead of hanging forever when DB is unreachable.
+    // 5s was too aggressive in dev; allow slower connects while still bounded.
+    connectionTimeoutMillis: 15000,
+  });
   const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
 };

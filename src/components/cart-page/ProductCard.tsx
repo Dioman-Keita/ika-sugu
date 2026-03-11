@@ -13,6 +13,8 @@ import {
   removeCartItem,
 } from "@/lib/features/carts/cartsSlice";
 import { useAppDispatch } from "@/lib/hooks/redux";
+import { useUiPreferences } from "@/lib/ui-preferences";
+import { translateAttribute } from "@/lib/i18n/messages";
 
 type ProductCardProps = {
   data: CartItem & {
@@ -25,8 +27,8 @@ type ProductCardProps = {
 
 const ProductCard = ({ data }: ProductCardProps) => {
   const dispatch = useAppDispatch();
-  const productSlug =
-    data.slug ?? data.name.trim().toLowerCase().replace(/\s+/g, "-");
+  const { t, locale } = useUiPreferences();
+  const productSlug = data.slug ?? data.name.trim().toLowerCase().replace(/\s+/g, "-");
   const basePrice = data.basePrice ?? data.price ?? 0;
   const finalPrice =
     typeof data.finalPrice === "number"
@@ -36,8 +38,7 @@ const ProductCard = ({ data }: ProductCardProps) => {
             (basePrice * (data.discountPercentage ?? data.discount?.percentage ?? 0)) /
               100,
         );
-  const discountPercentage =
-    data.discountPercentage ?? data.discount?.percentage ?? 0;
+  const discountPercentage = data.discountPercentage ?? data.discount?.percentage ?? 0;
 
   return (
     <div className="flex items-start space-x-4">
@@ -72,7 +73,7 @@ const ProductCard = ({ data }: ProductCardProps) => {
                   id: data.id,
                   attributes: data.attributes,
                   quantity: data.quantity,
-                })
+                }),
               )
             }
           >
@@ -80,15 +81,19 @@ const ProductCard = ({ data }: ProductCardProps) => {
           </Button>
         </div>
         <div className="-mt-1">
-          <span className="text-foreground text-xs md:text-sm mr-1">Size:</span>
+          <span className="text-foreground text-xs md:text-sm mr-1">
+            {t("cart.size")}
+          </span>
           <span className="text-muted-foreground text-xs md:text-sm">
-            {data.attributes[0]}
+            {translateAttribute(data.attributes[0], locale)}
           </span>
         </div>
         <div className="mb-auto -mt-1.5">
-          <span className="text-foreground text-xs md:text-sm mr-1">Color:</span>
+          <span className="text-foreground text-xs md:text-sm mr-1">
+            {t("cart.color")}
+          </span>
           <span className="text-muted-foreground text-xs md:text-sm">
-            {data.attributes[1]}
+            {translateAttribute(data.attributes[1], locale)}
           </span>
         </div>
         <div className="flex items-center flex-wrap justify-between">
@@ -117,11 +122,9 @@ const ProductCard = ({ data }: ProductCardProps) => {
                       id: data.id,
                       attributes: data.attributes,
                       quantity: data.quantity,
-                    })
+                    }),
                   )
-                : dispatch(
-                    removeCartItem({ id: data.id, attributes: data.attributes })
-                  )
+                : dispatch(removeCartItem({ id: data.id, attributes: data.attributes }))
             }
             isZeroDelete
             className="px-5 py-3 max-h-8 md:max-h-10 min-w-[105px] max-w-[105px] sm:max-w-32"

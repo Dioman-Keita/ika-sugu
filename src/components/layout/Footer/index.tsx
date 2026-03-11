@@ -81,9 +81,7 @@ const Footer = () => {
               >
                 IKA SUGU
               </h1>
-              <p className="text-muted-foreground text-sm mb-9">
-                {t("footer.tagline")}
-              </p>
+              <p className="text-muted-foreground text-sm mb-9">{t("footer.tagline")}</p>
               <div className="flex items-center">
                 {socialsData.map((social) => (
                   <Link

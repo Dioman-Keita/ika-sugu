@@ -1,3 +1,4 @@
+"use client";
 import * as motion from "framer-motion/client";
 import { cn } from "@/lib/utils";
 import { integralCF } from "@/styles/fonts";
@@ -5,14 +6,19 @@ import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carouse
 import ProductCard from "./ProductCard";
 import { Product } from "@/types/product.types";
 import Link from "next/link";
+import { useUiPreferences } from "@/lib/ui-preferences";
 
 type ProductListSecProps = {
-  title: string;
+  title?: string;
+  titleKey?: string;
   data: Product[];
   viewAllLink?: string;
 };
 
-const ProductListSec = ({ title, data, viewAllLink }: ProductListSecProps) => {
+const ProductListSec = ({ title, titleKey, data, viewAllLink }: ProductListSecProps) => {
+  const { t } = useUiPreferences();
+  const resolvedTitle = titleKey ? t(titleKey) : (title ?? "");
+
   return (
     <section className="max-w-frame mx-auto text-center">
       <motion.h2
@@ -25,7 +31,7 @@ const ProductListSec = ({ title, data, viewAllLink }: ProductListSecProps) => {
           "text-[32px] md:text-5xl mb-8 md:mb-14 capitalize",
         ])}
       >
-        {title}
+        {resolvedTitle}
       </motion.h2>
       <motion.div
         initial={{ y: "100px", opacity: 0 }}
@@ -36,7 +42,7 @@ const ProductListSec = ({ title, data, viewAllLink }: ProductListSecProps) => {
         {data.length === 0 && (
           <div className="w-full py-10 mb-6 md:mb-9 text-center border border-border rounded-[20px]">
             <p className="text-muted-foreground text-sm sm:text-base">
-              No products available right now.
+              {t("product.noProducts")}
             </p>
           </div>
         )}
@@ -65,7 +71,7 @@ const ProductListSec = ({ title, data, viewAllLink }: ProductListSecProps) => {
               href={viewAllLink}
               className="w-full inline-block sm:w-[218px] px-[54px] py-4 border rounded-full hover:bg-foreground hover:text-background text-foreground transition-all font-medium text-sm sm:text-base border-border"
             >
-              View All
+              {t("home.viewAll")}
             </Link>
           </div>
         )}

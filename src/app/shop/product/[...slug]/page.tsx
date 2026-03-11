@@ -4,16 +4,22 @@ import Header from "@/components/product-page/Header";
 import Tabs from "@/components/product-page/Tabs";
 import { getProductPageAction } from "@/app/actions/catalog";
 import { notFound, redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
+import { Locale, parseLocale } from "@/lib/i18n/locale";
 
 export default async function ProductPage({
   params,
 }: {
   params: Promise<{ slug: string[] }>;
 }) {
+  const cookieStore = await cookies();
+  const locale: Locale = parseLocale(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
+
   const resolvedParams = await params;
   const productId = resolvedParams.slug[0];
   const requestedSlug = resolvedParams.slug[1];
-  const productData = await getProductPageAction(productId);
+  const productData = await getProductPageAction(productId, locale);
 
   if (!productData?.product.title) {
     notFound();
@@ -31,10 +37,10 @@ export default async function ProductPage({
         <section className="mb-11">
           <Header data={productData.product} />
         </section>
-        <Tabs reviews={productData.reviews} />
+        <Tabs reviews={productData.reviews} specs={productData.product.specs} />
       </div>
       <div className="mb-[50px] sm:mb-20">
-        <ProductListSec title="You might also like" data={productData.relatedProducts} />
+        <ProductListSec titleKey="product.related" data={productData.relatedProducts} />
       </div>
     </main>
   );

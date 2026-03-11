@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "@/styles/globals.css";
 import { satoshi } from "@/styles/fonts";
 import TopBanner from "@/components/layout/Banner/TopBanner";
@@ -6,6 +7,9 @@ import TopNavbar from "@/components/layout/Navbar/TopNavbar";
 import Footer from "@/components/layout/Footer";
 import HolyLoader from "holy-loader";
 import Providers from "./providers";
+import { cookies } from "next/headers";
+import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
+import { Locale, parseLocale } from "@/lib/i18n/locale";
 
 export const metadata: Metadata = {
   title: "Ika sugu",
@@ -16,16 +20,38 @@ export const viewport: Viewport = {
   themeColor: "#000000",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const cookieLocale = cookieStore.get(LOCALE_COOKIE_KEY)?.value;
+  const initialLocale: Locale | undefined = cookieLocale
+    ? parseLocale(cookieLocale)
+    : undefined;
+  const htmlLang = initialLocale ?? "en";
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={htmlLang} suppressHydrationWarning>
+      <head>
+        {process.env.NODE_ENV === "development" && (
+          <Script
+            src="//unpkg.com/react-grab/dist/index.global.js"
+            crossOrigin="anonymous"
+            strategy="afterInteractive"
+          />
+        )}
+        {process.env.NODE_ENV === "development" && (
+          <Script
+            src="//unpkg.com/@react-grab/mcp/dist/client.global.js"
+            strategy="afterInteractive"
+          />
+        )}
+      </head>
       <body className={`${satoshi.className} bg-background text-foreground`}>
         <HolyLoader color="#f06262ff" />
-        <Providers>
+        <Providers initialLocale={initialLocale}>
           <TopBanner />
           <TopNavbar />
           {children}

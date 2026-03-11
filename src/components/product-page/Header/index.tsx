@@ -9,11 +9,13 @@ import Rating from "@/components/ui/Rating";
 import ColorSelection from "./ColorSelection";
 import SizeSelection from "./SizeSelection";
 import AddToCardSection from "./AddToCardSection";
+import { useUiPreferences } from "@/lib/ui-preferences";
 
 const Header = ({ data }: { data: Product }) => {
+  const { t } = useUiPreferences();
   const activeVariants = useMemo(
     () => data.variants.filter((variant) => variant.isActive),
-    [data.variants]
+    [data.variants],
   );
 
   const colorOptions = useMemo(() => {
@@ -44,7 +46,8 @@ const Header = ({ data }: { data: Product }) => {
     }));
   }, [activeVariants]);
 
-  const defaultColor = colorOptions.find((color) => color.isAvailable)?.name ?? colorOptions[0]?.name ?? "";
+  const defaultColor =
+    colorOptions.find((color) => color.isAvailable)?.name ?? colorOptions[0]?.name ?? "";
   const [selectedColor, setSelectedColor] = useState(defaultColor);
   const resolvedColor =
     selectedColor && colorOptions.some((color) => color.name === selectedColor)
@@ -66,7 +69,8 @@ const Header = ({ data }: { data: Product }) => {
     }));
   }, [activeVariants, resolvedColor]);
 
-  const fallbackSize = sizeOptions.find((size) => size.isAvailable)?.name ?? sizeOptions[0]?.name ?? "";
+  const fallbackSize =
+    sizeOptions.find((size) => size.isAvailable)?.name ?? sizeOptions[0]?.name ?? "";
   const [selectedSize, setSelectedSize] = useState(fallbackSize);
   const resolvedSize =
     selectedSize && sizeOptions.some((size) => size.name === selectedSize)
@@ -76,12 +80,11 @@ const Header = ({ data }: { data: Product }) => {
   const selectedVariant = useMemo(
     () =>
       activeVariants.find(
-        (variant) =>
-          variant.colorName === resolvedColor && variant.size === resolvedSize
+        (variant) => variant.colorName === resolvedColor && variant.size === resolvedSize,
       ) ??
       activeVariants.find((variant) => variant.colorName === resolvedColor) ??
       activeVariants[0],
-    [activeVariants, resolvedColor, resolvedSize]
+    [activeVariants, resolvedColor, resolvedSize],
   );
 
   const photos =
@@ -141,10 +144,9 @@ const Header = ({ data }: { data: Product }) => {
             )}
           </div>
           <p className="text-sm sm:text-base text-muted-foreground mb-5">
-            This graphic t-shirt which is perfect for any occasion. Crafted from
-            a soft and breathable fabric, it offers superior comfort and style.
+            {data.description}
           </p>
-          <hr className="h-[1px] border-t-border mb-5" />
+          <hr className="h-px border-t-border mb-5" />
           <ColorSelection
             colors={colorOptions}
             selectedColor={resolvedColor}
@@ -152,16 +154,13 @@ const Header = ({ data }: { data: Product }) => {
               setSelectedColor(colorName);
               const nextSize =
                 activeVariants.find(
-                  (variant) =>
-                    variant.colorName === colorName && variant.stock > 0
+                  (variant) => variant.colorName === colorName && variant.stock > 0,
                 )?.size ??
-                activeVariants.find(
-                  (variant) => variant.colorName === colorName
-                )?.size;
+                activeVariants.find((variant) => variant.colorName === colorName)?.size;
               if (nextSize) setSelectedSize(nextSize);
             }}
           />
-          <hr className="h-[1px] border-t-border my-5" />
+          <hr className="h-px border-t-border my-5" />
           <SizeSelection
             sizes={sizeOptions}
             selectedSize={resolvedSize}
@@ -169,10 +168,10 @@ const Header = ({ data }: { data: Product }) => {
           />
           {selectedVariantStock <= 0 && (
             <p className="text-sm text-[#FF3333] mt-3">
-              This variant is currently out of stock.
+              {t("product.variantOutOfStock")}
             </p>
           )}
-          <hr className="hidden md:block h-[1px] border-t-border my-5" />
+          <hr className="hidden md:block h-px border-t-border my-5" />
           <AddToCardSection
             key={`${selectedVariant?.id ?? data.id}-cart`}
             data={{

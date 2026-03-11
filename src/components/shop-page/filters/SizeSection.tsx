@@ -8,15 +8,18 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
+import { useUiPreferences } from "@/lib/ui-preferences";
+import { translateAttribute } from "@/lib/i18n/messages";
 
 const SizeSection = () => {
   const [selected, setSelected] = useState<string>("Large");
+  const { t, locale } = useUiPreferences();
 
   return (
     <Accordion type="single" collapsible defaultValue="filter-size">
       <AccordionItem value="filter-size" className="border-none">
         <AccordionTrigger className="text-foreground font-bold text-xl hover:no-underline p-0 py-0.5">
-          Size
+          {t("cart.size").replace(":", "")}
         </AccordionTrigger>
         <AccordionContent className="pt-4 pb-0">
           <div className="flex items-center flex-wrap">
@@ -40,7 +43,7 @@ const SizeSection = () => {
                 ])}
                 onClick={() => setSelected(size)}
               >
-                {size}
+                {translateAttribute(size, locale)}
               </button>
             ))}
           </div>

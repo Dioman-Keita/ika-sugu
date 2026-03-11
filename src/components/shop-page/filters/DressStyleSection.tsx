@@ -1,3 +1,4 @@
+"use client";
 import {
   Accordion,
   AccordionContent,
@@ -6,6 +7,8 @@ import {
 } from "@/components/ui/accordion";
 import Link from "next/link";
 import { MdKeyboardArrowRight } from "react-icons/md";
+import { useUiPreferences } from "@/lib/ui-preferences";
+import { translateAttribute } from "@/lib/i18n/messages";
 
 type DressStyle = {
   title: string;
@@ -20,11 +23,13 @@ const dressStylesData: DressStyle[] = [
 ];
 
 const DressStyleSection = () => {
+  const { t, locale } = useUiPreferences();
+
   return (
     <Accordion type="single" collapsible defaultValue="filter-style">
       <AccordionItem value="filter-style" className="border-none">
         <AccordionTrigger className="text-foreground font-bold text-xl hover:no-underline p-0 py-0.5">
-          Dress Style
+          {t("shop.dressStyle")}
         </AccordionTrigger>
         <AccordionContent className="pt-4 pb-0">
           <div className="flex flex-col text-muted-foreground space-y-0.5">
@@ -34,7 +39,7 @@ const DressStyleSection = () => {
                 href={dStyle.slug}
                 className="flex items-center justify-between py-2"
               >
-                {dStyle.title} <MdKeyboardArrowRight />
+                {translateAttribute(dStyle.title, locale)} <MdKeyboardArrowRight />
               </Link>
             ))}
           </div>
