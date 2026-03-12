@@ -5,12 +5,24 @@ import { cn } from "@/lib/utils";
 import { integralCF } from "@/styles/fonts";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useUiPreferences } from "@/lib/ui-preferences";
+import { authClient } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
+import { AuthNotice } from "@/components/auth/AuthNotice";
 
 export default function ForgotPasswordPage() {
+  const router = useRouter();
+  const { data: session, isPending: isSessionPending } = authClient.useSession();
   const [submitted, setSubmitted] = useState(false);
+  const [email, setEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { t } = useUiPreferences();
+
+  useEffect(() => {
+    if (!isSessionPending && session) router.replace("/");
+  }, [isSessionPending, router, session]);
 
   return (
     <main className="min-h-[calc(100vh-220px)] flex items-center justify-center px-4 py-12 bg-background">
@@ -37,9 +49,24 @@ export default function ForgotPasswordPage() {
           {!submitted ? (
             <form
               className="space-y-5"
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
-                setSubmitted(true);
+                if (isSubmitting) return;
+                setError(null);
+                setIsSubmitting(true);
+                try {
+                  const { error } = await authClient.requestPasswordReset({
+                    email,
+                    redirectTo: "/reset-password",
+                  });
+                  if (error) {
+                    setError(error.message ?? String(error));
+                    return;
+                  }
+                  setSubmitted(true);
+                } finally {
+                  setIsSubmitting(false);
+                }
               }}
             >
               {/* Email */}
@@ -51,13 +78,18 @@ export default function ForgotPasswordPage() {
                   type="email"
                   placeholder={t("auth.emailPlaceholder")}
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full px-5 py-3 bg-surface-section text-foreground rounded-full text-sm outline-none placeholder:text-foreground/40 focus:ring-2 focus:ring-foreground/15 transition-all"
                 />
               </div>
 
+              {error ? <AuthNotice variant="error">{error}</AuthNotice> : null}
+
               {/* Submit */}
               <Button
                 type="submit"
+                disabled={isSubmitting}
                 className="w-full bg-foreground text-background rounded-full h-[52px] text-sm font-medium hover:bg-foreground/85 transition-colors"
               >
                 {t("auth.forgot.submit")}

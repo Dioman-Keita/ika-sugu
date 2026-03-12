@@ -52,6 +52,9 @@ export const messages: Record<Locale, Messages> = {
     "auth.register.privacyLink": "Privacy Policy",
     "auth.register.submit": "Create Account",
     "auth.register.haveAccount": "Already have an account?",
+    "auth.register.errors.passwordMismatch": "Passwords do not match.",
+    "auth.register.errors.termsRequired": "Please accept the terms to continue.",
+    "auth.register.errors.nameRequired": "Please enter your name.",
 
     "auth.forgotPassword": "Forgot password?",
     "auth.forgot.title": "Forgot Password?",
@@ -61,6 +64,19 @@ export const messages: Record<Locale, Messages> = {
     "auth.forgot.successBody":
       "If an account exists for that email address, you'll receive a password reset link shortly.",
     "auth.forgot.backToSignIn": "Back to Sign In",
+    "auth.reset.title": "Reset Password",
+    "auth.reset.subtitle": "Choose a new password for your account.",
+    "auth.reset.newPassword": "New password",
+    "auth.reset.newPasswordPlaceholder": "Enter a new password",
+    "auth.reset.confirmPassword": "Confirm password",
+    "auth.reset.confirmPasswordPlaceholder": "Confirm your new password",
+    "auth.reset.submit": "Reset Password",
+    "auth.reset.invalidToken": "This reset link is invalid or expired.",
+    "auth.reset.missingToken": "Missing reset token.",
+    "auth.reset.backToForgot": "Request a new link",
+    "auth.reset.successTitle": "Password updated",
+    "auth.reset.successBody": "Your password has been updated successfully.",
+    "auth.reset.goToLogin": "Go to Login",
 
     "home.title": "FIND CLOTHES THAT MATCHES YOUR STYLE",
     "home.subtitle":
@@ -217,6 +233,13 @@ export const messages: Record<Locale, Messages> = {
     "newsletter.title": "STAY UP TO DATE ABOUT OUR LATEST OFFERS",
     "newsletter.placeholder": "Enter your email address",
     "newsletter.button": "Subscribe to Newsletter",
+
+    "account.title": "Account",
+    "account.loading": "Loading...",
+    "account.signedInAs": "Signed in as",
+    "account.signOut": "Sign Out",
+    "account.signedOut": "You are not signed in.",
+    "account.goToLogin": "Go to Login",
   },
   fr: {
     "topBanner.text":
@@ -267,6 +290,10 @@ export const messages: Record<Locale, Messages> = {
     "auth.register.privacyLink": "Politique de confidentialité",
     "auth.register.submit": "Créer un compte",
     "auth.register.haveAccount": "Vous avez déjà un compte ?",
+    "auth.register.errors.passwordMismatch": "Les mots de passe ne correspondent pas.",
+    "auth.register.errors.termsRequired":
+      "Veuillez accepter les conditions pour continuer.",
+    "auth.register.errors.nameRequired": "Veuillez saisir votre nom.",
 
     "auth.forgotPassword": "Mot de passe oublié ?",
     "auth.forgot.title": "Mot de passe oublié ?",
@@ -277,6 +304,19 @@ export const messages: Record<Locale, Messages> = {
     "auth.forgot.successBody":
       "Si un compte existe pour cette adresse email, vous recevrez bientôt un lien de réinitialisation.",
     "auth.forgot.backToSignIn": "Retour à la connexion",
+    "auth.reset.title": "Réinitialiser le mot de passe",
+    "auth.reset.subtitle": "Choisissez un nouveau mot de passe pour votre compte.",
+    "auth.reset.newPassword": "Nouveau mot de passe",
+    "auth.reset.newPasswordPlaceholder": "Saisissez un nouveau mot de passe",
+    "auth.reset.confirmPassword": "Confirmer le mot de passe",
+    "auth.reset.confirmPasswordPlaceholder": "Confirmez votre nouveau mot de passe",
+    "auth.reset.submit": "Réinitialiser",
+    "auth.reset.invalidToken": "Ce lien est invalide ou a expiré.",
+    "auth.reset.missingToken": "Jeton de réinitialisation manquant.",
+    "auth.reset.backToForgot": "Demander un nouveau lien",
+    "auth.reset.successTitle": "Mot de passe mis à jour",
+    "auth.reset.successBody": "Votre mot de passe a été mis à jour avec succès.",
+    "auth.reset.goToLogin": "Aller à la connexion",
 
     "home.title": "TROUVEZ DES VÊTEMENTS QUI MATCHENT VOTRE STYLE",
     "home.subtitle":
@@ -433,6 +473,13 @@ export const messages: Record<Locale, Messages> = {
     "newsletter.title": "RESTEZ INFORMÉ DE NOS DERNIÈRES OFFRES",
     "newsletter.placeholder": "Entrez votre adresse e-mail",
     "newsletter.button": "S'abonner à la newsletter",
+
+    "account.title": "Compte",
+    "account.loading": "Chargement...",
+    "account.signedInAs": "Connecté en tant que",
+    "account.signOut": "Se déconnecter",
+    "account.signedOut": "Vous n'êtes pas connecté.",
+    "account.goToLogin": "Aller à la connexion",
   },
 };
 
