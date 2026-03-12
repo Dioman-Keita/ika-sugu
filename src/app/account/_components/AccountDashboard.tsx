@@ -18,12 +18,13 @@ import { mockOrders } from "../_data/mockOrders";
 type Tab = "profile" | "orders" | "settings";
 
 function getInitials(name: string | null | undefined, email: string): string {
-  if (name) {
-    const parts = name.trim().split(/\s+/);
+  const trimmedName = name?.trim();
+  if (trimmedName) {
+    const parts = trimmedName.split(/\s+/);
     if (parts.length >= 2) {
       return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
     }
-    return name.substring(0, 2).toUpperCase();
+    return trimmedName.substring(0, 2).toUpperCase();
   }
   return email.substring(0, 2).toUpperCase();
 }

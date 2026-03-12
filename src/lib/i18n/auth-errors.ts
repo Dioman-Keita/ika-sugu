@@ -31,5 +31,9 @@ export function translateAuthError(rawMessage: string, locale: Locale): string {
   if (key) {
     return messages[locale][key] ?? messages["en"][key] ?? rawMessage;
   }
-  return messages[locale]["auth.errors.unknown"] ?? rawMessage;
+  return (
+    messages[locale]["auth.errors.unknown"] ??
+    messages["en"]["auth.errors.unknown"] ??
+    rawMessage
+  );
 }

@@ -29,11 +29,9 @@ function AccountSkeleton() {
         </div>
       </div>
       <div className="border-b border-border flex gap-6 pb-0">
-        {[100, 120, 90].map((w) => (
-          <div key={w} className="pb-3">
-            <div
-              className={`h-4 w-${w === 100 ? "20" : w === 120 ? "24" : "18"} rounded-full bg-border`}
-            />
+        {["w-20", "w-28", "w-24"].map((widthClass, index) => (
+          <div key={index} className="pb-3">
+            <div className={`h-4 ${widthClass} rounded-full bg-border`} />
           </div>
         ))}
       </div>
@@ -47,7 +45,7 @@ function AccountSkeleton() {
 }
 
 export default function AccountPage() {
-  const { t } = useUiPreferences();
+  useUiPreferences();
   const { data: session, isPending } = authClient.useSession();
 
   return (
