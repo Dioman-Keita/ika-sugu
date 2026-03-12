@@ -273,4 +273,3 @@ export default function RegisterClient({ googleEnabled }: { googleEnabled: boole
     </main>
   );
 }
-

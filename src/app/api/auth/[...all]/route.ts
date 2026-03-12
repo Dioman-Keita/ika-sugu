@@ -10,4 +10,3 @@ export const POST = handler.POST;
 export const PATCH = handler.PATCH;
 export const PUT = handler.PUT;
 export const DELETE = handler.DELETE;
-

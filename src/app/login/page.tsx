@@ -6,4 +6,3 @@ export default function LoginPage() {
   );
   return <LoginClient googleEnabled={googleEnabled} />;
 }
-

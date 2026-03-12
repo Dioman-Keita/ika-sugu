@@ -32,7 +32,9 @@ export const auth = betterAuth({
           });
           return;
         }
-        throw new Error("Email provider not configured (RESEND_API_KEY/RESEND_FROM_EMAIL)");
+        throw new Error(
+          "Email provider not configured (RESEND_API_KEY/RESEND_FROM_EMAIL)",
+        );
       }
 
       const safeName = user.name || user.email;

@@ -191,4 +191,3 @@ export default function LoginClient({ googleEnabled }: { googleEnabled: boolean 
     </main>
   );
 }
-
