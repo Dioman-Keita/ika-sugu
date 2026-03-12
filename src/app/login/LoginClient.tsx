@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { integralCF } from "@/styles/fonts";
 import { Button } from "@/components/ui/button";
@@ -11,9 +11,12 @@ import { useEffect, useState } from "react";
 import { useUiPreferences } from "@/lib/ui-preferences";
 import { authClient } from "@/lib/auth-client";
 import { AuthNotice } from "@/components/auth/AuthNotice";
+import { getSafeNext } from "@/lib/safe-next";
 
 export default function LoginClient({ googleEnabled }: { googleEnabled: boolean }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const safeNext = getSafeNext(searchParams.get("next")) ?? "/";
   const { data: session, isPending: isSessionPending } = authClient.useSession();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -23,8 +26,8 @@ export default function LoginClient({ googleEnabled }: { googleEnabled: boolean 
   const { t } = useUiPreferences();
 
   useEffect(() => {
-    if (!isSessionPending && session) router.replace("/");
-  }, [isSessionPending, router, session]);
+    if (!isSessionPending && session) router.replace(safeNext);
+  }, [isSessionPending, router, safeNext, session]);
 
   return (
     <main className="min-h-[calc(100vh-220px)] flex items-center justify-center px-4 py-12 bg-background">
@@ -69,7 +72,7 @@ export default function LoginClient({ googleEnabled }: { googleEnabled: boolean 
                   window.location.href = data.url;
                   return;
                 }
-                router.push("/");
+                router.push(safeNext);
               } finally {
                 setIsSubmitting(false);
               }
