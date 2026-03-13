@@ -107,6 +107,7 @@ model Product {
   name               String
   slug               String               @unique
   description        String
+  dressStyle         String?
   basePrice          Decimal              @db.Decimal(10, 2)
   discountPercentage Int                  @default(0)
   finalPrice         Decimal              @db.Decimal(10, 2)
@@ -120,6 +121,7 @@ model Product {
   updatedAt          DateTime             @updatedAt
 
   @@index([categoryId])
+  @@index([dressStyle])
   @@index([createdAt])
 }
 
@@ -142,10 +144,14 @@ model ProductVariant {
   id        String   @id @default(cuid())
   productId String
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku       String?  @unique
   colorName String
   colorHex  String?
   size      String
   images    String[]
+  price     Decimal  @db.Decimal(10, 2)
+  compareAtPrice Decimal? @db.Decimal(10, 2)
+  currency  String   @default("USD")
   stock     Int      @default(0)
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
@@ -154,6 +160,7 @@ model ProductVariant {
   @@unique([productId, colorName, size])
   @@index([productId, colorName])
   @@index([productId, size])
+  @@index([productId, price])
 }
 
 model Order {

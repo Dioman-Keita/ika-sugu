@@ -1,18 +1,12 @@
 import BreadcrumbShop from "@/components/shop-page/BreadcrumbShop";
 import React from "react";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import MobileFilters from "@/components/shop-page/filters/MobileFilters";
 import Filters from "@/components/shop-page/filters";
 import { FiSliders } from "react-icons/fi";
 import { getShopProductsAction } from "@/app/actions/catalog";
 import ProductCard from "@/components/common/ProductCard";
+import ShopSortSelect from "@/components/shop-page/ShopSortSelect";
 import {
   Pagination,
   PaginationContent,
@@ -36,6 +30,9 @@ const getPageParam = (value?: string | string[]): number => {
   const page = Number(raw);
   return Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
 };
+
+const getSingleSearchParam = (param: string | string[] | undefined) =>
+  Array.isArray(param) ? param[0] : param;
 
 const sectionTitles: Record<string, string> = {
   "men-clothes": "nav.men",
@@ -68,6 +65,29 @@ export default async function ShopPage({
   };
 
   const requestedPage = getPageParam(resolvedSearchParams.page);
+  const categoryParam = getSingleSearchParam(resolvedSearchParams.category);
+  const styleParam = getSingleSearchParam(resolvedSearchParams.style);
+  const colorParam = getSingleSearchParam(resolvedSearchParams.color);
+  const sizeParam = getSingleSearchParam(resolvedSearchParams.size);
+  const minPriceParam = getSingleSearchParam(resolvedSearchParams.minPrice);
+  const maxPriceParam = getSingleSearchParam(resolvedSearchParams.maxPrice);
+  const sortParam = getSingleSearchParam(resolvedSearchParams.sort);
+
+  const minPrice =
+    typeof minPriceParam === "string" && minPriceParam.trim() !== ""
+      ? Number(minPriceParam)
+      : null;
+  const maxPrice =
+    typeof maxPriceParam === "string" && maxPriceParam.trim() !== ""
+      ? Number(maxPriceParam)
+      : null;
+
+  const validSorts = ["low-price", "high-price", "newest", "most-popular"] as const;
+  type SortOption = (typeof validSorts)[number];
+  const sort: SortOption =
+    sortParam && validSorts.includes(sortParam as SortOption)
+      ? (sortParam as SortOption)
+      : "most-popular";
   const sectionParam = Array.isArray(resolvedSearchParams.section)
     ? resolvedSearchParams.section[0]
     : resolvedSearchParams.section;
@@ -81,6 +101,13 @@ export default async function ShopPage({
     page: requestedPage,
     pageSize: PAGE_SIZE,
     locale,
+    category: categoryParam ?? null,
+    style: styleParam ?? null,
+    color: colorParam ?? null,
+    size: sizeParam ?? null,
+    minPrice: typeof minPrice === "number" && Number.isFinite(minPrice) ? minPrice : null,
+    maxPrice: typeof maxPrice === "number" && Number.isFinite(maxPrice) ? maxPrice : null,
+    sort,
   });
   const currentPage = Math.min(requestedPage, totalPages);
   const startProduct = totalProducts === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
@@ -117,25 +144,7 @@ export default async function ShopPage({
                     .replace("{end}", String(endProduct))
                     .replace("{total}", String(totalProducts))}
                 </span>
-                <div className="flex items-center">
-                  {messages[locale]["shop.sortBy"]}
-                  <Select defaultValue="most-popular">
-                    <SelectTrigger className="font-medium text-sm px-1.5 sm:text-base w-fit text-foreground bg-transparent shadow-none border-none">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="most-popular">
-                        {messages[locale]["shop.mostPopular"]}
-                      </SelectItem>
-                      <SelectItem value="low-price">
-                        {messages[locale]["shop.lowPrice"]}
-                      </SelectItem>
-                      <SelectItem value="high-price">
-                        {messages[locale]["shop.highPrice"]}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <ShopSortSelect locale={locale} />
               </div>
             </div>
             {products.length > 0 ? (

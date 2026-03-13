@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -10,10 +9,26 @@ import {
 import { IoMdCheckmark } from "react-icons/io";
 import { cn } from "@/lib/utils";
 import { useUiPreferences } from "@/lib/ui-preferences";
+import { translateAttribute } from "@/lib/i18n/messages";
+import { useShopQuery } from "./useShopQuery";
 
 const ColorsSection = () => {
-  const [selected, setSelected] = useState<string>("bg-green-600");
-  const { t } = useUiPreferences();
+  const { t, locale } = useUiPreferences();
+  const { searchParams, setParams } = useShopQuery();
+  const selectedColor = searchParams.get("color");
+
+  const colors: Array<{ name: string; hex: string }> = [
+    { name: "Green", hex: "#16A34A" },
+    { name: "Red", hex: "#DC2626" },
+    { name: "Yellow", hex: "#FACC15" },
+    { name: "Orange", hex: "#EA580C" },
+    { name: "Cyan", hex: "#22D3EE" },
+    { name: "Blue", hex: "#2563EB" },
+    { name: "Purple", hex: "#9333EA" },
+    { name: "Pink", hex: "#DB2777" },
+    { name: "White", hex: "#F5F5F5" },
+    { name: "Black", hex: "#1F1F1F" },
+  ];
 
   return (
     <Accordion type="single" collapsible defaultValue="filter-colors">
@@ -23,28 +38,22 @@ const ColorsSection = () => {
         </AccordionTrigger>
         <AccordionContent className="pt-4 pb-0">
           <div className="flex space-2.5 flex-wrap md:grid grid-cols-5 gap-2.5">
-            {[
-              "bg-green-600",
-              "bg-red-600",
-              "bg-yellow-300",
-              "bg-orange-600",
-              "bg-cyan-400",
-              "bg-blue-600",
-              "bg-purple-600",
-              "bg-pink-600",
-              "bg-white",
-              "bg-black",
-            ].map((color, index) => (
+            {colors.map((color) => (
               <button
-                key={index}
+                key={color.name}
                 type="button"
                 className={cn([
-                  color,
                   "rounded-full w-9 sm:w-10 h-9 sm:h-10 flex items-center justify-center border border-border",
                 ])}
-                onClick={() => setSelected(color)}
+                style={{ backgroundColor: color.hex }}
+                onClick={() =>
+                  setParams({ color: selectedColor === color.name ? null : color.name })
+                }
+                title={translateAttribute(color.name, locale)}
               >
-                {selected === color && <IoMdCheckmark className="text-base text-white" />}
+                {selectedColor === color.name && (
+                  <IoMdCheckmark className="text-base text-white" />
+                )}
               </button>
             ))}
           </div>

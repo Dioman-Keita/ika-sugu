@@ -4,12 +4,22 @@ import Link from "next/link";
 import { MdKeyboardArrowRight } from "react-icons/md";
 import { Locale } from "@/lib/i18n/messages";
 import React from "react";
+import { useSearchParams } from "next/navigation";
 
 type Category = { id: string; slug: string; name: string };
 
 const CategoriesSection = ({ locale = "en" }: { locale?: Locale }) => {
   const [categories, setCategories] = React.useState<Category[] | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const searchParams = useSearchParams();
+
+  const buildCategoryHref = (slug: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("category", slug);
+    params.delete("page");
+    const qs = params.toString();
+    return qs ? `/shop?${qs}` : "/shop";
+  };
 
   React.useEffect(() => {
     let cancelled = false;
@@ -53,7 +63,7 @@ const CategoriesSection = ({ locale = "en" }: { locale?: Locale }) => {
       {categories?.map((category) => (
         <Link
           key={category.id}
-          href={`/shop?category=${category.slug}`}
+          href={buildCategoryHref(category.slug)}
           className="flex items-center justify-between py-2 hover:text-foreground transition-colors"
         >
           {category.name} <MdKeyboardArrowRight />
