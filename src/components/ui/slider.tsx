@@ -24,6 +24,13 @@ const Slider = React.forwardRef<
   ) => {
     const [values, setValues] = React.useState<[number, number]>(defaultValue);
 
+    const defaultMin = defaultValue[0];
+    const defaultMax = defaultValue[1];
+
+    React.useEffect(() => {
+      setValues([defaultMin, defaultMax]);
+    }, [defaultMin, defaultMax]);
+
     const handleValueChange = (newValues: number[]) => {
       setValues([newValues[0], newValues[1]]);
       props.onValueChange?.(newValues);

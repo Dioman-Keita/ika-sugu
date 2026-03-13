@@ -31,6 +31,9 @@ const getPageParam = (value?: string | string[]): number => {
   return Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
 };
 
+const getSingleSearchParam = (param: string | string[] | undefined) =>
+  Array.isArray(param) ? param[0] : param;
+
 const sectionTitles: Record<string, string> = {
   "men-clothes": "nav.men",
   "women-clothes": "nav.women",
@@ -62,27 +65,13 @@ export default async function ShopPage({
   };
 
   const requestedPage = getPageParam(resolvedSearchParams.page);
-  const categoryParam = Array.isArray(resolvedSearchParams.category)
-    ? resolvedSearchParams.category[0]
-    : resolvedSearchParams.category;
-  const styleParam = Array.isArray(resolvedSearchParams.style)
-    ? resolvedSearchParams.style[0]
-    : resolvedSearchParams.style;
-  const colorParam = Array.isArray(resolvedSearchParams.color)
-    ? resolvedSearchParams.color[0]
-    : resolvedSearchParams.color;
-  const sizeParam = Array.isArray(resolvedSearchParams.size)
-    ? resolvedSearchParams.size[0]
-    : resolvedSearchParams.size;
-  const minPriceParam = Array.isArray(resolvedSearchParams.minPrice)
-    ? resolvedSearchParams.minPrice[0]
-    : resolvedSearchParams.minPrice;
-  const maxPriceParam = Array.isArray(resolvedSearchParams.maxPrice)
-    ? resolvedSearchParams.maxPrice[0]
-    : resolvedSearchParams.maxPrice;
-  const sortParam = Array.isArray(resolvedSearchParams.sort)
-    ? resolvedSearchParams.sort[0]
-    : resolvedSearchParams.sort;
+  const categoryParam = getSingleSearchParam(resolvedSearchParams.category);
+  const styleParam = getSingleSearchParam(resolvedSearchParams.style);
+  const colorParam = getSingleSearchParam(resolvedSearchParams.color);
+  const sizeParam = getSingleSearchParam(resolvedSearchParams.size);
+  const minPriceParam = getSingleSearchParam(resolvedSearchParams.minPrice);
+  const maxPriceParam = getSingleSearchParam(resolvedSearchParams.maxPrice);
+  const sortParam = getSingleSearchParam(resolvedSearchParams.sort);
 
   const minPrice =
     typeof minPriceParam === "string" && minPriceParam.trim() !== ""

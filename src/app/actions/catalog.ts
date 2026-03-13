@@ -271,6 +271,8 @@ export const getShopProductsAction = async ({
       ? [{ finalPrice: "asc" }]
       : sort === "high-price"
         ? [{ finalPrice: "desc" }]
+        : sort === "most-popular"
+          ? [{ reviews: { _count: "desc" } }, { createdAt: "desc" }]
         : [{ createdAt: "desc" }];
 
   try {

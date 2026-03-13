@@ -17,8 +17,16 @@ const PriceSection = () => {
   const max = 250;
   const fallback: [number, number] = [50, 200];
 
-  const minPriceParam = Number(searchParams.get("minPrice"));
-  const maxPriceParam = Number(searchParams.get("maxPrice"));
+  const minPriceRaw = searchParams.get("minPrice");
+  const maxPriceRaw = searchParams.get("maxPrice");
+  const minPriceParam =
+    typeof minPriceRaw === "string" && minPriceRaw.trim() !== ""
+      ? Number(minPriceRaw)
+      : Number.NaN;
+  const maxPriceParam =
+    typeof maxPriceRaw === "string" && maxPriceRaw.trim() !== ""
+      ? Number(maxPriceRaw)
+      : Number.NaN;
 
   const defaultValue: [number, number] =
     Number.isFinite(minPriceParam) && Number.isFinite(maxPriceParam)
