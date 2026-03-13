@@ -15,6 +15,7 @@ export type MockOrder = {
   date: string;
   status: OrderStatus;
   total: number;
+  currency?: string;
   products: OrderProduct[];
 };
 
@@ -24,6 +25,7 @@ export const mockOrders: MockOrder[] = [
     date: "2024-12-01",
     status: "delivered",
     total: 129.0,
+    currency: "USD",
     products: [
       {
         id: "p1",
@@ -50,6 +52,7 @@ export const mockOrders: MockOrder[] = [
     date: "2024-12-20",
     status: "shipped",
     total: 89.0,
+    currency: "USD",
     products: [
       {
         id: "p3",
@@ -67,6 +70,7 @@ export const mockOrders: MockOrder[] = [
     date: "2025-01-05",
     status: "processing",
     total: 198.0,
+    currency: "USD",
     products: [
       {
         id: "p4",

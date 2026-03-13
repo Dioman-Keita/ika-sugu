@@ -10,6 +10,7 @@ import { useSelector } from "react-redux";
 import type { RootState } from "@/lib/store";
 import type { AuthSession } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { formatMonthYear } from "@/lib/i18n/format";
 import AccountProfile from "./AccountProfile";
 import AccountOrders from "./AccountOrders";
 import AccountSettings from "./AccountSettings";
@@ -46,12 +47,7 @@ export default function AccountDashboard({ session }: Props) {
   const user = session.user;
   const initials = getInitials(user.name, user.email);
 
-  const memberSince = user.createdAt
-    ? new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-US", {
-        month: "long",
-        year: "numeric",
-      }).format(new Date(user.createdAt))
-    : null;
+  const memberSince = formatMonthYear(user.createdAt, locale);
 
   const tabs: { id: Tab; labelKey: string; icon: typeof User }[] = [
     { id: "profile", labelKey: "account.tabs.profile", icon: User },

@@ -34,7 +34,7 @@ function OrderCard({ order }: { order: MockOrder }) {
 
   const formattedTotal = new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
     style: "currency",
-    currency: "USD",
+    currency: order.currency ?? "USD",
     minimumFractionDigits: 0,
   }).format(order.total);
 

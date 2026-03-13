@@ -4,6 +4,7 @@ import { Mail, User, Calendar, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUiPreferences } from "@/lib/ui-preferences";
 import type { AuthSession } from "@/lib/auth";
+import { formatMonthYear } from "@/lib/i18n/format";
 
 type Props = {
   session: AuthSession;
@@ -13,12 +14,7 @@ export default function AccountProfile({ session }: Props) {
   const { t, locale } = useUiPreferences();
   const user = session.user;
 
-  const memberSinceDate = user.createdAt
-    ? new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-US", {
-        month: "long",
-        year: "numeric",
-      }).format(new Date(user.createdAt))
-    : "—";
+  const memberSinceDate = formatMonthYear(user.createdAt, locale) ?? "—";
 
   const fields = [
     {
@@ -46,8 +42,8 @@ export default function AccountProfile({ session }: Props) {
 
       {/* Info card */}
       <div className="border border-border rounded-[20px] bg-surface-card divide-y divide-border overflow-hidden">
-        {fields.map(({ icon: Icon, label, value }) => (
-          <div key={label} className="flex items-center gap-4 px-5 py-4">
+        {fields.map(({ icon: Icon, label, value }, index) => (
+          <div key={index} className="flex items-center gap-4 px-5 py-4">
             <div className="shrink-0 w-8 h-8 rounded-full bg-surface-section flex items-center justify-center">
               <Icon size={14} className="text-muted-foreground" />
             </div>
