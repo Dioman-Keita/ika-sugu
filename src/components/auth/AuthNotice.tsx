@@ -18,7 +18,7 @@ export function AuthNotice({
     <div
       role={variant === "error" ? "alert" : undefined}
       className={cn(
-        "rounded-[16px] border px-4 py-3 text-sm",
+        "rounded-full border px-4 py-3 text-sm",
         variant === "error" && "border-destructive/25 bg-destructive/5 text-destructive",
         variant === "success" &&
           "border-foreground/10 bg-surface-section text-foreground",

@@ -10,6 +10,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useUiPreferences } from "@/lib/ui-preferences";
 import { authClient } from "@/lib/auth-client";
+import { translateAuthError } from "@/lib/i18n/auth-errors";
 import { AuthNotice } from "@/components/auth/AuthNotice";
 import { getSafeNext } from "@/lib/safe-next";
 
@@ -28,7 +29,7 @@ export default function RegisterClient({ googleEnabled }: { googleEnabled: boole
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { t } = useUiPreferences();
+  const { t, locale } = useUiPreferences();
 
   useEffect(() => {
     if (!isSessionPending && session) router.replace(safeNext);
@@ -87,7 +88,7 @@ export default function RegisterClient({ googleEnabled }: { googleEnabled: boole
                   callbackURL: safeNext,
                 });
                 if (error) {
-                  setError(error.message ?? String(error));
+                  setError(translateAuthError(error.message ?? String(error), locale));
                   return;
                 }
                 router.push(safeNext);
@@ -246,7 +247,7 @@ export default function RegisterClient({ googleEnabled }: { googleEnabled: boole
                       provider: "google",
                     });
                     if (error) {
-                      setError(error.message ?? String(error));
+                      setError(translateAuthError(error.message ?? String(error), locale));
                       return;
                     }
                     if (data?.url) {
