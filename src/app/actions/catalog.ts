@@ -322,7 +322,9 @@ export const getShopProductsAction = async ({
             });
 
             const byId = new Map(fetched.map((p) => [p.id, p]));
-            return ids.map((id) => byId.get(id)).filter(Boolean) as typeof fetched;
+            return ids
+              .map((id) => byId.get(id))
+              .filter((p): p is NonNullable<typeof p> => Boolean(p));
           })
         : await withDbRetry(() =>
             db.product.findMany({

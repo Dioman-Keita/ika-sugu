@@ -82,12 +82,11 @@ export default async function ShopPage({
       ? Number(maxPriceParam)
       : null;
 
-  const sort =
-    sortParam === "low-price" ||
-    sortParam === "high-price" ||
-    sortParam === "newest" ||
-    sortParam === "most-popular"
-      ? sortParam
+  const validSorts = ["low-price", "high-price", "newest", "most-popular"] as const;
+  type SortOption = (typeof validSorts)[number];
+  const sort: SortOption =
+    sortParam && validSorts.includes(sortParam as SortOption)
+      ? (sortParam as SortOption)
       : "most-popular";
   const sectionParam = Array.isArray(resolvedSearchParams.section)
     ? resolvedSearchParams.section[0]
