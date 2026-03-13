@@ -162,7 +162,9 @@ export default function LoginClient({ googleEnabled }: { googleEnabled: boolean 
                       provider: "google",
                     });
                     if (error) {
-                      setError(translateAuthError(error.message ?? String(error), locale));
+                      setError(
+                        translateAuthError(error.message ?? String(error), locale),
+                      );
                       return;
                     }
                     if (data?.url) {

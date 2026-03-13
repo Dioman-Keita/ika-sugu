@@ -26,4 +26,3 @@ export function useShopQuery() {
 
   return { searchParams, setParams };
 }
-

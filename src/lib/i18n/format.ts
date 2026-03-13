@@ -17,4 +17,3 @@ export function formatMonthYear(
     year: "numeric",
   }).format(value);
 }
-

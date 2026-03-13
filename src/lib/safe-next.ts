@@ -7,4 +7,3 @@ export function getSafeNext(nextValue: string | null | undefined): string | null
   if (v.includes("\r") || v.includes("\n")) return null;
   return v;
 }
-

@@ -102,7 +102,7 @@ const toUiProduct = (
   const translation = product.translations?.find((t) => t.locale === locale);
 
   const activeVariants = product.variants.filter((variant) => variant.isActive);
-  const prices = activeVariants.map((variant) => variant?.price?.toNumber());
+  const prices = activeVariants.map((variant) => variant.price.toNumber());
   const minVariantPrice = prices.length
     ? Math.min(...prices)
     : product.finalPrice.toNumber();
@@ -122,8 +122,8 @@ const toUiProduct = (
   return {
     variants: product.variants.map((variant) => ({
       ...variant,
-      price: variant?.price?.toNumber(),
-      compareAtPrice: variant?.compareAtPrice?.toNumber() ?? null,
+      price: variant.price.toNumber(),
+      compareAtPrice: variant.compareAtPrice?.toNumber() ?? null,
     })),
     id: product.id,
     slug: product.slug,
@@ -259,9 +259,7 @@ export const getShopProductsAction = async ({
   const where: Prisma.ProductWhereInput = {
     ...(category ? { category: { slug: category } } : {}),
     ...(style ? { dressStyle: style } : {}),
-    ...(color || size || typeof minPrice === "number" || typeof maxPrice === "number"
-      ? { variants: { some: variantWhere } }
-      : {}),
+    variants: { some: variantWhere },
   };
 
   // Prisma doesn't support ordering products by min/max variant price via relation aggregates
@@ -273,28 +271,75 @@ export const getShopProductsAction = async ({
         ? [{ finalPrice: "desc" }]
         : sort === "most-popular"
           ? [{ reviews: { _count: "desc" } }, { createdAt: "desc" }]
-        : [{ createdAt: "desc" }];
+          : [{ createdAt: "desc" }];
 
   try {
-    const [totalProducts, products] = await withDbRetry(() =>
-      Promise.all([
-        db.product.count({ where }),
-        db.product.findMany({
-          where,
-          skip,
-          take: safePageSize,
-          orderBy,
-          include: {
-            translations: { where: { locale } },
-            variants: {
-              where: variantWhere,
-              orderBy: [{ price: "asc" }, { colorName: "asc" }, { size: "asc" }],
-              take: 1,
-            },
-          },
-        }),
-      ]),
-    );
+    const totalProducts = await withDbRetry(() => db.product.count({ where }));
+
+    const products =
+      sort === "low-price" || sort === "high-price"
+        ? await withDbRetry(async () => {
+            const conditions: Prisma.Sql[] = [
+              Prisma.sql`pv."isActive" = true`,
+              ...(color ? [Prisma.sql`pv."colorName" = ${color}`] : []),
+              ...(size ? [Prisma.sql`pv."size" = ${size}`] : []),
+              ...(typeof minPrice === "number"
+                ? [Prisma.sql`pv."price" >= ${new Prisma.Decimal(minPrice)}`]
+                : []),
+              ...(typeof maxPrice === "number"
+                ? [Prisma.sql`pv."price" <= ${new Prisma.Decimal(maxPrice)}`]
+                : []),
+              ...(style ? [Prisma.sql`p."dressStyle" = ${style}`] : []),
+              ...(category ? [Prisma.sql`c."slug" = ${category}`] : []),
+            ];
+
+            const direction = sort === "low-price" ? Prisma.sql`ASC` : Prisma.sql`DESC`;
+
+            const rows = await db.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+              SELECT p."id" AS id
+              FROM "Product" p
+              JOIN "ProductVariant" pv ON pv."productId" = p."id"
+              LEFT JOIN "Category" c ON c."id" = p."categoryId"
+              WHERE ${Prisma.join(conditions, " AND ")}
+              GROUP BY p."id"
+              ORDER BY MIN(pv."price") ${direction}, p."createdAt" DESC
+              LIMIT ${safePageSize} OFFSET ${skip}
+            `);
+
+            const ids = rows.map((r) => r.id);
+            if (ids.length === 0) return [];
+
+            const fetched = await db.product.findMany({
+              where: { id: { in: ids } },
+              include: {
+                translations: { where: { locale } },
+                variants: {
+                  where: variantWhere,
+                  orderBy: [{ price: "asc" }, { colorName: "asc" }, { size: "asc" }],
+                  take: 1,
+                },
+              },
+            });
+
+            const byId = new Map(fetched.map((p) => [p.id, p]));
+            return ids.map((id) => byId.get(id)).filter(Boolean) as typeof fetched;
+          })
+        : await withDbRetry(() =>
+            db.product.findMany({
+              where,
+              skip,
+              take: safePageSize,
+              orderBy,
+              include: {
+                translations: { where: { locale } },
+                variants: {
+                  where: variantWhere,
+                  orderBy: [{ price: "asc" }, { colorName: "asc" }, { size: "asc" }],
+                  take: 1,
+                },
+              },
+            }),
+          );
 
     const ratingByProductId = products.length
       ? new Map(

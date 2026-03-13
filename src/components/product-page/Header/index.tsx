@@ -97,7 +97,9 @@ const Header = ({ data }: { data: Product }) => {
   const selectedVariantPrice = selectedVariant?.price ?? data.finalPrice;
   const selectedVariantCompareAtPrice = selectedVariant?.compareAtPrice ?? null;
   const selectedVariantDiscountPercentage =
-    selectedVariantCompareAtPrice && selectedVariantCompareAtPrice > selectedVariantPrice
+    selectedVariantCompareAtPrice &&
+    selectedVariantCompareAtPrice > 0 &&
+    selectedVariantCompareAtPrice > selectedVariantPrice
       ? Math.round(
           ((selectedVariantCompareAtPrice - selectedVariantPrice) /
             selectedVariantCompareAtPrice) *
@@ -144,10 +146,10 @@ const Header = ({ data }: { data: Product }) => {
             </span>
             {selectedVariantDiscountPercentage > 0 &&
               selectedVariantCompareAtPrice !== null && (
-              <span className="font-bold text-foreground/40 line-through text-2xl sm:text-[32px]">
-                ${selectedVariantCompareAtPrice}
-              </span>
-            )}
+                <span className="font-bold text-foreground/40 line-through text-2xl sm:text-[32px]">
+                  ${selectedVariantCompareAtPrice}
+                </span>
+              )}
             {selectedVariantDiscountPercentage > 0 && (
               <span className="font-medium text-[10px] sm:text-xs py-1.5 px-3.5 rounded-full bg-[#FF3333]/10 text-[#FF3333]">
                 {`-${selectedVariantDiscountPercentage}%`}

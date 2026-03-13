@@ -288,7 +288,8 @@ export const messages: Record<Locale, Messages> = {
     "account.settings.saved": "Preferences saved",
 
     "account.guest.title": "Your Account",
-    "account.guest.subtitle": "Sign in to track orders, manage your profile, and access exclusive member offers.",
+    "account.guest.subtitle":
+      "Sign in to track orders, manage your profile, and access exclusive member offers.",
     "account.guest.benefit1.title": "Track Orders",
     "account.guest.benefit1.desc": "Real-time updates on all your deliveries",
     "account.guest.benefit2.title": "Exclusive Offers",
@@ -378,7 +379,8 @@ export const messages: Record<Locale, Messages> = {
 
     "auth.errors.invalidCredentials": "Email ou mot de passe invalide.",
     "auth.errors.emailInUse": "Un compte avec cet email existe déjà.",
-    "auth.errors.emailNotVerified": "Veuillez vérifier votre email avant de vous connecter.",
+    "auth.errors.emailNotVerified":
+      "Veuillez vérifier votre email avant de vous connecter.",
     "auth.errors.tooManyRequests": "Trop de tentatives. Veuillez réessayer plus tard.",
     "auth.errors.passwordTooShort": "Le mot de passe est trop court.",
     "auth.errors.unknown": "Une erreur est survenue. Veuillez réessayer.",
@@ -586,7 +588,8 @@ export const messages: Record<Locale, Messages> = {
     "account.settings.saved": "Préférences sauvegardées",
 
     "account.guest.title": "Votre compte",
-    "account.guest.subtitle": "Connectez-vous pour suivre vos commandes, gérer votre profil et accéder aux offres exclusives.",
+    "account.guest.subtitle":
+      "Connectez-vous pour suivre vos commandes, gérer votre profil et accéder aux offres exclusives.",
     "account.guest.benefit1.title": "Suivi des commandes",
     "account.guest.benefit1.desc": "Mises à jour en temps réel sur vos livraisons",
     "account.guest.benefit2.title": "Offres exclusives",
