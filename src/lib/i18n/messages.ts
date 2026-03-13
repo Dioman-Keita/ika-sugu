@@ -114,6 +114,7 @@ export const messages: Record<Locale, Messages> = {
     "shop.price": "Price",
     "shop.dressStyle": "Dress Style",
     "shop.applyFilter": "Apply Filter",
+    "shop.clearFilters": "Clear Filters",
 
     "product.chooseSize": "Choose Size",
     "product.selectColors": "Select Colors",
@@ -411,6 +412,7 @@ export const messages: Record<Locale, Messages> = {
     "shop.price": "Prix",
     "shop.dressStyle": "Style vestimentaire",
     "shop.applyFilter": "Appliquer le filtre",
+    "shop.clearFilters": "Effacer les filtres",
 
     "product.chooseSize": "Choisir la taille",
     "product.selectColors": "Sélectionner les couleurs",

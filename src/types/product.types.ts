@@ -1,9 +1,13 @@
 export type ProductVariant = {
   id: string;
+  sku?: string | null;
   colorName: string;
   colorHex?: string | null;
   size: string;
   images: string[];
+  price: number;
+  compareAtPrice?: number | null;
+  currency?: string;
   stock: number;
   isActive: boolean;
 };

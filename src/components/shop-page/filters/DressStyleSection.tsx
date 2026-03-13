@@ -9,6 +9,7 @@ import Link from "next/link";
 import { MdKeyboardArrowRight } from "react-icons/md";
 import { useUiPreferences } from "@/lib/ui-preferences";
 import { translateAttribute } from "@/lib/i18n/messages";
+import { useSearchParams } from "next/navigation";
 
 type DressStyle = {
   title: string;
@@ -16,14 +17,23 @@ type DressStyle = {
 };
 
 const dressStylesData: DressStyle[] = [
-  { title: "Casual", slug: "/shop?style=casual" },
-  { title: "Formal", slug: "/shop?style=formal" },
-  { title: "Party", slug: "/shop?style=party" },
-  { title: "Gym", slug: "/shop?style=gym" },
+  { title: "Casual", slug: "casual" },
+  { title: "Formal", slug: "formal" },
+  { title: "Party", slug: "party" },
+  { title: "Gym", slug: "gym" },
 ];
 
 const DressStyleSection = () => {
   const { t, locale } = useUiPreferences();
+  const searchParams = useSearchParams();
+
+  const buildStyleHref = (style: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("style", style);
+    params.delete("page");
+    const qs = params.toString();
+    return qs ? `/shop?${qs}` : "/shop";
+  };
 
   return (
     <Accordion type="single" collapsible defaultValue="filter-style">
@@ -36,7 +46,7 @@ const DressStyleSection = () => {
             {dressStylesData.map((dStyle, idx) => (
               <Link
                 key={idx}
-                href={dStyle.slug}
+                href={buildStyleHref(dStyle.slug)}
                 className="flex items-center justify-between py-2"
               >
                 {translateAttribute(dStyle.title, locale)} <MdKeyboardArrowRight />

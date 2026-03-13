@@ -94,6 +94,17 @@ const Header = ({ data }: { data: Product }) => {
         ? data.gallery
         : [data.srcUrl];
   const selectedVariantStock = selectedVariant?.stock ?? 0;
+  const selectedVariantPrice = selectedVariant?.price ?? data.finalPrice;
+  const selectedVariantCompareAtPrice =
+    selectedVariant?.compareAtPrice ?? (data.discountPercentage > 0 ? data.basePrice : null);
+  const selectedVariantDiscountPercentage =
+    selectedVariantCompareAtPrice && selectedVariantCompareAtPrice > selectedVariantPrice
+      ? Math.round(
+          ((selectedVariantCompareAtPrice - selectedVariantPrice) /
+            selectedVariantCompareAtPrice) *
+            100,
+        )
+      : 0;
 
   return (
     <>
@@ -130,16 +141,17 @@ const Header = ({ data }: { data: Product }) => {
           </div>
           <div className="flex items-center space-x-2.5 sm:space-x-3 mb-5">
             <span className="font-bold text-foreground text-2xl sm:text-[32px]">
-              ${data.finalPrice}
+              ${selectedVariantPrice}
             </span>
-            {data.discountPercentage > 0 && (
+            {selectedVariantDiscountPercentage > 0 &&
+              selectedVariantCompareAtPrice !== null && (
               <span className="font-bold text-foreground/40 line-through text-2xl sm:text-[32px]">
-                ${data.basePrice}
+                ${selectedVariantCompareAtPrice}
               </span>
             )}
-            {data.discountPercentage > 0 && (
+            {selectedVariantDiscountPercentage > 0 && (
               <span className="font-medium text-[10px] sm:text-xs py-1.5 px-3.5 rounded-full bg-[#FF3333]/10 text-[#FF3333]">
-                {`-${data.discountPercentage}%`}
+                {`-${selectedVariantDiscountPercentage}%`}
               </span>
             )}
           </div>
@@ -177,6 +189,12 @@ const Header = ({ data }: { data: Product }) => {
             data={{
               ...data,
               srcUrl: photos[0] ?? data.srcUrl,
+              basePrice:
+                selectedVariantCompareAtPrice && selectedVariantCompareAtPrice > 0
+                  ? selectedVariantCompareAtPrice
+                  : selectedVariantPrice,
+              finalPrice: selectedVariantPrice,
+              discountPercentage: selectedVariantDiscountPercentage,
             }}
             selectedColor={resolvedColor}
             selectedSize={resolvedSize}

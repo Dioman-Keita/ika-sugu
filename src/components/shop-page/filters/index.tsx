@@ -7,9 +7,11 @@ import SizeSection from "@/components/shop-page/filters/SizeSection";
 import { Button } from "@/components/ui/button";
 import { Locale } from "@/lib/i18n/messages";
 import { useUiPreferences } from "@/lib/ui-preferences";
+import { useShopQuery } from "./useShopQuery";
 
 const Filters = ({ locale = "en" }: { locale?: Locale }) => {
   const { t } = useUiPreferences();
+  const { setParams } = useShopQuery();
 
   return (
     <>
@@ -26,8 +28,19 @@ const Filters = ({ locale = "en" }: { locale?: Locale }) => {
       <Button
         type="button"
         className="bg-foreground text-background w-full rounded-full text-sm font-medium py-4 h-12"
+        onClick={() =>
+          setParams({
+            category: null,
+            style: null,
+            color: null,
+            size: null,
+            minPrice: null,
+            maxPrice: null,
+            sort: null,
+          })
+        }
       >
-        {t("shop.applyFilter")}
+        {t("shop.clearFilters")}
       </Button>
     </>
   );

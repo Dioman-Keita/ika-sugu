@@ -3,7 +3,7 @@
 import db from "@/lib/db";
 import { Product } from "@/types/product.types";
 import { Review } from "@/types/review.types";
-import { ReviewStatus } from "@/generated/prisma/client";
+import { Prisma, ReviewStatus } from "@/generated/prisma/client";
 import { Locale } from "@/lib/i18n/messages";
 
 type ProductSpecsJson = Partial<Record<"material" | "care" | "fit" | "pattern", string>>;
@@ -78,10 +78,14 @@ const toUiProduct = (
     reviews?: Array<{ rating: number }>;
     variants: Array<{
       id: string;
+      sku: string | null;
       colorName: string;
       colorHex: string | null;
       size: string;
       images: string[];
+      price: { toNumber: () => number };
+      compareAtPrice: { toNumber: () => number } | null;
+      currency: string;
       stock: number;
       isActive: boolean;
     }>;
@@ -97,8 +101,30 @@ const toUiProduct = (
   // Try to find the specific translation for the requested locale
   const translation = product.translations?.find((t) => t.locale === locale);
 
+  const activeVariants = product.variants.filter((variant) => variant.isActive);
+  const prices = activeVariants.map((variant) => variant?.price?.toNumber());
+  const minVariantPrice = prices.length
+    ? Math.min(...prices)
+    : product.finalPrice.toNumber();
+
+  const compareAtPrices = activeVariants
+    .map((variant) => variant.compareAtPrice?.toNumber() ?? null)
+    .filter((value): value is number => typeof value === "number");
+  const minVariantCompareAtPrice = compareAtPrices.length
+    ? Math.min(...compareAtPrices)
+    : null;
+
+  const basePrice = minVariantCompareAtPrice ?? product.basePrice.toNumber();
+  const finalPrice = minVariantPrice;
+  const discountPercentage =
+    basePrice > finalPrice ? Math.round(((basePrice - finalPrice) / basePrice) * 100) : 0;
+
   return {
-    variants: product.variants,
+    variants: product.variants.map((variant) => ({
+      ...variant,
+      price: variant?.price?.toNumber(),
+      compareAtPrice: variant?.compareAtPrice?.toNumber() ?? null,
+    })),
     id: product.id,
     slug: product.slug,
     title: translation?.name ?? product.name,
@@ -108,9 +134,9 @@ const toUiProduct = (
       product.variants.find((variant) => variant.images.length > 0)?.images[0] ??
       "/images/pic1.png",
     gallery: product.variants.find((variant) => variant.images.length > 0)?.images ?? [],
-    basePrice: product.basePrice.toNumber(),
-    discountPercentage: product.discountPercentage,
-    finalPrice: product.finalPrice.toNumber(),
+    basePrice,
+    discountPercentage,
+    finalPrice,
     rating: getAverageRating(product.reviews ?? []),
   };
 };
@@ -195,28 +221,72 @@ export const getShopProductsAction = async ({
   page = 1,
   pageSize = 9,
   locale = "en",
+  category,
+  style,
+  color,
+  size,
+  minPrice,
+  maxPrice,
+  sort = "most-popular",
 }: {
   page?: number;
   pageSize?: number;
   locale?: Locale;
+  category?: string | null;
+  style?: string | null;
+  color?: string | null;
+  size?: string | null;
+  minPrice?: number | null;
+  maxPrice?: number | null;
+  sort?: "most-popular" | "low-price" | "high-price" | "newest";
 }) => {
   const safePageSize = Math.min(Math.max(Math.floor(pageSize), 1), 60);
   const safePage = Math.max(Math.floor(page), 1);
   const skip = (safePage - 1) * safePageSize;
 
+  const variantWhere: Prisma.ProductVariantWhereInput = {
+    isActive: true,
+    ...(color ? { colorName: color } : {}),
+    ...(size ? { size } : {}),
+    ...((typeof minPrice === "number" || typeof maxPrice === "number") && {
+      price: {
+        ...(typeof minPrice === "number" ? { gte: new Prisma.Decimal(minPrice) } : {}),
+        ...(typeof maxPrice === "number" ? { lte: new Prisma.Decimal(maxPrice) } : {}),
+      },
+    }),
+  };
+
+  const where: Prisma.ProductWhereInput = {
+    ...(category ? { category: { slug: category } } : {}),
+    ...(style ? { dressStyle: style } : {}),
+    ...(color || size || typeof minPrice === "number" || typeof maxPrice === "number"
+      ? { variants: { some: variantWhere } }
+      : {}),
+  };
+
+  // Prisma doesn't support ordering products by min/max variant price via relation aggregates
+  // in our current schema setup. We treat `Product.finalPrice` as the "from" price for sorting.
+  const orderBy: Prisma.ProductOrderByWithRelationInput[] =
+    sort === "low-price"
+      ? [{ finalPrice: "asc" }]
+      : sort === "high-price"
+        ? [{ finalPrice: "desc" }]
+        : [{ createdAt: "desc" }];
+
   try {
     const [totalProducts, products] = await withDbRetry(() =>
       Promise.all([
-        db.product.count(),
+        db.product.count({ where }),
         db.product.findMany({
+          where,
           skip,
           take: safePageSize,
-          orderBy: { createdAt: "desc" },
+          orderBy,
           include: {
             translations: { where: { locale } },
             variants: {
-              where: { isActive: true },
-              orderBy: [{ colorName: "asc" }, { size: "asc" }],
+              where: variantWhere,
+              orderBy: [{ price: "asc" }, { colorName: "asc" }, { size: "asc" }],
               take: 1,
             },
           },

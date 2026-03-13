@@ -26,6 +26,7 @@ const Slider = React.forwardRef<
 
     const handleValueChange = (newValues: number[]) => {
       setValues([newValues[0], newValues[1]]);
+      props.onValueChange?.(newValues);
     };
 
     return (
