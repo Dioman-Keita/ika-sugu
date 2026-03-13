@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUiPreferences } from "@/lib/ui-preferences";
+import { toIntlLocale } from "@/lib/i18n/format";
 import { mockOrders, type MockOrder, type OrderStatus } from "../_data/mockOrders";
 import { cn } from "@/lib/utils";
 
@@ -26,13 +27,13 @@ const statusKeys: Record<OrderStatus, string> = {
 function OrderCard({ order }: { order: MockOrder }) {
   const { t, locale } = useUiPreferences();
 
-  const formattedDate = new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-US", {
+  const formattedDate = new Intl.DateTimeFormat(toIntlLocale(locale), {
     day: "numeric",
     month: "short",
     year: "numeric",
   }).format(new Date(order.date));
 
-  const formattedTotal = new Intl.NumberFormat(locale === "fr" ? "fr-FR" : "en-US", {
+  const formattedTotal = new Intl.NumberFormat(toIntlLocale(locale), {
     style: "currency",
     currency: order.currency ?? "USD",
     minimumFractionDigits: 0,
