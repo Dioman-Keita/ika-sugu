@@ -102,7 +102,7 @@ const toUiProduct = (
   const translation = product.translations?.find((t) => t.locale === locale);
 
   const activeVariants = product.variants.filter((variant) => variant.isActive);
-  const prices = activeVariants.map((variant) => variant?.price?.toNumber());
+  const prices = activeVariants.map((variant) => variant.price.toNumber());
   const minVariantPrice = prices.length
     ? Math.min(...prices)
     : product.finalPrice.toNumber();
@@ -122,8 +122,8 @@ const toUiProduct = (
   return {
     variants: product.variants.map((variant) => ({
       ...variant,
-      price: variant?.price?.toNumber(),
-      compareAtPrice: variant?.compareAtPrice?.toNumber() ?? null,
+      price: variant.price.toNumber(),
+      compareAtPrice: variant.compareAtPrice?.toNumber() ?? null,
     })),
     id: product.id,
     slug: product.slug,

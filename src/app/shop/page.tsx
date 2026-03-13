@@ -106,8 +106,8 @@ export default async function ShopPage({
     style: styleParam ?? null,
     color: colorParam ?? null,
     size: sizeParam ?? null,
-    minPrice: Number.isFinite(minPrice as number) ? minPrice : null,
-    maxPrice: Number.isFinite(maxPrice as number) ? maxPrice : null,
+    minPrice: typeof minPrice === "number" && Number.isFinite(minPrice) ? minPrice : null,
+    maxPrice: typeof maxPrice === "number" && Number.isFinite(maxPrice) ? maxPrice : null,
     sort,
   });
   const currentPage = Math.min(requestedPage, totalPages);

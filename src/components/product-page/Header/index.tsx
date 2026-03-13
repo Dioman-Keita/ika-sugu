@@ -97,7 +97,9 @@ const Header = ({ data }: { data: Product }) => {
   const selectedVariantPrice = selectedVariant?.price ?? data.finalPrice;
   const selectedVariantCompareAtPrice = selectedVariant?.compareAtPrice ?? null;
   const selectedVariantDiscountPercentage =
-    selectedVariantCompareAtPrice && selectedVariantCompareAtPrice > selectedVariantPrice
+    selectedVariantCompareAtPrice &&
+    selectedVariantCompareAtPrice > 0 &&
+    selectedVariantCompareAtPrice > selectedVariantPrice
       ? Math.round(
           ((selectedVariantCompareAtPrice - selectedVariantPrice) /
             selectedVariantCompareAtPrice) *
