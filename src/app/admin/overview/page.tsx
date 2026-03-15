@@ -50,6 +50,13 @@ export default async function OverviewPage() {
 
   const [stats, recentOrders] = await Promise.all([getAdminStats(), getRecentOrders()]);
 
+  const revenueChartData = stats.monthlyRevenue.map(({ month, revenue }) => {
+    const [year, monthIndex] = month.split("-").map((v) => Number(v));
+    const d = new Date(year, monthIndex - 1, 1);
+    const label = new Intl.DateTimeFormat(locale, { month: "short", year: "2-digit" }).format(d);
+    return { month: label, revenue };
+  });
+
   const formattedRevenue = new Intl.NumberFormat(locale, {
     style: "currency",
     currency: "USD",
@@ -132,7 +139,7 @@ export default async function OverviewPage() {
                 {m["admin.overview.revenueChart"]}
               </h2>
             </div>
-            <RevenueChart data={stats.monthlyRevenue} />
+            <RevenueChart data={revenueChartData} />
           </div>
 
           {/* Orders by status */}

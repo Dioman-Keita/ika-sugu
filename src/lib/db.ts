@@ -3,6 +3,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client";
 
 let didWarnSupabasePort = false;
+let didWarnInsecureDbSsl = false;
 
 const prismaClientSingleton = () => {
   const connectionString = process.env.DATABASE_URL;
@@ -28,9 +29,31 @@ const prismaClientSingleton = () => {
 
   const normalizedConnectionString = parsedUrl.toString();
 
+  const allowInsecureDbSsl = process.env.ALLOW_INSECURE_DB_SSL === "true";
+  const supabaseCa = process.env.SUPABASE_CA_CERT;
+  const ssl = isSupabase
+    ? allowInsecureDbSsl
+      ? { rejectUnauthorized: false }
+      : supabaseCa
+        ? { ca: supabaseCa, rejectUnauthorized: true }
+        : { rejectUnauthorized: true }
+    : undefined;
+
+  if (
+    isSupabase &&
+    allowInsecureDbSsl &&
+    process.env.NODE_ENV !== "production" &&
+    !didWarnInsecureDbSsl
+  ) {
+    didWarnInsecureDbSsl = true;
+    console.warn(
+      "[db] ALLOW_INSECURE_DB_SSL=true disables TLS certificate validation. Do not use this in production.",
+    );
+  }
+
   const pool = new Pool({
     connectionString: normalizedConnectionString,
-    ...(isSupabase ? { ssl: { rejectUnauthorized: false } } : {}),
+    ...(ssl ? { ssl } : {}),
     // Fail fast instead of hanging forever when DB is unreachable.
     // 5s was too aggressive in dev; allow slower connects while still bounded.
     connectionTimeoutMillis: 15000,

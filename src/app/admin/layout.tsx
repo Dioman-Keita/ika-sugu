@@ -11,6 +11,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/login");
 
+  const adminEmails = (process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  const userEmail = session.user?.email?.toLowerCase();
+  const isAdmin = Boolean(userEmail && adminEmails.includes(userEmail));
+  if (!isAdmin) redirect("/");
+
   return (
     <div
       className="flex border-t border-border bg-background"

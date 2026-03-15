@@ -3,12 +3,33 @@
 import db from "@/lib/db";
 import { Prisma, ReviewStatus, OrderStatus } from "@/generated/prisma/client";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
 
 const PAGE_SIZE = 15;
+const REVENUE_GENERATING_STATUSES: OrderStatus[] = [
+  OrderStatus.PAID,
+  OrderStatus.SHIPPED,
+  OrderStatus.DELIVERED,
+];
+
+const assertAdmin = async () => {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) throw new Error("Unauthorized");
+
+  const adminEmails = (process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  const userEmail = session.user?.email?.toLowerCase();
+  const isAdmin = Boolean(userEmail && adminEmails.includes(userEmail));
+  if (!isAdmin) throw new Error("Forbidden");
+};
 
 // ─── Stat helpers ─────────────────────────────────────────────────────────────
 
 export async function getAdminStats() {
+  await assertAdmin();
   const [
     totalOrders,
     totalUsers,
@@ -25,7 +46,7 @@ export async function getAdminStats() {
     db.order.aggregate({
       _sum: { total: true },
       where: {
-        status: { in: [OrderStatus.PAID, OrderStatus.SHIPPED, OrderStatus.DELIVERED] },
+        status: { in: REVENUE_GENERATING_STATUSES },
       },
     }),
     db.order.groupBy({
@@ -35,7 +56,7 @@ export async function getAdminStats() {
     db.$queryRaw<Array<{ month: Date; revenue: number }>>(Prisma.sql`
       SELECT
         DATE_TRUNC('month', "createdAt") AS month,
-        COALESCE(SUM(CASE WHEN status IN ('PAID','SHIPPED','DELIVERED') THEN total ELSE 0 END), 0) AS revenue
+        COALESCE(SUM(CASE WHEN status IN (${Prisma.join(REVENUE_GENERATING_STATUSES)}) THEN total ELSE 0 END), 0) AS revenue
       FROM "Order"
       WHERE "createdAt" >= NOW() - INTERVAL '6 months'
       GROUP BY DATE_TRUNC('month', "createdAt")
@@ -55,12 +76,11 @@ export async function getAdminStats() {
   for (let i = 5; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const key = d.toISOString().slice(0, 7); // "2025-01"
-    const label = d.toLocaleString("en-US", { month: "short", year: "2-digit" });
     const found = monthlyRevenueRaw.find((r) => {
       const rKey = new Date(r.month).toISOString().slice(0, 7);
       return rKey === key;
     });
-    months.push({ month: label, revenue: found ? Number(found.revenue) : 0 });
+    months.push({ month: key, revenue: found ? Number(found.revenue) : 0 });
   }
 
   return {
@@ -77,6 +97,7 @@ export async function getAdminStats() {
 // ─── Recent Orders (for overview) ─────────────────────────────────────────────
 
 export async function getRecentOrders() {
+  await assertAdmin();
   const orders = await db.order.findMany({
     take: 6,
     orderBy: { createdAt: "desc" },
@@ -100,6 +121,7 @@ export async function getRecentOrders() {
 // ─── Products ─────────────────────────────────────────────────────────────────
 
 export async function getAdminProducts({ page = 1 }: { page?: number } = {}) {
+  await assertAdmin();
   const skip = (page - 1) * PAGE_SIZE;
   const [total, products] = await Promise.all([
     db.product.count(),
@@ -145,6 +167,7 @@ export async function getAdminOrders({
   page?: number;
   status?: OrderStatus;
 } = {}) {
+  await assertAdmin();
   const where: Prisma.OrderWhereInput = status ? { status } : {};
   const skip = (page - 1) * PAGE_SIZE;
 
@@ -179,6 +202,7 @@ export async function getAdminOrders({
 }
 
 export async function updateOrderStatusAction(id: string, status: OrderStatus) {
+  await assertAdmin();
   await db.order.update({ where: { id }, data: { status } });
   revalidatePath("/admin/orders");
 }
@@ -186,6 +210,7 @@ export async function updateOrderStatusAction(id: string, status: OrderStatus) {
 // ─── Users ────────────────────────────────────────────────────────────────────
 
 export async function getAdminUsers({ page = 1 }: { page?: number } = {}) {
+  await assertAdmin();
   const skip = (page - 1) * PAGE_SIZE;
   const [total, users] = await Promise.all([
     db.user.count(),
@@ -223,6 +248,7 @@ export async function getAdminReviews({
   page?: number;
   status?: ReviewStatus;
 } = {}) {
+  await assertAdmin();
   const where: Prisma.ReviewWhereInput = status ? { status } : {};
   const skip = (page - 1) * PAGE_SIZE;
 
@@ -259,6 +285,7 @@ export async function getAdminReviews({
 }
 
 export async function updateReviewStatusAction(id: string, status: ReviewStatus) {
+  await assertAdmin();
   await db.review.update({ where: { id }, data: { status } });
   revalidatePath("/admin/reviews");
 }
