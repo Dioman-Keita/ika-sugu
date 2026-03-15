@@ -43,11 +43,7 @@ export default function RevenueChart({ data }: Props) {
           }}
           formatter={(value) => [`$${Number(value ?? 0).toFixed(2)}`, "Revenue"]}
         />
-        <Bar
-          dataKey="revenue"
-          fill="hsl(var(--foreground))"
-          radius={[6, 6, 0, 0]}
-        />
+        <Bar dataKey="revenue" fill="hsl(var(--foreground))" radius={[6, 6, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

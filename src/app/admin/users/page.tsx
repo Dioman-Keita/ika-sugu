@@ -1,6 +1,10 @@
 import { Users } from "lucide-react";
 import { getAdminUsers } from "@/app/actions/admin";
 import AdminPagination from "@/components/admin/AdminPagination";
+import { cookies } from "next/headers";
+import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
+import { Locale, parseLocale } from "@/lib/i18n/locale";
+import { messages } from "@/lib/i18n/messages";
 
 type Props = {
   searchParams: Promise<{ page?: string }>;
@@ -10,13 +14,18 @@ function getInitials(name: string, email: string): string {
   const trimmed = name.trim();
   if (trimmed) {
     const parts = trimmed.split(/\s+/);
-    if (parts.length >= 2) return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+    if (parts.length >= 2)
+      return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
     return trimmed.substring(0, 2).toUpperCase();
   }
   return email.substring(0, 2).toUpperCase();
 }
 
 export default async function AdminUsersPage({ searchParams }: Props) {
+  const cookieStore = await cookies();
+  const locale: Locale = parseLocale(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
+  const m = messages[locale];
+
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
   const { users, total, totalPages, currentPage } = await getAdminUsers({ page });
@@ -27,7 +36,7 @@ export default async function AdminUsersPage({ searchParams }: Props) {
       <div className="px-6 py-5 border-b border-border bg-surface-card sticky top-0 z-10">
         <div className="flex items-center gap-2">
           <Users size={18} className="text-muted-foreground" />
-          <h1 className="text-lg font-bold text-foreground">Users</h1>
+          <h1 className="text-lg font-bold text-foreground">{m["admin.users.title"]}</h1>
           <span className="ml-2 text-xs font-medium bg-surface-section px-2 py-0.5 rounded-full text-muted-foreground">
             {total}
           </span>
@@ -41,24 +50,27 @@ export default async function AdminUsersPage({ searchParams }: Props) {
               <thead>
                 <tr className="border-b border-border bg-surface-section">
                   <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground">
-                    User
+                    {m["admin.users.table.user"]}
                   </th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground">
-                    Email verified
+                    {m["admin.users.table.emailVerified"]}
                   </th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-muted-foreground">
-                    Orders
+                    {m["admin.users.table.orders"]}
                   </th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground">
-                    Joined
+                    {m["admin.users.table.joined"]}
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {users.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-5 py-10 text-center text-muted-foreground">
-                      No users found.
+                    <td
+                      colSpan={4}
+                      className="px-5 py-10 text-center text-muted-foreground"
+                    >
+                      {m["admin.users.noUsers"]}
                     </td>
                   </tr>
                 ) : (
@@ -78,18 +90,20 @@ export default async function AdminUsersPage({ searchParams }: Props) {
                             </div>
                             <div>
                               <p className="font-medium text-foreground">{user.name}</p>
-                              <p className="text-xs text-muted-foreground">{user.email}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {user.email}
+                              </p>
                             </div>
                           </div>
                         </td>
                         <td className="px-5 py-3">
                           {user.emailVerified ? (
                             <span className="text-xs font-medium text-green-600 bg-green-500/10 border border-green-500/20 px-2 py-0.5 rounded-full">
-                              Verified
+                              {m["admin.users.status.verified"]}
                             </span>
                           ) : (
                             <span className="text-xs font-medium text-amber-600 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
-                              Unverified
+                              {m["admin.users.status.unverified"]}
                             </span>
                           )}
                         </td>
@@ -97,11 +111,11 @@ export default async function AdminUsersPage({ searchParams }: Props) {
                           {user.ordersCount}
                         </td>
                         <td className="px-5 py-3 text-xs text-muted-foreground">
-                          {new Date(user.createdAt).toLocaleDateString("en-US", {
+                          {new Intl.DateTimeFormat(locale, {
                             month: "short",
                             day: "numeric",
                             year: "numeric",
-                          })}
+                          }).format(new Date(user.createdAt))}
                         </td>
                       </tr>
                     );

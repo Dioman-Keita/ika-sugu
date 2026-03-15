@@ -31,7 +31,11 @@ export default function ReviewActions({ reviewId, currentStatus }: Props) {
         onClick={handleReject}
         disabled={isPending}
       >
-        {isPending ? <Loader2 size={12} className="animate-spin" /> : <XCircle size={12} />}
+        {isPending ? (
+          <Loader2 size={12} className="animate-spin" />
+        ) : (
+          <XCircle size={12} />
+        )}
         <span className="ml-1">Reject</span>
       </Button>
     );
@@ -46,7 +50,11 @@ export default function ReviewActions({ reviewId, currentStatus }: Props) {
         onClick={handleApprove}
         disabled={isPending}
       >
-        {isPending ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} />}
+        {isPending ? (
+          <Loader2 size={12} className="animate-spin" />
+        ) : (
+          <CheckCircle size={12} />
+        )}
         <span className="ml-1">Approve</span>
       </Button>
     );
@@ -61,7 +69,11 @@ export default function ReviewActions({ reviewId, currentStatus }: Props) {
         onClick={handleApprove}
         disabled={isPending}
       >
-        {isPending ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} />}
+        {isPending ? (
+          <Loader2 size={12} className="animate-spin" />
+        ) : (
+          <CheckCircle size={12} />
+        )}
         <span className="ml-1">Approve</span>
       </Button>
       <Button
@@ -71,7 +83,11 @@ export default function ReviewActions({ reviewId, currentStatus }: Props) {
         onClick={handleReject}
         disabled={isPending}
       >
-        {isPending ? <Loader2 size={12} className="animate-spin" /> : <XCircle size={12} />}
+        {isPending ? (
+          <Loader2 size={12} className="animate-spin" />
+        ) : (
+          <XCircle size={12} />
+        )}
         <span className="ml-1">Reject</span>
       </Button>
     </div>

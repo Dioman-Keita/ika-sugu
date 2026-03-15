@@ -2,12 +2,20 @@ import Link from "next/link";
 import { Package } from "lucide-react";
 import { getAdminProducts } from "@/app/actions/admin";
 import AdminPagination from "@/components/admin/AdminPagination";
+import { cookies } from "next/headers";
+import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
+import { Locale, parseLocale } from "@/lib/i18n/locale";
+import { messages } from "@/lib/i18n/messages";
 
 type Props = {
   searchParams: Promise<{ page?: string }>;
 };
 
 export default async function AdminProductsPage({ searchParams }: Props) {
+  const cookieStore = await cookies();
+  const locale: Locale = parseLocale(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
+  const m = messages[locale];
+
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
   const { products, total, totalPages, currentPage } = await getAdminProducts({ page });
@@ -18,7 +26,9 @@ export default async function AdminProductsPage({ searchParams }: Props) {
       <div className="px-6 py-5 border-b border-border bg-surface-card sticky top-0 z-10 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Package size={18} className="text-muted-foreground" />
-          <h1 className="text-lg font-bold text-foreground">Products</h1>
+          <h1 className="text-lg font-bold text-foreground">
+            {m["admin.products.title"]}
+          </h1>
           <span className="ml-2 text-xs font-medium bg-surface-section px-2 py-0.5 rounded-full text-muted-foreground">
             {total}
           </span>
@@ -32,33 +42,36 @@ export default async function AdminProductsPage({ searchParams }: Props) {
               <thead>
                 <tr className="border-b border-border bg-surface-section">
                   <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground">
-                    Product
+                    {m["admin.products.table.product"]}
                   </th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground">
-                    Category
+                    {m["admin.products.table.category"]}
                   </th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-muted-foreground">
-                    Price
+                    {m["admin.products.table.price"]}
                   </th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-muted-foreground">
-                    Discount
+                    {m["admin.products.table.discount"]}
                   </th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-muted-foreground">
-                    Variants
+                    {m["admin.products.table.variants"]}
                   </th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-muted-foreground">
-                    Stock
+                    {m["admin.products.table.stock"]}
                   </th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground">
-                    Added
+                    {m["admin.products.table.added"]}
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {products.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-5 py-10 text-center text-muted-foreground">
-                      No products found.
+                    <td
+                      colSpan={7}
+                      className="px-5 py-10 text-center text-muted-foreground"
+                    >
+                      {m["admin.products.noProducts"]}
                     </td>
                   </tr>
                 ) : (
@@ -75,11 +88,18 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                         >
                           {product.name}
                         </Link>
-                        <p className="text-[11px] text-muted-foreground font-mono">{product.id.slice(-8)}</p>
+                        <p className="text-[11px] text-muted-foreground font-mono">
+                          {product.id.slice(-8)}
+                        </p>
                       </td>
-                      <td className="px-5 py-3 text-muted-foreground">{product.category}</td>
+                      <td className="px-5 py-3 text-muted-foreground">
+                        {product.category}
+                      </td>
                       <td className="px-5 py-3 text-right font-semibold text-foreground">
-                        ${product.finalPrice.toFixed(2)}
+                        {new Intl.NumberFormat(locale, {
+                          style: "currency",
+                          currency: "USD",
+                        }).format(product.finalPrice)}
                       </td>
                       <td className="px-5 py-3 text-right">
                         {product.discountPercentage > 0 ? (
@@ -107,11 +127,11 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                         </span>
                       </td>
                       <td className="px-5 py-3 text-muted-foreground text-xs">
-                        {new Date(product.createdAt).toLocaleDateString("en-US", {
+                        {new Intl.DateTimeFormat(locale, {
                           month: "short",
                           day: "numeric",
                           year: "numeric",
-                        })}
+                        }).format(new Date(product.createdAt))}
                       </td>
                     </tr>
                   ))

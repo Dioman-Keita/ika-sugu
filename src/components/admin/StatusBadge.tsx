@@ -1,7 +1,8 @@
 import { cn } from "@/lib/utils";
 
 const orderStatusStyles: Record<string, string> = {
-  PENDING: "bg-amber-500/10 text-amber-600 border border-amber-500/20 dark:text-amber-400",
+  PENDING:
+    "bg-amber-500/10 text-amber-600 border border-amber-500/20 dark:text-amber-400",
   PAID: "bg-blue-500/10 text-blue-600 border border-blue-500/20",
   SHIPPED: "bg-indigo-500/10 text-indigo-600 border border-indigo-500/20",
   DELIVERED: "bg-green-500/10 text-green-600 border border-green-500/20",
@@ -9,7 +10,8 @@ const orderStatusStyles: Record<string, string> = {
 };
 
 const reviewStatusStyles: Record<string, string> = {
-  PENDING: "bg-amber-500/10 text-amber-600 border border-amber-500/20 dark:text-amber-400",
+  PENDING:
+    "bg-amber-500/10 text-amber-600 border border-amber-500/20 dark:text-amber-400",
   APPROVED: "bg-green-500/10 text-green-600 border border-green-500/20",
   REJECTED: "bg-red-500/10 text-red-500 border border-red-500/20",
 };

@@ -13,17 +13,23 @@ import {
   Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const navLinks = [
-  { href: "/admin/overview", label: "Overview", icon: LayoutDashboard },
-  { href: "/admin/products", label: "Products", icon: Package },
-  { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
-  { href: "/admin/users", label: "Users", icon: Users },
-  { href: "/admin/reviews", label: "Reviews", icon: Star },
-];
+import { useUiPreferences } from "@/lib/ui-preferences";
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const { t } = useUiPreferences();
+
+  const navLinks = [
+    {
+      href: "/admin/overview",
+      label: t("admin.sidebar.overview"),
+      icon: LayoutDashboard,
+    },
+    { href: "/admin/products", label: t("admin.sidebar.products"), icon: Package },
+    { href: "/admin/orders", label: t("admin.sidebar.orders"), icon: ShoppingCart },
+    { href: "/admin/users", label: t("admin.sidebar.users"), icon: Users },
+    { href: "/admin/reviews", label: t("admin.sidebar.reviews"), icon: Star },
+  ];
 
   return (
     <aside className="w-60 shrink-0 border-r border-border bg-surface-card flex flex-col">
@@ -33,7 +39,9 @@ export default function AdminSidebar() {
           <Shield size={15} className="text-background" />
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-bold text-foreground leading-none">Admin Panel</p>
+          <p className="text-sm font-bold text-foreground leading-none">
+            {t("admin.sidebar.adminPanel")}
+          </p>
           <p className="text-[11px] text-muted-foreground mt-0.5">Ika Sugu</p>
         </div>
       </div>
@@ -67,14 +75,14 @@ export default function AdminSidebar() {
           className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-surface-section transition-colors"
         >
           <ChevronLeft size={16} />
-          Back to Store
+          {t("admin.sidebar.backToStore")}
         </Link>
         <Link
           href="/account"
           className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-surface-section transition-colors"
         >
           <Settings size={16} />
-          Account Settings
+          {t("admin.sidebar.accountSettings")}
         </Link>
       </div>
     </aside>

@@ -24,7 +24,9 @@ export async function getAdminStats() {
     db.review.count({ where: { status: ReviewStatus.PENDING } }),
     db.order.aggregate({
       _sum: { total: true },
-      where: { status: { in: [OrderStatus.PAID, OrderStatus.SHIPPED, OrderStatus.DELIVERED] } },
+      where: {
+        status: { in: [OrderStatus.PAID, OrderStatus.SHIPPED, OrderStatus.DELIVERED] },
+      },
     }),
     db.order.groupBy({
       by: ["status"],

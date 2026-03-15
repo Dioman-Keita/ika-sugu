@@ -6,13 +6,10 @@ import AdminPagination from "@/components/admin/AdminPagination";
 import StatusBadge from "@/components/admin/StatusBadge";
 import ReviewActions from "@/components/admin/ReviewActions";
 import { cn } from "@/lib/utils";
-
-const STATUS_TABS: { label: string; value: ReviewStatus | "ALL" }[] = [
-  { label: "All", value: "ALL" },
-  { label: "Pending", value: ReviewStatus.PENDING },
-  { label: "Approved", value: ReviewStatus.APPROVED },
-  { label: "Rejected", value: ReviewStatus.REJECTED },
-];
+import { cookies } from "next/headers";
+import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
+import { Locale, parseLocale } from "@/lib/i18n/locale";
+import { messages } from "@/lib/i18n/messages";
 
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -21,7 +18,9 @@ function StarRating({ rating }: { rating: number }) {
         <Star
           key={s}
           size={11}
-          className={s <= rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}
+          className={
+            s <= rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"
+          }
         />
       ))}
     </div>
@@ -33,13 +32,27 @@ type Props = {
 };
 
 export default async function AdminReviewsPage({ searchParams }: Props) {
+  const cookieStore = await cookies();
+  const locale: Locale = parseLocale(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
+  const m = messages[locale];
+
+  const STATUS_TABS: { label: string; value: ReviewStatus | "ALL" }[] = [
+    { label: m["admin.reviews.tabs.all"], value: "ALL" },
+    { label: m["admin.reviews.tabs.pending"], value: ReviewStatus.PENDING },
+    { label: m["admin.reviews.tabs.approved"], value: ReviewStatus.APPROVED },
+    { label: m["admin.reviews.tabs.rejected"], value: ReviewStatus.REJECTED },
+  ];
+
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
   const rawStatus = params.status?.toUpperCase();
   const status =
     rawStatus && rawStatus !== "ALL" ? (rawStatus as ReviewStatus) : undefined;
 
-  const { reviews, total, totalPages, currentPage } = await getAdminReviews({ page, status });
+  const { reviews, total, totalPages, currentPage } = await getAdminReviews({
+    page,
+    status,
+  });
 
   const baseUrl = status ? `/admin/reviews?status=${status}` : "/admin/reviews";
 
@@ -49,7 +62,9 @@ export default async function AdminReviewsPage({ searchParams }: Props) {
       <div className="px-6 py-5 border-b border-border bg-surface-card sticky top-0 z-10">
         <div className="flex items-center gap-2">
           <Star size={18} className="text-muted-foreground" />
-          <h1 className="text-lg font-bold text-foreground">Reviews</h1>
+          <h1 className="text-lg font-bold text-foreground">
+            {m["admin.reviews.title"]}
+          </h1>
           <span className="ml-2 text-xs font-medium bg-surface-section px-2 py-0.5 rounded-full text-muted-foreground">
             {total}
           </span>
@@ -87,33 +102,36 @@ export default async function AdminReviewsPage({ searchParams }: Props) {
               <thead>
                 <tr className="border-b border-border bg-surface-section">
                   <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground">
-                    User
+                    {m["admin.reviews.table.user"]}
                   </th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground">
-                    Product
+                    {m["admin.reviews.table.product"]}
                   </th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground">
-                    Rating
+                    {m["admin.reviews.table.rating"]}
                   </th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground">
-                    Review
+                    {m["admin.reviews.table.review"]}
                   </th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground">
-                    Status
+                    {m["admin.reviews.table.status"]}
                   </th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground">
-                    Date
+                    {m["admin.reviews.table.date"]}
                   </th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-muted-foreground">
-                    Actions
+                    {m["admin.reviews.table.actions"]}
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {reviews.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-5 py-10 text-center text-muted-foreground">
-                      No reviews found.
+                    <td
+                      colSpan={7}
+                      className="px-5 py-10 text-center text-muted-foreground"
+                    >
+                      {m["admin.reviews.noReviews"]}
                     </td>
                   </tr>
                 ) : (
@@ -124,7 +142,9 @@ export default async function AdminReviewsPage({ searchParams }: Props) {
                     >
                       <td className="px-5 py-3">
                         <p className="font-medium text-foreground">{review.userName}</p>
-                        <p className="text-xs text-muted-foreground">{review.userEmail}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {review.userEmail}
+                        </p>
                       </td>
                       <td className="px-5 py-3">
                         <p
@@ -136,7 +156,9 @@ export default async function AdminReviewsPage({ searchParams }: Props) {
                       </td>
                       <td className="px-5 py-3">
                         <StarRating rating={review.rating} />
-                        <span className="text-xs text-muted-foreground">{review.rating}/5</span>
+                        <span className="text-xs text-muted-foreground">
+                          {review.rating}/5
+                        </span>
                       </td>
                       <td className="px-5 py-3">
                         <p
@@ -147,7 +169,7 @@ export default async function AdminReviewsPage({ searchParams }: Props) {
                         </p>
                         {review.verifiedPurchase && (
                           <span className="text-[10px] font-medium text-green-600">
-                            ✓ Verified purchase
+                            ✓ {m["admin.reviews.verifiedPurchase"]}
                           </span>
                         )}
                       </td>
@@ -155,11 +177,11 @@ export default async function AdminReviewsPage({ searchParams }: Props) {
                         <StatusBadge status={review.status} type="review" />
                       </td>
                       <td className="px-5 py-3 text-xs text-muted-foreground">
-                        {new Date(review.createdAt).toLocaleDateString("en-US", {
+                        {new Intl.DateTimeFormat(locale, {
                           month: "short",
                           day: "numeric",
                           year: "numeric",
-                        })}
+                        }).format(new Date(review.createdAt))}
                       </td>
                       <td className="px-5 py-3 text-right">
                         <ReviewActions

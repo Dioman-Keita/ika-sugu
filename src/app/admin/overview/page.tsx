@@ -9,6 +9,10 @@ import {
 import { getAdminStats, getRecentOrders } from "@/app/actions/admin";
 import RevenueChart from "@/components/admin/RevenueChart";
 import StatusBadge from "@/components/admin/StatusBadge";
+import { cookies } from "next/headers";
+import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
+import { Locale, parseLocale } from "@/lib/i18n/locale";
+import { messages } from "@/lib/i18n/messages";
 
 function StatCard({
   label,
@@ -40,9 +44,13 @@ function StatCard({
 }
 
 export default async function OverviewPage() {
+  const cookieStore = await cookies();
+  const locale: Locale = parseLocale(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
+  const m = messages[locale];
+
   const [stats, recentOrders] = await Promise.all([getAdminStats(), getRecentOrders()]);
 
-  const formattedRevenue = new Intl.NumberFormat("en-US", {
+  const formattedRevenue = new Intl.NumberFormat(locale, {
     style: "currency",
     currency: "USD",
     minimumFractionDigits: 0,
@@ -50,11 +58,15 @@ export default async function OverviewPage() {
   }).format(stats.totalRevenue);
 
   const orderStatuses = [
-    { label: "Pending", key: "PENDING", color: "bg-amber-500" },
-    { label: "Paid", key: "PAID", color: "bg-blue-500" },
-    { label: "Shipped", key: "SHIPPED", color: "bg-indigo-500" },
-    { label: "Delivered", key: "DELIVERED", color: "bg-green-500" },
-    { label: "Canceled", key: "CANCELED", color: "bg-red-500" },
+    { label: m["admin.overview.status.PENDING"], key: "PENDING", color: "bg-amber-500" },
+    { label: m["admin.overview.status.PAID"], key: "PAID", color: "bg-blue-500" },
+    { label: m["admin.overview.status.SHIPPED"], key: "SHIPPED", color: "bg-indigo-500" },
+    {
+      label: m["admin.overview.status.DELIVERED"],
+      key: "DELIVERED",
+      color: "bg-green-500",
+    },
+    { label: m["admin.overview.status.CANCELED"], key: "CANCELED", color: "bg-red-500" },
   ];
 
   return (
@@ -62,14 +74,16 @@ export default async function OverviewPage() {
       {/* Header */}
       <div className="px-6 py-5 border-b border-border flex items-center justify-between bg-surface-card sticky top-0 z-10">
         <div>
-          <h1 className="text-lg font-bold text-foreground">Overview</h1>
+          <h1 className="text-lg font-bold text-foreground">
+            {m["admin.overview.title"]}
+          </h1>
           <p className="text-xs text-muted-foreground">
-            {new Date().toLocaleDateString("en-US", {
+            {new Intl.DateTimeFormat(locale, {
               weekday: "long",
               year: "numeric",
               month: "long",
               day: "numeric",
-            })}
+            }).format(new Date())}
           </p>
         </div>
       </div>
@@ -78,26 +92,32 @@ export default async function OverviewPage() {
         {/* KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
-            label="Total Revenue"
+            label={m["admin.overview.revenue"]}
             value={formattedRevenue}
-            sub="Paid / Shipped / Delivered"
+            sub={m["admin.overview.revenueSub"]}
             icon={DollarSign}
           />
           <StatCard
-            label="Total Orders"
-            value={stats.totalOrders.toLocaleString()}
-            sub={`${stats.ordersByStatus["PENDING"] ?? 0} pending`}
+            label={m["admin.overview.orders"]}
+            value={stats.totalOrders.toLocaleString(locale)}
+            sub={m["admin.overview.ordersPending"].replace(
+              "{count}",
+              String(stats.ordersByStatus["PENDING"] ?? 0),
+            )}
             icon={ShoppingCart}
           />
           <StatCard
-            label="Total Users"
-            value={stats.totalUsers.toLocaleString()}
+            label={m["admin.overview.users"]}
+            value={stats.totalUsers.toLocaleString(locale)}
             icon={Users}
           />
           <StatCard
-            label="Total Products"
-            value={stats.totalProducts.toLocaleString()}
-            sub={`${stats.pendingReviews} reviews pending`}
+            label={m["admin.overview.products"]}
+            value={stats.totalProducts.toLocaleString(locale)}
+            sub={m["admin.overview.reviewsPending"].replace(
+              "{count}",
+              String(stats.pendingReviews),
+            )}
             icon={Package}
           />
         </div>
@@ -108,7 +128,9 @@ export default async function OverviewPage() {
           <div className="lg:col-span-2 border border-border rounded-2xl bg-surface-card p-5">
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp size={16} className="text-muted-foreground" />
-              <h2 className="text-sm font-semibold text-foreground">Revenue (last 6 months)</h2>
+              <h2 className="text-sm font-semibold text-foreground">
+                {m["admin.overview.revenueChart"]}
+              </h2>
             </div>
             <RevenueChart data={stats.monthlyRevenue} />
           </div>
@@ -117,7 +139,9 @@ export default async function OverviewPage() {
           <div className="border border-border rounded-2xl bg-surface-card p-5">
             <div className="flex items-center gap-2 mb-4">
               <ShoppingCart size={16} className="text-muted-foreground" />
-              <h2 className="text-sm font-semibold text-foreground">Orders by status</h2>
+              <h2 className="text-sm font-semibold text-foreground">
+                {m["admin.overview.ordersByStatus"]}
+              </h2>
             </div>
             <div className="space-y-3">
               {orderStatuses.map(({ label, key, color }) => {
@@ -127,7 +151,9 @@ export default async function OverviewPage() {
                   <div key={key}>
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs text-muted-foreground">{label}</span>
-                      <span className="text-xs font-semibold text-foreground">{count}</span>
+                      <span className="text-xs font-semibold text-foreground">
+                        {count}
+                      </span>
                     </div>
                     <div className="h-1.5 rounded-full bg-surface-section overflow-hidden">
                       <div
@@ -146,52 +172,64 @@ export default async function OverviewPage() {
         <div className="border border-border rounded-2xl bg-surface-card overflow-hidden">
           <div className="px-5 py-4 border-b border-border flex items-center gap-2">
             <Clock size={16} className="text-muted-foreground" />
-            <h2 className="text-sm font-semibold text-foreground">Recent Orders</h2>
+            <h2 className="text-sm font-semibold text-foreground">
+              {m["admin.overview.recentOrders"]}
+            </h2>
           </div>
           {recentOrders.length === 0 ? (
-            <p className="px-5 py-8 text-sm text-muted-foreground text-center">No orders yet.</p>
+            <p className="px-5 py-8 text-sm text-muted-foreground text-center">
+              {m["admin.overview.noOrders"]}
+            </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-surface-section">
                     <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground">
-                      Customer
+                      {m["admin.overview.table.customer"]}
                     </th>
                     <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground">
-                      Items
+                      {m["admin.overview.table.items"]}
                     </th>
                     <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground">
-                      Total
+                      {m["admin.overview.table.total"]}
                     </th>
                     <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground">
-                      Status
+                      {m["admin.overview.table.status"]}
                     </th>
                     <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground">
-                      Date
+                      {m["admin.overview.table.date"]}
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {recentOrders.map((order) => (
-                    <tr key={order.id} className="hover:bg-surface-section/50 transition-colors">
+                    <tr
+                      key={order.id}
+                      className="hover:bg-surface-section/50 transition-colors"
+                    >
                       <td className="px-5 py-3">
                         <p className="font-medium text-foreground">{order.userName}</p>
                         <p className="text-xs text-muted-foreground">{order.userEmail}</p>
                       </td>
-                      <td className="px-5 py-3 text-muted-foreground">{order.itemCount}</td>
+                      <td className="px-5 py-3 text-muted-foreground">
+                        {order.itemCount}
+                      </td>
                       <td className="px-5 py-3 font-semibold text-foreground">
-                        ${order.total.toFixed(2)}
+                        {new Intl.NumberFormat(locale, {
+                          style: "currency",
+                          currency: "USD",
+                        }).format(order.total)}
                       </td>
                       <td className="px-5 py-3">
                         <StatusBadge status={order.status} />
                       </td>
                       <td className="px-5 py-3 text-muted-foreground text-xs">
-                        {new Date(order.createdAt).toLocaleDateString("en-US", {
+                        {new Intl.DateTimeFormat(locale, {
                           month: "short",
                           day: "numeric",
                           year: "numeric",
-                        })}
+                        }).format(new Date(order.createdAt))}
                       </td>
                     </tr>
                   ))}
