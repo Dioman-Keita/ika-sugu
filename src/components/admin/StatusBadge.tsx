@@ -1,0 +1,38 @@
+import { cn } from "@/lib/utils";
+
+const orderStatusStyles: Record<string, string> = {
+  PENDING:
+    "bg-amber-500/10 text-amber-600 border border-amber-500/20 dark:text-amber-400",
+  PAID: "bg-blue-500/10 text-blue-600 border border-blue-500/20",
+  SHIPPED: "bg-indigo-500/10 text-indigo-600 border border-indigo-500/20",
+  DELIVERED: "bg-green-500/10 text-green-600 border border-green-500/20",
+  CANCELED: "bg-red-500/10 text-red-500 border border-red-500/20",
+};
+
+const reviewStatusStyles: Record<string, string> = {
+  PENDING:
+    "bg-amber-500/10 text-amber-600 border border-amber-500/20 dark:text-amber-400",
+  APPROVED: "bg-green-500/10 text-green-600 border border-green-500/20",
+  REJECTED: "bg-red-500/10 text-red-500 border border-red-500/20",
+};
+
+type Props = {
+  status: string;
+  type?: "order" | "review";
+  className?: string;
+};
+
+export default function StatusBadge({ status, type = "order", className }: Props) {
+  const styles = type === "review" ? reviewStatusStyles : orderStatusStyles;
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold",
+        styles[status] ?? "bg-muted text-muted-foreground border border-border",
+        className,
+      )}
+    >
+      {status.charAt(0) + status.slice(1).toLowerCase()}
+    </span>
+  );
+}
