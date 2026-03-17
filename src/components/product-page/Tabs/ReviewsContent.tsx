@@ -25,10 +25,7 @@ import Rating from "@/components/ui/Rating";
 import { Label } from "@/components/ui/label";
 import { createProductReviewAction } from "@/app/actions/reviews";
 import { authClient } from "@/lib/auth-client";
-import {
-  getReviewSubmissionErrorCode,
-  ReviewSubmissionErrorCode,
-} from "@/lib/errors/review-errors";
+import { ReviewSubmissionErrorCode } from "@/lib/errors/review-errors";
 import { REVIEW_MAX_CHARACTERS, REVIEW_MIN_CHARACTERS } from "@/lib/review-config";
 
 const ReviewsContent = ({ reviews, productId }: { reviews: Review[]; productId: string }) => {
@@ -52,18 +49,13 @@ const ReviewsContent = ({ reviews, productId }: { reviews: Review[]; productId: 
     setError(null);
     startTransition(async () => {
       try {
-        await createProductReviewAction({
-          productId,
-          rating,
-          content,
-        });
-        setDidSubmit(true);
-        setIsDialogOpen(false);
-        setContent("");
-        setRating(5);
-      } catch (e) {
-        const code = getReviewSubmissionErrorCode(e);
-        switch (code) {
+      const result = await createProductReviewAction({
+        productId,
+        rating,
+        content,
+      });
+      if (!result.ok) {
+        switch (result.errorCode) {
           case ReviewSubmissionErrorCode.Unauthorized:
             setError(t("product.reviews.error.unauthorized"));
             break;
@@ -73,9 +65,21 @@ const ReviewsContent = ({ reviews, productId }: { reviews: Review[]; productId: 
           case ReviewSubmissionErrorCode.ReviewTooShort:
             setError(t("product.reviews.error.tooShort"));
             break;
+          case ReviewSubmissionErrorCode.InvalidProductId:
+            setError(t("product.reviews.error.generic"));
+            break;
           default:
             setError(t("product.reviews.error.generic"));
         }
+        return;
+      }
+
+        setDidSubmit(true);
+        setIsDialogOpen(false);
+        setContent("");
+        setRating(5);
+      } catch {
+        setError(t("product.reviews.error.generic"));
       }
     });
   };
