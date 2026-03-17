@@ -4,7 +4,6 @@ import db from "@/lib/db";
 import { OrderStatus, Prisma } from "@/generated/prisma/client";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { revalidatePath } from "next/cache";
 import {
   ReviewSubmissionError,
   ReviewSubmissionErrorCode,
@@ -83,8 +82,6 @@ export async function createProductReviewAction(input: CreateProductReviewInput)
     });
 
     // Review is PENDING by default. Product pages show APPROVED reviews only.
-    revalidatePath(`/shop/product/${productId}`);
-
     return { ok: true as const, reviewId: review.id, status: "PENDING" as const };
   } catch (err) {
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
