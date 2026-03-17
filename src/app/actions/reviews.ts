@@ -5,6 +5,11 @@ import { OrderStatus, Prisma } from "@/generated/prisma/client";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import {
+  ReviewSubmissionError,
+  ReviewSubmissionErrorCode,
+} from "@/lib/errors/review-errors";
+import { REVIEW_MIN_CHARACTERS } from "@/lib/review-config";
 
 type CreateProductReviewInput = {
   productId: string;
@@ -18,16 +23,22 @@ const clampInt = (value: number, min: number, max: number) =>
 
 export async function createProductReviewAction(input: CreateProductReviewInput) {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user?.id) throw new Error("Unauthorized");
+  if (!session?.user?.id) {
+    throw new ReviewSubmissionError(ReviewSubmissionErrorCode.Unauthorized);
+  }
 
   const productId = String(input.productId || "").trim();
-  if (!productId) throw new Error("Invalid productId");
+  if (!productId) {
+    throw new ReviewSubmissionError(ReviewSubmissionErrorCode.InvalidProductId);
+  }
 
   const rating = clampInt(Number(input.rating), 1, 5);
   const content = String(input.content || "").trim();
   const title = input.title ? String(input.title).trim() : undefined;
 
-  if (content.length < 10) throw new Error("Review is too short");
+  if (content.length < REVIEW_MIN_CHARACTERS) {
+    throw new ReviewSubmissionError(ReviewSubmissionErrorCode.ReviewTooShort);
+  }
 
   const userId = session.user.id;
 
@@ -42,7 +53,7 @@ export async function createProductReviewAction(input: CreateProductReviewInput)
   });
 
   if (hasAlreadyReviewed) {
-    throw new Error("Duplicate review");
+    throw new ReviewSubmissionError(ReviewSubmissionErrorCode.DuplicateReview);
   }
 
   const verifiedPurchase = Boolean(
@@ -76,9 +87,9 @@ export async function createProductReviewAction(input: CreateProductReviewInput)
 
     return { ok: true as const, reviewId: review.id, status: "PENDING" as const };
   } catch (err) {
-    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
-      throw new Error("Duplicate review");
-    }
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+        throw new ReviewSubmissionError(ReviewSubmissionErrorCode.DuplicateReview);
+      }
     throw err;
   }
 }

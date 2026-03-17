@@ -25,8 +25,11 @@ import Rating from "@/components/ui/Rating";
 import { Label } from "@/components/ui/label";
 import { createProductReviewAction } from "@/app/actions/reviews";
 import { authClient } from "@/lib/auth-client";
-
-const MIN_REVIEW_CHARS = 10;
+import {
+  getReviewSubmissionErrorCode,
+  ReviewSubmissionErrorCode,
+} from "@/lib/errors/review-errors";
+import { REVIEW_MAX_CHARACTERS, REVIEW_MIN_CHARACTERS } from "@/lib/review-config";
 
 const ReviewsContent = ({ reviews, productId }: { reviews: Review[]; productId: string }) => {
   const { t } = useUiPreferences();
@@ -42,7 +45,7 @@ const ReviewsContent = ({ reviews, productId }: { reviews: Review[]; productId: 
   const canSubmit = useMemo(() => {
     if (!session?.user?.id) return false;
     if (isSubmitting) return false;
-    return content.trim().length >= MIN_REVIEW_CHARS && rating >= 1 && rating <= 5;
+    return content.trim().length >= REVIEW_MIN_CHARACTERS && rating >= 1 && rating <= 5;
   }, [content, isSubmitting, rating, session?.user?.id]);
 
   const submitReview = () => {
@@ -59,11 +62,20 @@ const ReviewsContent = ({ reviews, productId }: { reviews: Review[]; productId: 
         setContent("");
         setRating(5);
       } catch (e) {
-        const msg = e instanceof Error ? e.message : "Unknown error";
-        if (msg === "Unauthorized") setError(t("product.reviews.error.unauthorized"));
-        else if (msg === "Duplicate review") setError(t("product.reviews.error.duplicate"));
-        else if (msg === "Review is too short") setError(t("product.reviews.error.tooShort"));
-        else setError(t("product.reviews.error.generic"));
+        const code = getReviewSubmissionErrorCode(e);
+        switch (code) {
+          case ReviewSubmissionErrorCode.Unauthorized:
+            setError(t("product.reviews.error.unauthorized"));
+            break;
+          case ReviewSubmissionErrorCode.DuplicateReview:
+            setError(t("product.reviews.error.duplicate"));
+            break;
+          case ReviewSubmissionErrorCode.ReviewTooShort:
+            setError(t("product.reviews.error.tooShort"));
+            break;
+          default:
+            setError(t("product.reviews.error.generic"));
+        }
       }
     });
   };
@@ -161,9 +173,7 @@ const ReviewsContent = ({ reviews, productId }: { reviews: Review[]; productId: 
                     size={28}
                     SVGclassName="inline-block"
                   />
-                  <span className="text-sm text-muted-foreground">
-                    {rating}/5
-                  </span>
+                  <span className="text-sm text-muted-foreground">{rating}/5</span>
                 </div>
               </div>
 
@@ -181,7 +191,7 @@ const ReviewsContent = ({ reviews, productId }: { reviews: Review[]; productId: 
                 <div className="flex items-center justify-between text-xs sm:text-sm text-muted-foreground">
                   <span>{t("product.reviews.form.minChars")}</span>
                   <span>
-                    {Math.min(content.trim().length, 9999)}/{9999}
+                    {Math.min(content.trim().length, REVIEW_MAX_CHARACTERS)}/{REVIEW_MAX_CHARACTERS}
                   </span>
                 </div>
               </div>
