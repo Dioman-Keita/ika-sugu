@@ -37,7 +37,11 @@ export default async function ProductPage({
         <section className="mb-11">
           <Header data={productData.product} />
         </section>
-        <Tabs reviews={productData.reviews} specs={productData.product.specs} />
+        <Tabs
+          reviews={productData.reviews}
+          specs={productData.product.specs}
+          productId={productId}
+        />
       </div>
       <div className="mb-[50px] sm:mb-20">
         <ProductListSec titleKey="product.related" data={productData.relatedProducts} />

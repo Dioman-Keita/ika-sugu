@@ -15,7 +15,15 @@ type TabBtn = {
   label: string;
 };
 
-const Tabs = ({ reviews, specs }: { reviews: Review[]; specs?: SpecItem[] }) => {
+const Tabs = ({
+  reviews,
+  specs,
+  productId,
+}: {
+  reviews: Review[];
+  specs?: SpecItem[];
+  productId: string;
+}) => {
   const [active, setActive] = useState<number>(1);
   const { t } = useUiPreferences();
 
@@ -56,7 +64,7 @@ const Tabs = ({ reviews, specs }: { reviews: Review[]; specs?: SpecItem[] }) => 
       </div>
       <div className="mb-12 sm:mb-16">
         {active === 1 && <ProductDetailsContent specs={specs} />}
-        {active === 2 && <ReviewsContent reviews={reviews} />}
+        {active === 2 && <ReviewsContent reviews={reviews} productId={productId} />}
         {active === 3 && <FaqContent />}
       </div>
     </div>
