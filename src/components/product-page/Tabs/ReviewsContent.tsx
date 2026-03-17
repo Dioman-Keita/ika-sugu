@@ -49,27 +49,30 @@ const ReviewsContent = ({ reviews, productId }: { reviews: Review[]; productId: 
     setError(null);
     startTransition(async () => {
       try {
-        const result = await createProductReviewAction({
-          productId,
-          rating,
-          content,
-        });
-        if (!result.ok) {
-          switch (result.errorCode) {
-            case ReviewSubmissionErrorCode.Unauthorized:
-              setError(t("product.reviews.error.unauthorized"));
-              break;
-            case ReviewSubmissionErrorCode.DuplicateReview:
-              setError(t("product.reviews.error.duplicate"));
-              break;
-            case ReviewSubmissionErrorCode.ReviewTooShort:
-              setError(t("product.reviews.error.tooShort"));
-              break;
-            default:
-              setError(t("product.reviews.error.generic"));
-          }
-          return;
+      const result = await createProductReviewAction({
+        productId,
+        rating,
+        content,
+      });
+      if (!result.ok) {
+        switch (result.errorCode) {
+          case ReviewSubmissionErrorCode.Unauthorized:
+            setError(t("product.reviews.error.unauthorized"));
+            break;
+          case ReviewSubmissionErrorCode.DuplicateReview:
+            setError(t("product.reviews.error.duplicate"));
+            break;
+          case ReviewSubmissionErrorCode.ReviewTooShort:
+            setError(t("product.reviews.error.tooShort"));
+            break;
+          case ReviewSubmissionErrorCode.InvalidProductId:
+            setError(t("product.reviews.error.generic"));
+            break;
+          default:
+            setError(t("product.reviews.error.generic"));
         }
+        return;
+      }
 
         setDidSubmit(true);
         setIsDialogOpen(false);
