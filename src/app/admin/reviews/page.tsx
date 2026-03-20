@@ -10,6 +10,7 @@ import { cookies } from "next/headers";
 import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
 import { Locale, parseLocale } from "@/lib/i18n/locale";
 import { messages } from "@/lib/i18n/messages";
+import ReviewContentCell from "@/components/admin/ReviewContentCell";
 
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -156,22 +157,20 @@ export default async function AdminReviewsPage({ searchParams }: Props) {
                       </td>
                       <td className="px-5 py-3">
                         <StarRating rating={review.rating} />
-                        <span className="text-xs text-muted-foreground">
-                          {review.rating}/5
-                        </span>
                       </td>
                       <td className="px-5 py-3">
-                        <p
-                          className="text-muted-foreground text-xs max-w-[200px] truncate"
-                          title={review.content}
-                        >
-                          {review.content}
-                        </p>
-                        {review.verifiedPurchase && (
-                          <span className="text-[10px] font-medium text-green-600">
-                            ✓ {m["admin.reviews.verifiedPurchase"]}
-                          </span>
-                        )}
+                        <ReviewContentCell
+                          productName={review.productName}
+                          userName={review.userName}
+                          content={review.content}
+                          rating={review.rating}
+                          verified={review.verifiedPurchase}
+                          labels={{
+                            view: m["admin.reviews.view"],
+                            verified: m["admin.reviews.verifiedPurchase"],
+                            close: m["common.close"] ?? "Close",
+                          }}
+                        />
                       </td>
                       <td className="px-5 py-3">
                         <StatusBadge status={review.status} type="review" />

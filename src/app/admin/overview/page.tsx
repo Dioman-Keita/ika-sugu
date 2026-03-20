@@ -53,7 +53,10 @@ export default async function OverviewPage() {
   const revenueChartData = stats.monthlyRevenue.map(({ month, revenue }) => {
     const [year, monthIndex] = month.split("-").map((v) => Number(v));
     const d = new Date(year, monthIndex - 1, 1);
-    const label = new Intl.DateTimeFormat(locale, { month: "short", year: "2-digit" }).format(d);
+    const label = new Intl.DateTimeFormat(locale, {
+      month: "short",
+      year: "2-digit",
+    }).format(d);
     return { month: label, revenue };
   });
 

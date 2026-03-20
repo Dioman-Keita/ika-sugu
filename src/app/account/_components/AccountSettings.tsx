@@ -13,6 +13,9 @@ export default function AccountSettings() {
     { value: "fr", labelKey: "account.settings.languageFr" },
   ];
 
+  // Admin CTA removed from client to avoid exposing admin list publicly.
+  const isAdmin = false;
+
   return (
     <div className="space-y-4">
       <h2 className="text-base font-semibold text-foreground">
@@ -75,6 +78,8 @@ export default function AccountSettings() {
             </button>
           </div>
         </div>
+
+        {isAdmin && null}
       </div>
     </div>
   );

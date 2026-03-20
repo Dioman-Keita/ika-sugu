@@ -28,7 +28,13 @@ import { authClient } from "@/lib/auth-client";
 import { ReviewSubmissionErrorCode } from "@/lib/errors/review-errors";
 import { REVIEW_MAX_CHARACTERS, REVIEW_MIN_CHARACTERS } from "@/lib/review-config";
 
-const ReviewsContent = ({ reviews, productId }: { reviews: Review[]; productId: string }) => {
+const ReviewsContent = ({
+  reviews,
+  productId,
+}: {
+  reviews: Review[];
+  productId: string;
+}) => {
   const { t } = useUiPreferences();
   const { data: session, isPending: isSessionPending } = authClient.useSession();
 
@@ -49,30 +55,30 @@ const ReviewsContent = ({ reviews, productId }: { reviews: Review[]; productId: 
     setError(null);
     startTransition(async () => {
       try {
-      const result = await createProductReviewAction({
-        productId,
-        rating,
-        content,
-      });
-      if (!result.ok) {
-        switch (result.errorCode) {
-          case ReviewSubmissionErrorCode.Unauthorized:
-            setError(t("product.reviews.error.unauthorized"));
-            break;
-          case ReviewSubmissionErrorCode.DuplicateReview:
-            setError(t("product.reviews.error.duplicate"));
-            break;
-          case ReviewSubmissionErrorCode.ReviewTooShort:
-            setError(t("product.reviews.error.tooShort"));
-            break;
-          case ReviewSubmissionErrorCode.InvalidProductId:
-            setError(t("product.reviews.error.generic"));
-            break;
-          default:
-            setError(t("product.reviews.error.generic"));
+        const result = await createProductReviewAction({
+          productId,
+          rating,
+          content,
+        });
+        if (!result.ok) {
+          switch (result.errorCode) {
+            case ReviewSubmissionErrorCode.Unauthorized:
+              setError(t("product.reviews.error.unauthorized"));
+              break;
+            case ReviewSubmissionErrorCode.DuplicateReview:
+              setError(t("product.reviews.error.duplicate"));
+              break;
+            case ReviewSubmissionErrorCode.ReviewTooShort:
+              setError(t("product.reviews.error.tooShort"));
+              break;
+            case ReviewSubmissionErrorCode.InvalidProductId:
+              setError(t("product.reviews.error.generic"));
+              break;
+            default:
+              setError(t("product.reviews.error.generic"));
+          }
+          return;
         }
-        return;
-      }
 
         setDidSubmit(true);
         setIsDialogOpen(false);
@@ -152,10 +158,14 @@ const ReviewsContent = ({ reviews, productId }: { reviews: Review[]; productId: 
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-xl">
+        <DialogContent className="max-w-lg bg-surface-card border border-border rounded-2xl shadow-xl p-6 gap-5">
           <DialogHeader>
-            <DialogTitle>{t("product.reviews.dialog.title")}</DialogTitle>
-            <DialogDescription>{t("product.reviews.dialog.description")}</DialogDescription>
+            <DialogTitle className="text-lg font-semibold text-foreground">
+              {t("product.reviews.dialog.title")}
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              {t("product.reviews.dialog.description")}
+            </DialogDescription>
           </DialogHeader>
 
           {!isSessionPending && !session?.user?.id ? (
@@ -172,7 +182,9 @@ const ReviewsContent = ({ reviews, productId }: { reviews: Review[]; productId: 
                 <div className="flex items-center gap-3">
                   <Rating
                     initialValue={rating}
-                    onClick={(value) => setRating(Math.max(1, Math.min(5, Math.round(value))))}
+                    onClick={(value) =>
+                      setRating(Math.max(1, Math.min(5, Math.round(value))))
+                    }
                     allowFraction={false}
                     size={28}
                     SVGclassName="inline-block"
@@ -190,12 +202,14 @@ const ReviewsContent = ({ reviews, productId }: { reviews: Review[]; productId: 
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder={t("product.reviews.form.commentPlaceholder")}
+                  maxLength={REVIEW_MAX_CHARACTERS}
                   className="min-h-28 w-full rounded-[14px] border border-border bg-background px-4 py-3 text-sm sm:text-base text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 />
                 <div className="flex items-center justify-between text-xs sm:text-sm text-muted-foreground">
                   <span>{t("product.reviews.form.minChars")}</span>
                   <span>
-                    {Math.min(content.trim().length, REVIEW_MAX_CHARACTERS)}/{REVIEW_MAX_CHARACTERS}
+                    {Math.min(content.trim().length, REVIEW_MAX_CHARACTERS)}/
+                    {REVIEW_MAX_CHARACTERS}
                   </span>
                 </div>
               </div>
@@ -219,7 +233,9 @@ const ReviewsContent = ({ reviews, productId }: { reviews: Review[]; productId: 
               disabled={!canSubmit}
               className="bg-foreground text-background"
             >
-              {isSubmitting ? t("product.reviews.dialog.submitting") : t("product.reviews.dialog.submit")}
+              {isSubmitting
+                ? t("product.reviews.dialog.submitting")
+                : t("product.reviews.dialog.submit")}
             </Button>
           </DialogFooter>
         </DialogContent>

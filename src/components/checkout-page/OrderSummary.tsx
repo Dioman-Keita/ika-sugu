@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { CartItem } from "@/lib/features/carts/cartsSlice";
 import { FaArrowRight } from "react-icons/fa6";
+import { Loader2 } from "lucide-react";
 import { useUiPreferences } from "@/lib/ui-preferences";
 import { translateAttribute } from "@/lib/i18n/messages";
 
@@ -111,9 +112,16 @@ const OrderSummary = ({ items, isSubmitting }: OrderSummaryProps) => {
         disabled={isSubmitting}
         className="text-sm md:text-base font-medium bg-foreground text-background rounded-full w-full py-4 h-[54px] md:h-[60px] group"
       >
-        {isSubmitting ? t("checkout.processing") : t("checkout.placeOrder")}
-        {!isSubmitting && (
-          <FaArrowRight className="text-xl ml-2 group-hover:translate-x-1 transition-all" />
+        {isSubmitting ? (
+          <span className="inline-flex items-center gap-2">
+            <Loader2 size={18} className="animate-spin" />
+            {t("checkout.processing")}
+          </span>
+        ) : (
+          <>
+            {t("checkout.placeOrder")}
+            <FaArrowRight className="text-xl ml-2 group-hover:translate-x-1 transition-all" />
+          </>
         )}
       </Button>
     </div>

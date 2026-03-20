@@ -28,7 +28,9 @@ type CreateProductReviewError = {
   errorCode: ReviewSubmissionErrorCode;
 };
 
-export type CreateProductReviewResult = CreateProductReviewSuccess | CreateProductReviewError;
+export type CreateProductReviewResult =
+  | CreateProductReviewSuccess
+  | CreateProductReviewError;
 
 export async function createProductReviewAction(
   input: CreateProductReviewInput,
@@ -95,9 +97,9 @@ export async function createProductReviewAction(
 
     return { ok: true, reviewId: review.id, status: "PENDING" };
   } catch (err) {
-      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
-        return { ok: false, errorCode: ReviewSubmissionErrorCode.DuplicateReview };
-      }
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+      return { ok: false, errorCode: ReviewSubmissionErrorCode.DuplicateReview };
+    }
     throw err;
   }
 }

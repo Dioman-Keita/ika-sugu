@@ -40,7 +40,7 @@ const Field = ({
   </div>
 );
 
-const ShippingForm = ({ onSubmit }: ShippingFormProps) => {
+const ShippingForm = ({ onSubmit, isSubmitting }: ShippingFormProps) => {
   const [form, setForm] = useState<FormData>({
     firstName: "",
     lastName: "",
@@ -60,6 +60,7 @@ const ShippingForm = ({ onSubmit }: ShippingFormProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     onSubmit(form);
   };
 

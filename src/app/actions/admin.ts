@@ -158,6 +158,201 @@ export async function getAdminProducts({ page = 1 }: { page?: number } = {}) {
   };
 }
 
+type UpsertProductInput = {
+  id?: string;
+  name: string;
+  slug: string;
+  description: string;
+  dressStyle?: string | null;
+  categoryId: string;
+  basePrice: number;
+  discountPercentage?: number;
+  vatRate?: number;
+  variants?: Array<{
+    id?: string;
+    sku?: string | null;
+    colorName: string;
+    colorHex?: string | null;
+    size: string;
+    price: number;
+    compareAtPrice?: number | null;
+    currency?: string;
+    stock?: number;
+    images?: string[];
+  }>;
+};
+
+const computeFinalPrice = (base: number, discount?: number) => {
+  const pct = Math.max(0, Math.min(100, discount ?? 0));
+  return Math.max(0, Number((base * (1 - pct / 100)).toFixed(2)));
+};
+
+export async function createAdminProduct(data: UpsertProductInput) {
+  await assertAdmin();
+  const net = computeFinalPrice(data.basePrice, data.discountPercentage);
+  const vatRate = Math.max(0, data.vatRate ?? 20);
+  const finalPriceComputed = Number((net * (1 + vatRate / 100)).toFixed(2));
+
+  const variantsPayload =
+    data.variants && data.variants.length
+      ? data.variants.map((v) => ({
+          sku: v.sku ?? null,
+          colorName: v.colorName,
+          colorHex: v.colorHex ?? null,
+          size: v.size,
+          price: v.price,
+          compareAtPrice: v.compareAtPrice ?? null,
+          currency: v.currency ?? "USD",
+          stock: v.stock ?? 0,
+          images: v.images ?? [],
+        }))
+      : [
+          {
+            colorName: "Default",
+            size: "Unique",
+            price: finalPriceComputed,
+            compareAtPrice: data.basePrice,
+            currency: "USD",
+            stock: 0,
+            images: [],
+          },
+        ];
+
+  const minVariantPrice = variantsPayload.reduce(
+    (min, v) => Math.min(min, Number(v.price)),
+    Infinity,
+  );
+  const finalPrice = minVariantPrice === Infinity ? finalPriceComputed : minVariantPrice;
+
+  const product = await db.product.create({
+    data: {
+      id: data.id,
+      name: data.name,
+      slug: data.slug,
+      description: data.description,
+      dressStyle: data.dressStyle ?? null,
+      basePrice: data.basePrice,
+      vatRate,
+      discountPercentage: data.discountPercentage ?? 0,
+      finalPrice,
+      categoryId: data.categoryId,
+      variants: { create: variantsPayload },
+    },
+    select: { id: true, slug: true },
+  });
+
+  revalidatePath("/admin/products");
+  return product;
+}
+
+export async function updateAdminProduct(data: UpsertProductInput & { id: string }) {
+  await assertAdmin();
+  const net = computeFinalPrice(data.basePrice, data.discountPercentage);
+  const vatRate = Math.max(0, data.vatRate ?? 20);
+  const computedFinalPrice = Number((net * (1 + vatRate / 100)).toFixed(2));
+
+  const product = await db.$transaction(async (tx) => {
+    const existingVariants = await tx.productVariant.findMany({
+      where: { productId: data.id },
+    });
+    const incoming = data.variants ?? [];
+
+    const existingById = new Map(existingVariants.map((v) => [v.id, v]));
+    const incomingIds = new Set<string>();
+
+    const toCreate: Prisma.ProductVariantCreateManyInput[] = [];
+    const toUpdate: Array<{ id: string; data: Prisma.ProductVariantUpdateInput }> = [];
+
+    for (const v of incoming) {
+      if (v.id && existingById.has(v.id)) {
+        incomingIds.add(v.id);
+        toUpdate.push({
+          id: v.id,
+          data: {
+            sku: v.sku ?? null,
+            colorName: v.colorName,
+            colorHex: v.colorHex ?? null,
+            size: v.size,
+            price: v.price,
+            compareAtPrice: v.compareAtPrice ?? null,
+            currency: v.currency ?? "USD",
+            stock: v.stock ?? 0,
+            images: v.images ?? [],
+          },
+        });
+      } else {
+        toCreate.push({
+          productId: data.id,
+          sku: v.sku ?? null,
+          colorName: v.colorName,
+          colorHex: v.colorHex ?? null,
+          size: v.size,
+          price: v.price,
+          compareAtPrice: v.compareAtPrice ?? null,
+          currency: v.currency ?? "USD",
+          stock: v.stock ?? 0,
+          images: v.images ?? [],
+        });
+      }
+    }
+
+    const toDeleteIds = existingVariants
+      .filter((v) => !incomingIds.has(v.id))
+      .map((v) => v.id);
+
+    if (toUpdate.length) {
+      await Promise.all(
+        toUpdate.map(({ id, data: variantData }) =>
+          tx.productVariant.update({ where: { id }, data: variantData }),
+        ),
+      );
+    }
+    if (toDeleteIds.length) {
+      await tx.productVariant.deleteMany({ where: { id: { in: toDeleteIds } } });
+    }
+    if (toCreate.length) {
+      await tx.productVariant.createMany({ data: toCreate });
+    }
+
+    const minVariantPrice = incoming.length
+      ? incoming.reduce((min, v) => Math.min(min, Number(v.price)), Infinity)
+      : Infinity;
+    const finalPrice =
+      minVariantPrice === Infinity ? computedFinalPrice : minVariantPrice;
+
+    const updated = await tx.product.update({
+      where: { id: data.id },
+      data: {
+        name: data.name,
+        slug: data.slug,
+        description: data.description,
+        dressStyle: data.dressStyle ?? null,
+        basePrice: data.basePrice,
+        vatRate,
+        discountPercentage: data.discountPercentage ?? 0,
+        finalPrice,
+        categoryId: data.categoryId,
+      },
+      select: { id: true, slug: true },
+    });
+
+    return updated;
+  });
+
+  revalidatePath("/admin/products");
+  revalidatePath(`/admin/products/${product.id}`);
+  return product;
+}
+
+export async function getAdminCategories() {
+  await assertAdmin();
+  const cats = await db.category.findMany({
+    orderBy: { name: "asc" },
+    select: { id: true, name: true, slug: true },
+  });
+  return cats;
+}
+
 // ─── Orders ───────────────────────────────────────────────────────────────────
 
 export async function getAdminOrders({

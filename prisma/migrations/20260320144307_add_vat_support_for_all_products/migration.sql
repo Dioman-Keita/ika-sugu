@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Product" ADD COLUMN     "vatRate" DECIMAL(5,2) NOT NULL DEFAULT 20.00;

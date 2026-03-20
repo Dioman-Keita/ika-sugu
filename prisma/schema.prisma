@@ -109,6 +109,7 @@ model Product {
   description        String
   dressStyle         String?
   basePrice          Decimal              @db.Decimal(10, 2)
+  vatRate            Decimal              @db.Decimal(5, 2) @default(20.00) // VAT percentage
   discountPercentage Int                  @default(0)
   finalPrice         Decimal              @db.Decimal(10, 2)
   variants           ProductVariant[]
