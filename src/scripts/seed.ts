@@ -8,14 +8,28 @@ const prisma = db;
 const toMoney = (value: number | Prisma.Decimal) =>
   new Prisma.Decimal(value).toDecimalPlaces(2);
 
-const calcVatAmount = (lineTotal: Prisma.Decimal, vatRate: Prisma.Decimal) =>
-  lineTotal.mul(vatRate).div(100).toDecimalPlaces(2);
+const grossPrice = (base: number, discountPct: number, vatPct: number) => {
+  const net = new Prisma.Decimal(base).mul(
+    new Prisma.Decimal(1).sub(new Prisma.Decimal(discountPct).div(100)),
+  );
+  return toMoney(
+    net.mul(new Prisma.Decimal(1).add(new Prisma.Decimal(vatPct).div(100))),
+  );
+};
+
+const vatPortionFromGross = (gross: Prisma.Decimal, vatPct: Prisma.Decimal) => {
+  const net = gross.div(new Prisma.Decimal(1).add(vatPct.div(100)));
+  return gross.sub(net).toDecimalPlaces(2);
+};
 
 const toSku = (productSlug: string, colorName: string, size: string) =>
   `${productSlug}-${colorName}-${size}`
     .toUpperCase()
     .replaceAll(/\s+/g, "-")
     .replaceAll(/[^A-Z0-9-]/g, "");
+
+const storagePublicBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://example.supabase.co"}/storage/v1/object/public`;
+const seedImage = (path: string) => `${storagePublicBase}/${path}`;
 
 async function main() {
   // Reset in FK-safe order
@@ -27,6 +41,9 @@ async function main() {
   await prisma.categoryTranslation.deleteMany();
   await prisma.category.deleteMany();
   await prisma.user.deleteMany();
+
+  const vatFashion = new Prisma.Decimal(18);
+  const vatAccessories = new Prisma.Decimal(10);
 
   const [fashionCategory, shoesCategory, accessoriesCategory] = await Promise.all([
     prisma.category.create({
@@ -106,7 +123,8 @@ async function main() {
         dressStyle: "casual",
         basePrice: toMoney(120),
         discountPercentage: 0,
-        finalPrice: toMoney(120),
+        vatRate: vatFashion,
+        finalPrice: grossPrice(120, 0, vatFashion.toNumber()),
         variants: {
           create: [
             {
@@ -114,8 +132,8 @@ async function main() {
               colorName: "White",
               colorHex: "#F5F5F5",
               size: "Small",
-              images: ["/images/pic1.png"],
-              price: toMoney(120),
+              images: [seedImage("products/seed/tee-white-s.png")],
+              price: grossPrice(120, 0, vatFashion.toNumber()),
               compareAtPrice: null,
               currency: "USD",
               stock: 8,
@@ -125,8 +143,8 @@ async function main() {
               colorName: "White",
               colorHex: "#F5F5F5",
               size: "Medium",
-              images: ["/images/pic1.png"],
-              price: toMoney(120),
+              images: [seedImage("products/seed/tee-white-m.png")],
+              price: grossPrice(120, 0, vatFashion.toNumber()),
               compareAtPrice: null,
               currency: "USD",
               stock: 0,
@@ -136,8 +154,8 @@ async function main() {
               colorName: "White",
               colorHex: "#F5F5F5",
               size: "Large",
-              images: ["/images/pic1.png"],
-              price: toMoney(120),
+              images: [seedImage("products/seed/tee-white-l.png")],
+              price: grossPrice(120, 0, vatFashion.toNumber()),
               compareAtPrice: null,
               currency: "USD",
               stock: 6,
@@ -147,8 +165,8 @@ async function main() {
               colorName: "Black",
               colorHex: "#1F1F1F",
               size: "Small",
-              images: ["/images/pic1.png"],
-              price: toMoney(125),
+              images: [seedImage("products/seed/tee-black-s.png")],
+              price: grossPrice(125, 0, vatFashion.toNumber()),
               compareAtPrice: null,
               currency: "USD",
               stock: 12,
@@ -158,8 +176,8 @@ async function main() {
               colorName: "Black",
               colorHex: "#1F1F1F",
               size: "Medium",
-              images: ["/images/pic1.png"],
-              price: toMoney(125),
+              images: [seedImage("products/seed/tee-black-m.png")],
+              price: grossPrice(125, 0, vatFashion.toNumber()),
               compareAtPrice: null,
               currency: "USD",
               stock: 9,
@@ -169,8 +187,8 @@ async function main() {
               colorName: "Black",
               colorHex: "#1F1F1F",
               size: "Large",
-              images: ["/images/pic1.png"],
-              price: toMoney(125),
+              images: [seedImage("products/seed/tee-black-l.png")],
+              price: grossPrice(125, 0, vatFashion.toNumber()),
               compareAtPrice: null,
               currency: "USD",
               stock: 0,
@@ -214,7 +232,8 @@ async function main() {
         dressStyle: "casual",
         basePrice: toMoney(260),
         discountPercentage: 20,
-        finalPrice: toMoney(208),
+        vatRate: vatFashion,
+        finalPrice: grossPrice(260, 20, vatFashion.toNumber()),
         variants: {
           create: [
             {
@@ -222,9 +241,9 @@ async function main() {
               colorName: "Blue",
               colorHex: "#314F7F",
               size: "30",
-              images: ["/images/pic2.png"],
-              price: toMoney(208),
-              compareAtPrice: toMoney(260),
+              images: [seedImage("products/seed/jeans-blue-30.png")],
+              price: grossPrice(260, 20, vatFashion.toNumber()),
+              compareAtPrice: grossPrice(260, 0, vatFashion.toNumber()),
               currency: "USD",
               stock: 5,
             },
@@ -233,9 +252,9 @@ async function main() {
               colorName: "Blue",
               colorHex: "#314F7F",
               size: "32",
-              images: ["/images/pic2.png"],
-              price: toMoney(212),
-              compareAtPrice: toMoney(260),
+              images: [seedImage("products/seed/jeans-blue-32.png")],
+              price: grossPrice(260, 20, vatFashion.toNumber()),
+              compareAtPrice: grossPrice(260, 0, vatFashion.toNumber()),
               currency: "USD",
               stock: 10,
             },
@@ -244,9 +263,9 @@ async function main() {
               colorName: "Blue",
               colorHex: "#314F7F",
               size: "34",
-              images: ["/images/pic2.png"],
-              price: toMoney(208),
-              compareAtPrice: toMoney(260),
+              images: [seedImage("products/seed/jeans-blue-34.png")],
+              price: grossPrice(260, 20, vatFashion.toNumber()),
+              compareAtPrice: grossPrice(260, 0, vatFashion.toNumber()),
               currency: "USD",
               stock: 8,
             },
@@ -255,9 +274,9 @@ async function main() {
               colorName: "Blue",
               colorHex: "#314F7F",
               size: "36",
-              images: ["/images/pic2.png"],
-              price: toMoney(208),
-              compareAtPrice: toMoney(260),
+              images: [seedImage("products/seed/jeans-blue-36.png")],
+              price: grossPrice(260, 20, vatFashion.toNumber()),
+              compareAtPrice: grossPrice(260, 0, vatFashion.toNumber()),
               currency: "USD",
               stock: 0,
             },
@@ -300,7 +319,8 @@ async function main() {
         dressStyle: "gym",
         basePrice: toMoney(145),
         discountPercentage: 10,
-        finalPrice: toMoney(130.5),
+        vatRate: vatFashion,
+        finalPrice: grossPrice(145, 10, vatFashion.toNumber()),
         variants: {
           create: [
             {
@@ -308,9 +328,9 @@ async function main() {
               colorName: "White",
               colorHex: "#F5F5F5",
               size: "S",
-              images: ["/images/pic6.png"],
-              price: toMoney(130.5),
-              compareAtPrice: toMoney(145),
+              images: [seedImage("products/seed/sneaker-white-s.png")],
+              price: grossPrice(145, 10, vatFashion.toNumber()),
+              compareAtPrice: grossPrice(145, 0, vatFashion.toNumber()),
               currency: "USD",
               stock: 4,
             },
@@ -319,9 +339,9 @@ async function main() {
               colorName: "White",
               colorHex: "#F5F5F5",
               size: "M",
-              images: ["/images/pic6.png"],
-              price: toMoney(132),
-              compareAtPrice: toMoney(145),
+              images: [seedImage("products/seed/sneaker-white-m.png")],
+              price: grossPrice(145, 10, vatFashion.toNumber()),
+              compareAtPrice: grossPrice(145, 0, vatFashion.toNumber()),
               currency: "USD",
               stock: 7,
             },
@@ -330,9 +350,9 @@ async function main() {
               colorName: "White",
               colorHex: "#F5F5F5",
               size: "L",
-              images: ["/images/pic6.png"],
-              price: toMoney(130.5),
-              compareAtPrice: toMoney(145),
+              images: [seedImage("products/seed/sneaker-white-l.png")],
+              price: grossPrice(145, 10, vatFashion.toNumber()),
+              compareAtPrice: grossPrice(145, 0, vatFashion.toNumber()),
               currency: "USD",
               stock: 3,
             },
@@ -341,9 +361,9 @@ async function main() {
               colorName: "White",
               colorHex: "#F5F5F5",
               size: "XL",
-              images: ["/images/pic6.png"],
-              price: toMoney(130.5),
-              compareAtPrice: toMoney(145),
+              images: [seedImage("products/seed/sneaker-white-xl.png")],
+              price: grossPrice(145, 10, vatFashion.toNumber()),
+              compareAtPrice: grossPrice(145, 0, vatFashion.toNumber()),
               currency: "USD",
               stock: 0,
             },
@@ -352,9 +372,9 @@ async function main() {
               colorName: "Gray",
               colorHex: "#8C9198",
               size: "S",
-              images: ["/images/pic6.png"],
-              price: toMoney(130.5),
-              compareAtPrice: toMoney(145),
+              images: [seedImage("products/seed/sneaker-gray-s.png")],
+              price: grossPrice(145, 10, vatFashion.toNumber()),
+              compareAtPrice: grossPrice(145, 0, vatFashion.toNumber()),
               currency: "USD",
               stock: 5,
             },
@@ -363,9 +383,9 @@ async function main() {
               colorName: "Gray",
               colorHex: "#8C9198",
               size: "M",
-              images: ["/images/pic6.png"],
-              price: toMoney(130.5),
-              compareAtPrice: toMoney(145),
+              images: [seedImage("products/seed/sneaker-gray-m.png")],
+              price: grossPrice(145, 10, vatFashion.toNumber()),
+              compareAtPrice: grossPrice(145, 0, vatFashion.toNumber()),
               currency: "USD",
               stock: 4,
             },
@@ -374,9 +394,9 @@ async function main() {
               colorName: "Gray",
               colorHex: "#8C9198",
               size: "L",
-              images: ["/images/pic6.png"],
-              price: toMoney(130.5),
-              compareAtPrice: toMoney(145),
+              images: [seedImage("products/seed/sneaker-gray-l.png")],
+              price: grossPrice(145, 10, vatFashion.toNumber()),
+              compareAtPrice: grossPrice(145, 0, vatFashion.toNumber()),
               currency: "USD",
               stock: 6,
             },
@@ -385,9 +405,9 @@ async function main() {
               colorName: "Gray",
               colorHex: "#8C9198",
               size: "XL",
-              images: ["/images/pic6.png"],
-              price: toMoney(130.5),
-              compareAtPrice: toMoney(145),
+              images: [seedImage("products/seed/sneaker-gray-xl.png")],
+              price: grossPrice(145, 10, vatFashion.toNumber()),
+              compareAtPrice: grossPrice(145, 0, vatFashion.toNumber()),
               currency: "USD",
               stock: 0,
             },
@@ -430,7 +450,8 @@ async function main() {
         dressStyle: "formal",
         basePrice: toMoney(80),
         discountPercentage: 0,
-        finalPrice: toMoney(80),
+        vatRate: vatAccessories,
+        finalPrice: grossPrice(80, 0, vatAccessories.toNumber()),
         variants: {
           create: [
             {
@@ -438,8 +459,8 @@ async function main() {
               colorName: "Brown",
               colorHex: "#6B4D32",
               size: "S",
-              images: ["/images/pic7.png"],
-              price: toMoney(80),
+              images: [seedImage("products/seed/belt-brown-s.png")],
+              price: grossPrice(80, 0, vatAccessories.toNumber()),
               compareAtPrice: null,
               currency: "USD",
               stock: 10,
@@ -449,8 +470,8 @@ async function main() {
               colorName: "Brown",
               colorHex: "#6B4D32",
               size: "M",
-              images: ["/images/pic7.png"],
-              price: toMoney(80),
+              images: [seedImage("products/seed/belt-brown-m.png")],
+              price: grossPrice(80, 0, vatAccessories.toNumber()),
               compareAtPrice: null,
               currency: "USD",
               stock: 12,
@@ -460,8 +481,8 @@ async function main() {
               colorName: "Brown",
               colorHex: "#6B4D32",
               size: "L",
-              images: ["/images/pic7.png"],
-              price: toMoney(85),
+              images: [seedImage("products/seed/belt-brown-l.png")],
+              price: grossPrice(85, 0, vatAccessories.toNumber()),
               compareAtPrice: null,
               currency: "USD",
               stock: 6,
@@ -471,8 +492,8 @@ async function main() {
               colorName: "Black",
               colorHex: "#1F1F1F",
               size: "S",
-              images: ["/images/pic7.png"],
-              price: toMoney(80),
+              images: [seedImage("products/seed/belt-black-s.png")],
+              price: grossPrice(80, 0, vatAccessories.toNumber()),
               compareAtPrice: null,
               currency: "USD",
               stock: 9,
@@ -482,8 +503,8 @@ async function main() {
               colorName: "Black",
               colorHex: "#1F1F1F",
               size: "M",
-              images: ["/images/pic7.png"],
-              price: toMoney(80),
+              images: [seedImage("products/seed/belt-black-m.png")],
+              price: grossPrice(80, 0, vatAccessories.toNumber()),
               compareAtPrice: null,
               currency: "USD",
               stock: 0,
@@ -493,8 +514,8 @@ async function main() {
               colorName: "Black",
               colorHex: "#1F1F1F",
               size: "L",
-              images: ["/images/pic7.png"],
-              price: toMoney(85),
+              images: [seedImage("products/seed/belt-black-l.png")],
+              price: grossPrice(85, 0, vatAccessories.toNumber()),
               compareAtPrice: null,
               currency: "USD",
               stock: 7,
@@ -534,14 +555,13 @@ async function main() {
 
   const [tee, jeans, sneakers, belt] = products;
 
-  const vatFashion = toMoney(18);
-  const vatAccessories = toMoney(10);
-
-  const aliceLine1Total = toMoney(new Prisma.Decimal(tee.finalPrice).mul(2));
-  const aliceLine1Vat = calcVatAmount(aliceLine1Total, vatFashion);
-  const aliceLine2Total = toMoney(new Prisma.Decimal(jeans.finalPrice).mul(1));
-  const aliceLine2Vat = calcVatAmount(aliceLine2Total, vatFashion);
-  const aliceSubtotal = toMoney(new Prisma.Decimal(aliceLine1Total).add(aliceLine2Total));
+  const aliceLine1Gross = toMoney(new Prisma.Decimal(tee.finalPrice).mul(2));
+  const aliceLine1Vat = vatPortionFromGross(aliceLine1Gross, vatFashion);
+  const aliceLine1Net = aliceLine1Gross.sub(aliceLine1Vat);
+  const aliceLine2Gross = toMoney(new Prisma.Decimal(jeans.finalPrice).mul(1));
+  const aliceLine2Vat = vatPortionFromGross(aliceLine2Gross, vatFashion);
+  const aliceLine2Net = aliceLine2Gross.sub(aliceLine2Vat);
+  const aliceSubtotal = toMoney(new Prisma.Decimal(aliceLine1Net).add(aliceLine2Net));
   const aliceTaxTotal = toMoney(new Prisma.Decimal(aliceLine1Vat).add(aliceLine2Vat));
   const aliceTotal = toMoney(new Prisma.Decimal(aliceSubtotal).add(aliceTaxTotal));
 
@@ -557,16 +577,16 @@ async function main() {
           {
             productId: tee.id,
             quantity: 2,
-            unitPrice: tee.finalPrice,
-            totalPrice: aliceLine1Total,
+            unitPrice: toMoney(aliceLine1Net.div(2)),
+            totalPrice: aliceLine1Net,
             vatRate: vatFashion,
             vatAmount: aliceLine1Vat,
           },
           {
             productId: jeans.id,
             quantity: 1,
-            unitPrice: jeans.finalPrice,
-            totalPrice: aliceLine2Total,
+            unitPrice: aliceLine2Net,
+            totalPrice: aliceLine2Net,
             vatRate: vatFashion,
             vatAmount: aliceLine2Vat,
           },
@@ -575,11 +595,13 @@ async function main() {
     },
   });
 
-  const bobLine1Total = toMoney(new Prisma.Decimal(sneakers.finalPrice).mul(1));
-  const bobLine1Vat = calcVatAmount(bobLine1Total, vatFashion);
-  const bobLine2Total = toMoney(new Prisma.Decimal(belt.finalPrice).mul(3));
-  const bobLine2Vat = calcVatAmount(bobLine2Total, vatAccessories);
-  const bobSubtotal = toMoney(new Prisma.Decimal(bobLine1Total).add(bobLine2Total));
+  const bobLine1Gross = toMoney(new Prisma.Decimal(sneakers.finalPrice).mul(1));
+  const bobLine1Vat = vatPortionFromGross(bobLine1Gross, vatFashion);
+  const bobLine1Net = bobLine1Gross.sub(bobLine1Vat);
+  const bobLine2Gross = toMoney(new Prisma.Decimal(belt.finalPrice).mul(3));
+  const bobLine2Vat = vatPortionFromGross(bobLine2Gross, vatAccessories);
+  const bobLine2Net = bobLine2Gross.sub(bobLine2Vat);
+  const bobSubtotal = toMoney(new Prisma.Decimal(bobLine1Net).add(bobLine2Net));
   const bobTaxTotal = toMoney(new Prisma.Decimal(bobLine1Vat).add(bobLine2Vat));
   const bobTotal = toMoney(new Prisma.Decimal(bobSubtotal).add(bobTaxTotal));
 
@@ -595,16 +617,16 @@ async function main() {
           {
             productId: sneakers.id,
             quantity: 1,
-            unitPrice: sneakers.finalPrice,
-            totalPrice: bobLine1Total,
+            unitPrice: bobLine1Net,
+            totalPrice: bobLine1Net,
             vatRate: vatFashion,
             vatAmount: bobLine1Vat,
           },
           {
             productId: belt.id,
             quantity: 3,
-            unitPrice: belt.finalPrice,
-            totalPrice: bobLine2Total,
+            unitPrice: toMoney(bobLine2Net.div(3)),
+            totalPrice: bobLine2Net,
             vatRate: vatAccessories,
             vatAmount: bobLine2Vat,
           },

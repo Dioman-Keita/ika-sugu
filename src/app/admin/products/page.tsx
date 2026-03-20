@@ -6,6 +6,8 @@ import { cookies } from "next/headers";
 import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
 import { Locale, parseLocale } from "@/lib/i18n/locale";
 import { messages } from "@/lib/i18n/messages";
+import ProductImageUploader from "@/components/admin/ProductImageUploader";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   searchParams: Promise<{ page?: string }>;
@@ -33,6 +35,9 @@ export default async function AdminProductsPage({ searchParams }: Props) {
             {total}
           </span>
         </div>
+        <Button asChild className="rounded-full h-10 px-4 text-sm">
+          <Link href="/admin/products/new">{m["admin.product.form.action.create"]}</Link>
+        </Button>
       </div>
 
       <div className="p-6">
@@ -62,13 +67,16 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                   <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground">
                     {m["admin.products.table.added"]}
                   </th>
+                  <th className="text-right px-5 py-3 text-xs font-semibold text-muted-foreground">
+                    {m["admin.products.table.media"]}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {products.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={7}
+                      colSpan={8}
                       className="px-5 py-10 text-center text-muted-foreground"
                     >
                       {m["admin.products.noProducts"]}
@@ -126,15 +134,23 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                           {product.totalStock}
                         </span>
                       </td>
-                      <td className="px-5 py-3 text-muted-foreground text-xs">
-                        {new Intl.DateTimeFormat(locale, {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        }).format(new Date(product.createdAt))}
-                      </td>
-                    </tr>
-                  ))
+                    <td className="px-5 py-3 text-muted-foreground text-xs">
+                      {new Intl.DateTimeFormat(locale, {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      }).format(new Date(product.createdAt))}
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      <Link
+                        href={`/admin/products/${product.id}`}
+                        className="text-primary hover:underline text-xs font-medium"
+                      >
+                        {m["admin.products.table.mediaAction"]}
+                      </Link>
+                    </td>
+                  </tr>
+                ))
                 )}
               </tbody>
             </table>

@@ -1,2 +1,2 @@
 export const REVIEW_MIN_CHARACTERS = 10;
-export const REVIEW_MAX_CHARACTERS = 9999;
+export const REVIEW_MAX_CHARACTERS = 300;

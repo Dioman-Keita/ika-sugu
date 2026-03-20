@@ -158,6 +158,156 @@ export async function getAdminProducts({ page = 1 }: { page?: number } = {}) {
   };
 }
 
+type UpsertProductInput = {
+  id?: string;
+  name: string;
+  slug: string;
+  description: string;
+  dressStyle?: string | null;
+  categoryId: string;
+  basePrice: number;
+  discountPercentage?: number;
+  vatRate?: number;
+  variants?: Array<{
+    sku?: string | null;
+    colorName: string;
+    colorHex?: string | null;
+    size: string;
+    price: number;
+    compareAtPrice?: number | null;
+    currency?: string;
+    stock?: number;
+    images?: string[];
+  }>;
+};
+
+const computeFinalPrice = (base: number, discount?: number) => {
+  const pct = Math.max(0, Math.min(100, discount ?? 0));
+  return Math.max(0, Number((base * (1 - pct / 100)).toFixed(2)));
+};
+
+export async function createAdminProduct(data: UpsertProductInput) {
+  await assertAdmin();
+  const net = computeFinalPrice(data.basePrice, data.discountPercentage);
+  const vatRate = Math.max(0, data.vatRate ?? 20);
+  const finalPriceComputed = Number((net * (1 + vatRate / 100)).toFixed(2));
+
+  const variantsPayload =
+    data.variants && data.variants.length
+      ? data.variants.map((v) => ({
+          sku: v.sku ?? null,
+          colorName: v.colorName,
+          colorHex: v.colorHex ?? null,
+          size: v.size,
+          price: v.price,
+          compareAtPrice: v.compareAtPrice ?? null,
+          currency: v.currency ?? "USD",
+          stock: v.stock ?? 0,
+          images: v.images ?? [],
+        }))
+      : [
+          {
+            colorName: "Default",
+            size: "Unique",
+            price: finalPriceComputed,
+            compareAtPrice: data.basePrice,
+            currency: "USD",
+            stock: 0,
+            images: [],
+          },
+        ];
+
+  const minVariantPrice = variantsPayload.reduce((min, v) => Math.min(min, Number(v.price)), Infinity);
+  const finalPrice = minVariantPrice === Infinity ? finalPriceComputed : minVariantPrice;
+
+  const product = await db.product.create({
+    data: {
+      id: data.id,
+      name: data.name,
+      slug: data.slug,
+      description: data.description,
+      dressStyle: data.dressStyle ?? null,
+      basePrice: data.basePrice,
+      vatRate,
+      discountPercentage: data.discountPercentage ?? 0,
+      finalPrice,
+      categoryId: data.categoryId,
+      variants: { create: variantsPayload },
+    },
+    select: { id: true, slug: true },
+  });
+
+  revalidatePath("/admin/products");
+  return product;
+}
+
+export async function updateAdminProduct(data: UpsertProductInput & { id: string }) {
+  await assertAdmin();
+  const net = computeFinalPrice(data.basePrice, data.discountPercentage);
+  const vatRate = Math.max(0, data.vatRate ?? 20);
+  const computedFinalPrice = Number((net * (1 + vatRate / 100)).toFixed(2));
+
+  const variantsPayload =
+    data.variants && data.variants.length
+      ? data.variants.map((v) => ({
+          sku: v.sku ?? null,
+          colorName: v.colorName,
+          colorHex: v.colorHex ?? null,
+          size: v.size,
+          price: v.price,
+          compareAtPrice: v.compareAtPrice ?? null,
+          currency: v.currency ?? "USD",
+          stock: v.stock ?? 0,
+          images: v.images ?? [],
+        }))
+      : undefined;
+
+  const minVariantPrice =
+    variantsPayload && variantsPayload.length
+      ? variantsPayload.reduce((min, v) => Math.min(min, Number(v.price)), Infinity)
+      : Infinity;
+  const finalPrice = minVariantPrice === Infinity ? computedFinalPrice : minVariantPrice;
+
+  const product = await db.$transaction(async (tx) => {
+    const updated = await tx.product.update({
+      where: { id: data.id },
+      data: {
+        name: data.name,
+        slug: data.slug,
+        description: data.description,
+        dressStyle: data.dressStyle ?? null,
+        basePrice: data.basePrice,
+        vatRate,
+        discountPercentage: data.discountPercentage ?? 0,
+        finalPrice,
+        categoryId: data.categoryId,
+      },
+      select: { id: true, slug: true },
+    });
+
+    if (variantsPayload) {
+      await tx.productVariant.deleteMany({ where: { productId: data.id } });
+      await tx.productVariant.createMany({
+        data: variantsPayload.map((v) => ({ ...v, productId: data.id })),
+      });
+    }
+    return updated;
+  });
+
+  revalidatePath("/admin/products");
+  revalidatePath(`/admin/products/${product.id}`);
+  return product;
+}
+
+export async function getAdminCategories() {
+  await assertAdmin();
+  const cats = await db.category.findMany({
+    orderBy: { name: "asc" },
+    select: { id: true, name: true, slug: true },
+  });
+  return cats;
+}
+
 // ─── Orders ───────────────────────────────────────────────────────────────────
 
 export async function getAdminOrders({

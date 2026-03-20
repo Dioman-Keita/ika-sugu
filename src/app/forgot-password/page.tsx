@@ -4,7 +4,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { integralCF } from "@/styles/fonts";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useUiPreferences } from "@/lib/ui-preferences";
 import { authClient } from "@/lib/auth-client";
@@ -92,7 +92,14 @@ export default function ForgotPasswordPage() {
                 disabled={isSubmitting}
                 className="w-full bg-foreground text-background rounded-full h-[52px] text-sm font-medium hover:bg-foreground/85 transition-colors"
               >
-                {t("auth.forgot.submit")}
+                {isSubmitting ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Loader2 size={16} className="animate-spin" />
+                    {t("auth.forgot.submit")}
+                  </span>
+                ) : (
+                  t("auth.forgot.submit")
+                )}
               </Button>
             </form>
           ) : (

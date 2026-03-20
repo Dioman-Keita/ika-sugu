@@ -1,17 +1,27 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, Shield } from "lucide-react";
 import { useUiPreferences } from "@/lib/ui-preferences";
 import { cn } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n/locale";
 
-export default function AccountSettings() {
+type Props = { userEmail: string };
+
+export default function AccountSettings({ userEmail }: Props) {
   const { t, theme, setTheme, locale, setLocale } = useUiPreferences();
 
   const languages: { value: Locale; labelKey: string }[] = [
     { value: "en", labelKey: "account.settings.languageEn" },
     { value: "fr", labelKey: "account.settings.languageFr" },
   ];
+
+  // On the client we only have access to NEXT_PUBLIC_* variables.
+  const adminEmailsEnv = process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "";
+  const adminEmails = adminEmailsEnv
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  const isAdmin = adminEmails.includes(userEmail.toLowerCase());
 
   return (
     <div className="space-y-4">
@@ -75,6 +85,23 @@ export default function AccountSettings() {
             </button>
           </div>
         </div>
+
+        {isAdmin && (
+          <div className="px-5 py-5 border-t border-border space-y-3">
+            <p className="text-xs text-muted-foreground mb-1">
+              {t("account.settings.adminCta")}
+            </p>
+            <div className="flex gap-2">
+              <a
+                href="/admin/overview"
+                className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-colors bg-transparent text-foreground border-border hover:bg-surface-section"
+              >
+                <Shield size={14} />
+                {t("account.settings.adminButton")}
+              </a>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

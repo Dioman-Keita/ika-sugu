@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { integralCF } from "@/styles/fonts";
 import { Button } from "@/components/ui/button";
 import { FcGoogle } from "react-icons/fc";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useUiPreferences } from "@/lib/ui-preferences";
 import { authClient } from "@/lib/auth-client";
@@ -135,7 +135,14 @@ export default function LoginClient({ googleEnabled }: { googleEnabled: boolean 
               disabled={isSubmitting}
               className="w-full bg-foreground text-background rounded-full h-13 text-sm font-medium hover:bg-foreground/85 transition-colors mt-2"
             >
-              {t("auth.login.submit")}
+              {isSubmitting ? (
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 size={16} className="animate-spin" />
+                  {t("auth.login.submit")}
+                </span>
+              ) : (
+                t("auth.login.submit")
+              )}
             </Button>
           </form>
 
@@ -174,10 +181,23 @@ export default function LoginClient({ googleEnabled }: { googleEnabled: boolean 
                     setIsSubmitting(false);
                   }
                 }}
-                className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-border rounded-full text-sm font-medium text-foreground hover:bg-surface-section transition-colors"
+                className={cn(
+                  "w-full flex items-center justify-center gap-3 px-4 py-3 border border-border rounded-full text-sm font-medium text-foreground hover:bg-surface-section transition-colors",
+                  isSubmitting && "opacity-60 cursor-not-allowed",
+                )}
+                disabled={isSubmitting}
               >
-                <FcGoogle size={20} />
-                {t("auth.continueWithGoogle")}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    {t("auth.login.submit")}
+                  </>
+                ) : (
+                  <>
+                    <FcGoogle size={20} />
+                    {t("auth.continueWithGoogle")}
+                  </>
+                )}
               </button>
             </>
           ) : null}

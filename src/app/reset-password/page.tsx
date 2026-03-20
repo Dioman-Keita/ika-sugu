@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { AuthNotice } from "@/components/auth/AuthNotice";
 import { useUiPreferences } from "@/lib/ui-preferences";
 import { authClient } from "@/lib/auth-client";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -170,7 +170,14 @@ export default function ResetPasswordPage() {
                 disabled={isSubmitting}
                 className="w-full bg-foreground text-background rounded-full h-[52px] text-sm font-medium hover:bg-foreground/85 transition-colors"
               >
-                {t("auth.reset.submit")}
+                {isSubmitting ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Loader2 size={16} className="animate-spin" />
+                    {t("auth.reset.submit")}
+                  </span>
+                ) : (
+                  t("auth.reset.submit")
+                )}
               </Button>
             </form>
           )}

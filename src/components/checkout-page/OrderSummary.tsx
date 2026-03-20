@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { CartItem } from "@/lib/features/carts/cartsSlice";
 import { FaArrowRight } from "react-icons/fa6";
+import { Loader2 } from "lucide-react";
 import { useUiPreferences } from "@/lib/ui-preferences";
 import { translateAttribute } from "@/lib/i18n/messages";
 
@@ -18,7 +19,17 @@ const getFinalPrice = (item: LegacyCartItem): number => {
   if (typeof item.finalPrice === "number") return item.finalPrice;
   const base = getBasePrice(item);
   const pct = item.discountPercentage ?? item.discount?.percentage ?? 0;
-  return Math.round(base - (base * pct) / 100);
+  const net = base - (base * pct) / 100;
+  const vat = item.vatRate ?? 0;
+  return Math.round(net * (1 + vat / 100));
+};
+
+const getVatPortion = (item: LegacyCartItem): number => {
+  const vat = item.vatRate ?? 0;
+  if (vat <= 0) return 0;
+  const gross = getFinalPrice(item);
+  const net = gross / (1 + vat / 100);
+  return Math.round(gross - net);
 };
 
 type OrderSummaryProps = {
@@ -36,6 +47,11 @@ const OrderSummary = ({ items, isSubmitting }: OrderSummaryProps) => {
     (sum, item) => sum + getFinalPrice(item) * item.quantity,
     0,
   );
+  const totalVat = items.reduce(
+    (sum, item) => sum + getVatPortion(item) * item.quantity,
+    0,
+  );
+  const subtotalExclVat = Math.max(0, Math.round(totalFinalPrice - totalVat));
   const discountAmount = Math.max(0, Math.round(totalBasePrice - totalFinalPrice));
   const discountPercentage =
     totalBasePrice > 0 ? Math.round((discountAmount / totalBasePrice) * 100) : 0;
@@ -81,8 +97,8 @@ const OrderSummary = ({ items, isSubmitting }: OrderSummaryProps) => {
       {/* Totals */}
       <div className="flex flex-col space-y-4">
         <div className="flex items-center justify-between">
-          <span className="text-muted-foreground">{t("checkout.subtotal")}</span>
-          <span className="font-bold text-foreground">${totalBasePrice}</span>
+          <span className="text-muted-foreground">{t("checkout.subtotalExclVat")}</span>
+          <span className="font-bold text-foreground">${subtotalExclVat}</span>
         </div>
         {discountAmount > 0 && (
           <div className="flex items-center justify-between">
@@ -92,6 +108,10 @@ const OrderSummary = ({ items, isSubmitting }: OrderSummaryProps) => {
             <span className="font-bold text-red-500">-${discountAmount}</span>
           </div>
         )}
+        <div className="flex items-center justify-between">
+          <span className="text-muted-foreground">{t("checkout.vat")}</span>
+          <span className="font-bold text-foreground">${totalVat}</span>
+        </div>
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground">{t("checkout.delivery")}</span>
           <span className="font-bold text-foreground">{t("checkout.free")}</span>
@@ -111,9 +131,16 @@ const OrderSummary = ({ items, isSubmitting }: OrderSummaryProps) => {
         disabled={isSubmitting}
         className="text-sm md:text-base font-medium bg-foreground text-background rounded-full w-full py-4 h-[54px] md:h-[60px] group"
       >
-        {isSubmitting ? t("checkout.processing") : t("checkout.placeOrder")}
-        {!isSubmitting && (
-          <FaArrowRight className="text-xl ml-2 group-hover:translate-x-1 transition-all" />
+        {isSubmitting ? (
+          <span className="inline-flex items-center gap-2">
+            <Loader2 size={18} className="animate-spin" />
+            {t("checkout.processing")}
+          </span>
+        ) : (
+          <>
+            {t("checkout.placeOrder")}
+            <FaArrowRight className="text-xl ml-2 group-hover:translate-x-1 transition-all" />
+          </>
         )}
       </Button>
     </div>

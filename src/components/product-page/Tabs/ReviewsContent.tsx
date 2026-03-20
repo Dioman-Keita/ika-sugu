@@ -152,10 +152,14 @@ const ReviewsContent = ({ reviews, productId }: { reviews: Review[]; productId: 
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-xl">
+        <DialogContent className="max-w-lg bg-surface-card border border-border rounded-2xl shadow-xl p-6 gap-5">
           <DialogHeader>
-            <DialogTitle>{t("product.reviews.dialog.title")}</DialogTitle>
-            <DialogDescription>{t("product.reviews.dialog.description")}</DialogDescription>
+            <DialogTitle className="text-lg font-semibold text-foreground">
+              {t("product.reviews.dialog.title")}
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              {t("product.reviews.dialog.description")}
+            </DialogDescription>
           </DialogHeader>
 
           {!isSessionPending && !session?.user?.id ? (
@@ -190,6 +194,7 @@ const ReviewsContent = ({ reviews, productId }: { reviews: Review[]; productId: 
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder={t("product.reviews.form.commentPlaceholder")}
+                  maxLength={REVIEW_MAX_CHARACTERS}
                   className="min-h-28 w-full rounded-[14px] border border-border bg-background px-4 py-3 text-sm sm:text-base text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 />
                 <div className="flex items-center justify-between text-xs sm:text-sm text-muted-foreground">
