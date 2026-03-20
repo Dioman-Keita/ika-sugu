@@ -9,7 +9,7 @@ import db from "@/lib/db";
 import { getAdminCategories } from "@/app/actions/admin";
 import ProductForm from "@/components/admin/ProductForm";
 
-type Props = { params: { id: string } };
+type Props = { params: Promise<{ id: string }> };
 
 const PRODUCT_SELECT = {
   id: true,
@@ -62,12 +62,13 @@ const shapeProduct = (product: ProductShape | null) => {
 };
 
 export default async function AdminProductDetailPage({ params }: Props) {
+  const { id } = await params;
   const cookieStore = await cookies();
   const locale: Locale = parseLocale(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
   const m = messages[locale];
 
   const product = await db.product.findFirst({
-    where: { OR: [{ id: params.id }, { slug: params.id }] },
+    where: { OR: [{ id }, { slug: id }] },
     select: PRODUCT_SELECT,
   });
   const shaped = shapeProduct(product);
