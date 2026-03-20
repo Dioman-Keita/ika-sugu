@@ -87,7 +87,11 @@ export default function ReviewContentCell({
           </div>
 
           <div className="flex justify-end">
-            <Button variant="outline" onClick={() => setOpen(false)} className="rounded-full">
+            <Button
+              variant="outline"
+              onClick={() => setOpen(false)}
+              className="rounded-full"
+            >
               {labels.close}
             </Button>
           </div>

@@ -17,8 +17,12 @@ export default async function AdminNewProductPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <p className="text-sm text-muted-foreground">{m["admin.product.form.subtitle"]}</p>
-        <h1 className="text-2xl font-semibold text-foreground">{m["admin.product.form.title.new"]}</h1>
+        <p className="text-sm text-muted-foreground">
+          {m["admin.product.form.subtitle"]}
+        </p>
+        <h1 className="text-2xl font-semibold text-foreground">
+          {m["admin.product.form.title.new"]}
+        </h1>
       </div>
 
       <div className="border border-border rounded-2xl p-5 bg-surface-card shadow-sm">

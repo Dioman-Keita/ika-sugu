@@ -217,7 +217,10 @@ export async function createAdminProduct(data: UpsertProductInput) {
           },
         ];
 
-  const minVariantPrice = variantsPayload.reduce((min, v) => Math.min(min, Number(v.price)), Infinity);
+  const minVariantPrice = variantsPayload.reduce(
+    (min, v) => Math.min(min, Number(v.price)),
+    Infinity,
+  );
   const finalPrice = minVariantPrice === Infinity ? finalPriceComputed : minVariantPrice;
 
   const product = await db.product.create({

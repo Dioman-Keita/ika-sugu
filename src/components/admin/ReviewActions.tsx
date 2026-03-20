@@ -18,17 +18,18 @@ export default function ReviewActions({ reviewId, currentStatus }: Props) {
   const nextStatus = isApproved ? ReviewStatus.REJECTED : ReviewStatus.APPROVED;
   const label = useMemo(() => (isApproved ? "Reject" : "Approve"), [isApproved]);
   const Icon = isApproved ? XCircle : CheckCircle;
-  const color =
-    isApproved
-      ? "text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950"
-      : "text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-950";
+  const color = isApproved
+    ? "text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950"
+    : "text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-950";
 
   return (
     <Button
       variant="outline"
       size="sm"
       className={`h-7 px-2 text-xs rounded-lg ${color}`}
-      onClick={() => startTransition(() => updateReviewStatusAction(reviewId, nextStatus))}
+      onClick={() =>
+        startTransition(() => updateReviewStatusAction(reviewId, nextStatus))
+      }
       disabled={isPending}
     >
       {isPending ? <Loader2 size={12} className="animate-spin" /> : <Icon size={12} />}

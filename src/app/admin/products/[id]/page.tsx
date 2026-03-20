@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
+import type { Prisma } from "@/generated/prisma/client";
 import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
 import { Locale, parseLocale } from "@/lib/i18n/locale";
 import { messages } from "@/lib/i18n/messages";
@@ -37,10 +38,12 @@ const PRODUCT_SELECT = {
   },
 } as const;
 
-const shapeProduct = (product: any) => {
+type ProductShape = Prisma.ProductGetPayload<{ select: typeof PRODUCT_SELECT }>;
+
+const shapeProduct = (product: ProductShape | null) => {
   if (!product) return null;
   const variants =
-    product.variants?.map((v: any) => ({
+    product.variants?.map((v) => ({
       id: v.id,
       colorName: v.colorName,
       colorHex: v.colorHex ?? undefined,
@@ -50,7 +53,10 @@ const shapeProduct = (product: any) => {
       currency: v.currency ?? "USD",
       stock: v.stock,
       sku: v.sku ?? undefined,
-      images: (v.images ?? []).map((url: string, idx: number) => ({ url, isCover: idx === 0 })),
+      images: (v.images ?? []).map((url: string, idx: number) => ({
+        url,
+        isCover: idx === 0,
+      })),
     })) ?? [];
   return { ...product, variants };
 };
@@ -73,7 +79,9 @@ export default async function AdminProductDetailPage({ params }: Props) {
     <div className="p-6 space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-muted-foreground">{m["admin.product.form.subtitle"]}</p>
+          <p className="text-sm text-muted-foreground">
+            {m["admin.product.form.subtitle"]}
+          </p>
           <h1 className="text-2xl font-semibold text-foreground">{shaped.name}</h1>
           <Link
             href={`/shop/product/${shaped.slug}`}

@@ -21,7 +21,11 @@ type Props = {
   };
 };
 
-export default function ProductImagesManager({ productId, initialImages, labels }: Props) {
+export default function ProductImagesManager({
+  productId,
+  initialImages,
+  labels,
+}: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

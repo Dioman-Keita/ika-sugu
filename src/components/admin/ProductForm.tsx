@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { createAdminProduct, updateAdminProduct } from "@/app/actions/admin";
@@ -39,31 +39,31 @@ type ProductFormProps = {
   labels: Record<string, string>;
 };
 
-export default function ProductForm({ mode, categories, initial, labels }: ProductFormProps) {
+export default function ProductForm({
+  mode,
+  categories,
+  initial,
+  labels,
+}: ProductFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
   const [productId] = useState(initial?.id ?? crypto.randomUUID());
+  const [slugEdited, setSlugEdited] = useState(false);
 
   const [name, setName] = useState(initial?.name ?? "");
   const [slug, setSlug] = useState(initial?.slug ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [dressStyle, setDressStyle] = useState(initial?.dressStyle ?? "");
-  const [categoryId, setCategoryId] = useState(initial?.categoryId ?? categories[0]?.id ?? "");
+  const [categoryId, setCategoryId] = useState(
+    initial?.categoryId ?? categories[0]?.id ?? "",
+  );
   const [basePrice, setBasePrice] = useState(initial?.basePrice ?? 0);
-  const [discountPercentage, setDiscountPercentage] = useState(initial?.discountPercentage ?? 0);
+  const [discountPercentage, setDiscountPercentage] = useState(
+    initial?.discountPercentage ?? 0,
+  );
   const [vatRate, setVatRate] = useState(initial?.vatRate ?? 20);
-
-  useEffect(() => {
-    setSlug(
-      name
-        .toLowerCase()
-        .trim()
-        .replace(/\s+/g, "-")
-        .replace(/[^a-z0-9-_]/g, ""),
-    );
-  }, [name]);
 
   const finalPrice = useMemo(() => {
     const pct = Math.max(0, Math.min(100, discountPercentage || 0));
@@ -158,20 +158,38 @@ export default function ProductForm({ mode, categories, initial, labels }: Produ
     <form className="space-y-6" onSubmit={handleSubmit}>
       <div className="grid md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">{labels["field.name"]}</label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            className="w-full rounded-xl border border-border bg-surface-section px-4 py-3 text-sm text-foreground focus:ring-2 focus:ring-foreground/10 outline-none"
-            placeholder={labels["placeholder.name"]}
-          />
-        </div>
+          <label className="text-sm font-medium text-foreground">
+            {labels["field.name"]}
+          </label>
+        <input
+          value={name}
+          onChange={(e) => {
+            const nextName = e.target.value;
+            setName(nextName);
+            if (!slugEdited) {
+              const autoSlug = nextName
+                .toLowerCase()
+                .trim()
+                .replace(/\s+/g, "-")
+                .replace(/[^a-z0-9-_]/g, "");
+              setSlug(autoSlug);
+            }
+          }}
+          required
+          className="w-full rounded-xl border border-border bg-surface-section px-4 py-3 text-sm text-foreground focus:ring-2 focus:ring-foreground/10 outline-none"
+          placeholder={labels["placeholder.name"]}
+        />
+      </div>
         <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">{labels["field.slug"]}</label>
+          <label className="text-sm font-medium text-foreground">
+            {labels["field.slug"]}
+          </label>
           <input
-            value={slug}
-            onChange={(e) => setSlug(e.target.value)}
+          value={slug}
+          onChange={(e) => {
+            setSlugEdited(true);
+            setSlug(e.target.value);
+          }}
             required
             className="w-full rounded-xl border border-border bg-surface-section px-4 py-3 text-sm text-foreground focus:ring-2 focus:ring-foreground/10 outline-none"
             placeholder={labels["placeholder.slug"]}
@@ -180,7 +198,9 @@ export default function ProductForm({ mode, categories, initial, labels }: Produ
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-foreground">{labels["field.description"]}</label>
+        <label className="text-sm font-medium text-foreground">
+          {labels["field.description"]}
+        </label>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -192,7 +212,9 @@ export default function ProductForm({ mode, categories, initial, labels }: Produ
 
       <div className="grid md:grid-cols-3 gap-4">
         <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">{labels["field.category"]}</label>
+          <label className="text-sm font-medium text-foreground">
+            {labels["field.category"]}
+          </label>
           <select
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
@@ -207,7 +229,9 @@ export default function ProductForm({ mode, categories, initial, labels }: Produ
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">{labels["field.basePrice"]}</label>
+          <label className="text-sm font-medium text-foreground">
+            {labels["field.basePrice"]}
+          </label>
           <input
             type="number"
             step="0.01"
@@ -220,7 +244,9 @@ export default function ProductForm({ mode, categories, initial, labels }: Produ
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">{labels["field.discount"]}</label>
+          <label className="text-sm font-medium text-foreground">
+            {labels["field.discount"]}
+          </label>
           <input
             type="number"
             step="1"
@@ -233,7 +259,9 @@ export default function ProductForm({ mode, categories, initial, labels }: Produ
           />
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">{labels["field.vat"]}</label>
+          <label className="text-sm font-medium text-foreground">
+            {labels["field.vat"]}
+          </label>
           <input
             type="number"
             step="0.1"
@@ -249,7 +277,9 @@ export default function ProductForm({ mode, categories, initial, labels }: Produ
 
       <div className="grid md:grid-cols-3 gap-4">
         <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">{labels["field.dressStyle"]}</label>
+          <label className="text-sm font-medium text-foreground">
+            {labels["field.dressStyle"]}
+          </label>
           <input
             value={dressStyle}
             onChange={(e) => setDressStyle(e.target.value)}
@@ -258,7 +288,9 @@ export default function ProductForm({ mode, categories, initial, labels }: Produ
           />
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-medium text-muted-foreground">{labels["field.finalPrice"]}</label>
+          <label className="text-sm font-medium text-muted-foreground">
+            {labels["field.finalPrice"]}
+          </label>
           <div className="h-[46px] flex items-center px-4 rounded-xl border border-border bg-surface-section text-sm text-foreground">
             {finalPrice.toFixed(2)} USD
           </div>
@@ -281,7 +313,12 @@ export default function ProductForm({ mode, categories, initial, labels }: Produ
               Couleurs, tailles, prix, stock et images spécifiques.
             </p>
           </div>
-          <Button type="button" variant="secondary" className="rounded-full h-9 px-4" onClick={addVariant}>
+          <Button
+            type="button"
+            variant="secondary"
+            className="rounded-full h-9 px-4"
+            onClick={addVariant}
+          >
             Ajouter une variante
           </Button>
         </div>
@@ -311,7 +348,9 @@ export default function ProductForm({ mode, categories, initial, labels }: Produ
               <div className="grid md:grid-cols-3 gap-3">
                 <input
                   value={variant.colorName}
-                  onChange={(e) => updateVariant(variant.id, { colorName: e.target.value })}
+                  onChange={(e) =>
+                    updateVariant(variant.id, { colorName: e.target.value })
+                  }
                   className="w-full rounded-xl border border-border bg-surface-card px-4 py-3 text-sm text-foreground"
                   placeholder="Couleur (ex: Navy)"
                 />
@@ -334,7 +373,9 @@ export default function ProductForm({ mode, categories, initial, labels }: Produ
                   type="number"
                   step="0.01"
                   value={variant.price}
-                  onChange={(e) => updateVariant(variant.id, { price: Number(e.target.value) })}
+                  onChange={(e) =>
+                    updateVariant(variant.id, { price: Number(e.target.value) })
+                  }
                   className="w-full rounded-xl border border-border bg-surface-card px-4 py-3 text-sm text-foreground"
                   placeholder="Prix TTC"
                 />
@@ -344,7 +385,8 @@ export default function ProductForm({ mode, categories, initial, labels }: Produ
                   value={variant.compareAtPrice ?? ""}
                   onChange={(e) =>
                     updateVariant(variant.id, {
-                      compareAtPrice: e.target.value === "" ? null : Number(e.target.value),
+                      compareAtPrice:
+                        e.target.value === "" ? null : Number(e.target.value),
                     })
                   }
                   className="w-full rounded-xl border border-border bg-surface-card px-4 py-3 text-sm text-foreground"
@@ -354,13 +396,17 @@ export default function ProductForm({ mode, categories, initial, labels }: Produ
                   type="number"
                   step="1"
                   value={variant.stock ?? 0}
-                  onChange={(e) => updateVariant(variant.id, { stock: Number(e.target.value) })}
+                  onChange={(e) =>
+                    updateVariant(variant.id, { stock: Number(e.target.value) })
+                  }
                   className="w-full rounded-xl border border-border bg-surface-card px-4 py-3 text-sm text-foreground"
                   placeholder="Stock"
                 />
                 <input
                   value={variant.colorHex ?? ""}
-                  onChange={(e) => updateVariant(variant.id, { colorHex: e.target.value })}
+                  onChange={(e) =>
+                    updateVariant(variant.id, { colorHex: e.target.value })
+                  }
                   className="w-full rounded-xl border border-border bg-surface-card px-4 py-3 text-sm text-foreground"
                   placeholder="Code couleur (hex)"
                 />
@@ -395,7 +441,11 @@ export default function ProductForm({ mode, categories, initial, labels }: Produ
           {labels["action.cancel"]}
         </Button>
         <Button type="submit" className="rounded-full" disabled={isPending}>
-          {isPending ? labels["action.saving"] : mode === "create" ? labels["action.create"] : labels["action.save"]}
+          {isPending
+            ? labels["action.saving"]
+            : mode === "create"
+              ? labels["action.create"]
+              : labels["action.save"]}
         </Button>
       </div>
     </form>

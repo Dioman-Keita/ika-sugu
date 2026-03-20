@@ -12,9 +12,7 @@ const grossPrice = (base: number, discountPct: number, vatPct: number) => {
   const net = new Prisma.Decimal(base).mul(
     new Prisma.Decimal(1).sub(new Prisma.Decimal(discountPct).div(100)),
   );
-  return toMoney(
-    net.mul(new Prisma.Decimal(1).add(new Prisma.Decimal(vatPct).div(100))),
-  );
+  return toMoney(net.mul(new Prisma.Decimal(1).add(new Prisma.Decimal(vatPct).div(100))));
 };
 
 const vatPortionFromGross = (gross: Prisma.Decimal, vatPct: Prisma.Decimal) => {

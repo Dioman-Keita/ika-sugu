@@ -7,7 +7,9 @@ const getEnv = () => {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!url) {
-    throw new Error("NEXT_PUBLIC_SUPABASE_URL is required for the Supabase server client");
+    throw new Error(
+      "NEXT_PUBLIC_SUPABASE_URL is required for the Supabase server client",
+    );
   }
   if (!serviceRoleKey) {
     throw new Error(

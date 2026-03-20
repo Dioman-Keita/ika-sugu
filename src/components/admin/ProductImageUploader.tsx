@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { Upload, X, Star } from "lucide-react";
+import Image from "next/image";
 import { uploadImage, UploadError } from "@/lib/storage/uploadImage";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -40,10 +41,13 @@ export default function ProductImageUploader({
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const emitChange = async (next: ImageItem[]) => {
-    setImages(next);
-    if (onPersist) await onPersist(next);
-  };
+  const emitChange = useCallback(
+    async (next: ImageItem[]) => {
+      setImages(next);
+      if (onPersist) await onPersist(next);
+    },
+    [onPersist],
+  );
 
   const handleFiles = useCallback(
     async (files: FileList | File[]) => {
@@ -57,9 +61,10 @@ export default function ProductImageUploader({
           const url = await uploadImage(file, { productId });
           uploaded.push({ url, isCover: false });
         }
-        const next = images.length === 0 && uploaded.length > 0
-          ? [{ ...uploaded[0], isCover: true }, ...uploaded.slice(1), ...images]
-          : [...images, ...uploaded];
+        const next =
+          images.length === 0 && uploaded.length > 0
+            ? [{ ...uploaded[0], isCover: true }, ...uploaded.slice(1), ...images]
+            : [...images, ...uploaded];
         await emitChange(next);
       } catch (err) {
         const message = err instanceof UploadError ? err.message : "Upload failed";
@@ -68,7 +73,7 @@ export default function ProductImageUploader({
         setIsUploading(false);
       }
     },
-    [images, max, productId],
+    [emitChange, images, max, productId],
   );
 
   const onDrop = async (e: React.DragEvent<HTMLDivElement>) => {
@@ -151,8 +156,17 @@ export default function ProductImageUploader({
       {images.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {images.map((img) => (
-            <div key={img.url} className="relative group border border-border rounded-lg overflow-hidden">
-              <img src={img.url} alt="Product" className="w-full h-36 object-cover" />
+            <div
+              key={img.url}
+              className="relative group border border-border rounded-lg overflow-hidden"
+            >
+              <Image
+                src={img.url}
+                alt="Product"
+                width={400}
+                height={240}
+                className="w-full h-36 object-cover"
+              />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition flex items-start justify-end p-2 gap-2">
                 <Button
                   size="icon"

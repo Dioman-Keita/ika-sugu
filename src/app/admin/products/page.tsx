@@ -6,7 +6,6 @@ import { cookies } from "next/headers";
 import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
 import { Locale, parseLocale } from "@/lib/i18n/locale";
 import { messages } from "@/lib/i18n/messages";
-import ProductImageUploader from "@/components/admin/ProductImageUploader";
 import { Button } from "@/components/ui/button";
 
 type Props = {
@@ -134,23 +133,23 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                           {product.totalStock}
                         </span>
                       </td>
-                    <td className="px-5 py-3 text-muted-foreground text-xs">
-                      {new Intl.DateTimeFormat(locale, {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      }).format(new Date(product.createdAt))}
-                    </td>
-                    <td className="px-5 py-3 text-right">
-                      <Link
-                        href={`/admin/products/${product.id}`}
-                        className="text-primary hover:underline text-xs font-medium"
-                      >
-                        {m["admin.products.table.mediaAction"]}
-                      </Link>
-                    </td>
-                  </tr>
-                ))
+                      <td className="px-5 py-3 text-muted-foreground text-xs">
+                        {new Intl.DateTimeFormat(locale, {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        }).format(new Date(product.createdAt))}
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        <Link
+                          href={`/admin/products/${product.id}`}
+                          className="text-primary hover:underline text-xs font-medium"
+                        >
+                          {m["admin.products.table.mediaAction"]}
+                        </Link>
+                      </td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>

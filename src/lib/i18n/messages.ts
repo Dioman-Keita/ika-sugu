@@ -600,8 +600,7 @@ export const messages: Record<Locale, Messages> = {
       "Dites-nous ce que vous avez aimé (ou pas)…",
     "product.reviews.form.minChars": "Minimum 10 caractères",
     "product.reviews.error.unauthorized": "Connectez-vous pour envoyer un avis.",
-    "product.reviews.error.duplicate":
-      "Vous avez déjà laissé un avis sur ce produit.",
+    "product.reviews.error.duplicate": "Vous avez déjà laissé un avis sur ce produit.",
     "product.reviews.error.tooShort": "Votre avis est trop court.",
     "product.reviews.error.generic": "Une erreur s'est produite. Réessayez.",
     "product.faq.title": "Questions fréquentes",
@@ -846,7 +845,8 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.form.action.saving": "Enregistrement...",
 
     "notFound.title": "Page introuvable",
-    "notFound.subtitle": "Oups ! La page que vous cherchez n'existe plus ou a été déplacée.",
+    "notFound.subtitle":
+      "Oups ! La page que vous cherchez n'existe plus ou a été déplacée.",
     "notFound.home": "Retour à l'accueil",
     "notFound.shop": "Continuer vos achats",
 

@@ -13,10 +13,20 @@ const PRODUCT_SELECT = {
   id: true,
   name: true,
   slug: true,
-  variants: { select: { id: true, images: true, createdAt: true }, orderBy: { createdAt: "asc" as const } },
+  variants: {
+    select: { id: true, images: true, createdAt: true },
+    orderBy: { createdAt: "asc" as const },
+  },
 } as const;
 
-const shapeProduct = (product: { id: string; name: string; slug: string; variants: { id: string; images: string[] }[] } | null) => {
+const shapeProduct = (
+  product: {
+    id: string;
+    name: string;
+    slug: string;
+    variants: { id: string; images: string[] }[];
+  } | null,
+) => {
   if (!product) return null;
   const primaryVariant = product.variants[0];
   const initialImages =
@@ -29,8 +39,14 @@ const getProduct = async (idOrSlug: string | undefined) => {
 
   // Try by product id, then slug, then variant id
   const product =
-    (await db.product.findUnique({ where: { id: idOrSlug }, select: { ...PRODUCT_SELECT } })) ??
-    (await db.product.findUnique({ where: { slug: idOrSlug }, select: { ...PRODUCT_SELECT } })) ??
+    (await db.product.findUnique({
+      where: { id: idOrSlug },
+      select: { ...PRODUCT_SELECT },
+    })) ??
+    (await db.product.findUnique({
+      where: { slug: idOrSlug },
+      select: { ...PRODUCT_SELECT },
+    })) ??
     (await db.product.findFirst({
       where: { variants: { some: { id: idOrSlug } } },
       select: { ...PRODUCT_SELECT },

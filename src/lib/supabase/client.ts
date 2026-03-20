@@ -7,7 +7,9 @@ const getEnv = () => {
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY;
 
   if (!url || !anonKey) {
-    throw new Error("Supabase client env vars are missing (NEXT_PUBLIC_SUPABASE_URL + PUBLISHABLE KEY)");
+    throw new Error(
+      "Supabase client env vars are missing (NEXT_PUBLIC_SUPABASE_URL + PUBLISHABLE KEY)",
+    );
   }
 
   return { url, anonKey };

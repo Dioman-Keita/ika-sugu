@@ -2,7 +2,13 @@ import imageCompression from "browser-image-compression";
 import { getSupabaseClient } from "@/lib/supabase/client";
 
 const MAX_FILE_MB = 5;
-const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/jpg", "image/gif"];
+const ACCEPTED_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/jpg",
+  "image/gif",
+];
 
 type UploadOptions = {
   productId: string;
