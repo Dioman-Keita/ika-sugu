@@ -68,20 +68,3 @@ export const uploadImage = async (file: File, opts: UploadOptions): Promise<stri
 
   return data.publicUrl;
 };
-
-export type UploadedImage = {
-  url: string;
-  path: string;
-};
-
-export const deleteImage = async (publicUrl: string) => {
-  const supabase = getSupabaseClient();
-  const marker = "/storage/v1/object/public/";
-  const idx = publicUrl.indexOf(marker);
-  if (idx === -1) throw new UploadError("Invalid public URL");
-  const path = publicUrl.slice(idx + marker.length);
-  const [bucket, ...rest] = path.split("/");
-  const storagePath = rest.join("/");
-  const { error } = await supabase.storage.from(bucket).remove([storagePath]);
-  if (error) throw new UploadError(error.message);
-};

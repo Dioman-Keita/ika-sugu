@@ -67,7 +67,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                     {m["admin.products.table.added"]}
                   </th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-muted-foreground">
-                    {m["admin.products.table.media"]}
+                    Actions
                   </th>
                 </tr>
               </thead>
@@ -145,7 +145,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                           href={`/admin/products/${product.id}`}
                           className="text-primary hover:underline text-xs font-medium"
                         >
-                          {m["admin.products.table.mediaAction"]}
+                          Edit
                         </Link>
                       </td>
                     </tr>

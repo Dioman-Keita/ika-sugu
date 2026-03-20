@@ -139,7 +139,11 @@ export default function ProductForm({
             compareAtPrice: v.compareAtPrice ? Number(v.compareAtPrice) : null,
             currency: v.currency || "USD",
             stock: Number(v.stock) || 0,
-            images: v.images?.map((img) => img.url) ?? [],
+            images:
+              v.images
+                ?.slice()
+                .sort((a, b) => Number(b.isCover) - Number(a.isCover))
+                .map((img) => img.url) ?? [],
           })),
         };
         const result =
@@ -161,35 +165,35 @@ export default function ProductForm({
           <label className="text-sm font-medium text-foreground">
             {labels["field.name"]}
           </label>
-        <input
-          value={name}
-          onChange={(e) => {
-            const nextName = e.target.value;
-            setName(nextName);
-            if (!slugEdited) {
-              const autoSlug = nextName
-                .toLowerCase()
-                .trim()
-                .replace(/\s+/g, "-")
-                .replace(/[^a-z0-9-_]/g, "");
-              setSlug(autoSlug);
-            }
-          }}
-          required
-          className="w-full rounded-xl border border-border bg-surface-section px-4 py-3 text-sm text-foreground focus:ring-2 focus:ring-foreground/10 outline-none"
-          placeholder={labels["placeholder.name"]}
-        />
-      </div>
+          <input
+            value={name}
+            onChange={(e) => {
+              const nextName = e.target.value;
+              setName(nextName);
+              if (!slugEdited) {
+                const autoSlug = nextName
+                  .toLowerCase()
+                  .trim()
+                  .replace(/\s+/g, "-")
+                  .replace(/[^a-z0-9-_]/g, "");
+                setSlug(autoSlug);
+              }
+            }}
+            required
+            className="w-full rounded-xl border border-border bg-surface-section px-4 py-3 text-sm text-foreground focus:ring-2 focus:ring-foreground/10 outline-none"
+            placeholder={labels["placeholder.name"]}
+          />
+        </div>
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground">
             {labels["field.slug"]}
           </label>
           <input
-          value={slug}
-          onChange={(e) => {
-            setSlugEdited(true);
-            setSlug(e.target.value);
-          }}
+            value={slug}
+            onChange={(e) => {
+              setSlugEdited(true);
+              setSlug(e.target.value);
+            }}
             required
             className="w-full rounded-xl border border-border bg-surface-section px-4 py-3 text-sm text-foreground focus:ring-2 focus:ring-foreground/10 outline-none"
             placeholder={labels["placeholder.slug"]}

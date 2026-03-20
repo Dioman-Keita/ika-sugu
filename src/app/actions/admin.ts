@@ -169,6 +169,7 @@ type UpsertProductInput = {
   discountPercentage?: number;
   vatRate?: number;
   variants?: Array<{
+    id?: string;
     sku?: string | null;
     colorName: string;
     colorHex?: string | null;
@@ -250,9 +251,38 @@ export async function updateAdminProduct(data: UpsertProductInput & { id: string
   const vatRate = Math.max(0, data.vatRate ?? 20);
   const computedFinalPrice = Number((net * (1 + vatRate / 100)).toFixed(2));
 
-  const variantsPayload =
-    data.variants && data.variants.length
-      ? data.variants.map((v) => ({
+  const product = await db.$transaction(async (tx) => {
+    const existingVariants = await tx.productVariant.findMany({
+      where: { productId: data.id },
+    });
+    const incoming = data.variants ?? [];
+
+    const existingById = new Map(existingVariants.map((v) => [v.id, v]));
+    const incomingIds = new Set<string>();
+
+    const toCreate: Prisma.ProductVariantCreateManyInput[] = [];
+    const toUpdate: Array<{ id: string; data: Prisma.ProductVariantUpdateInput }> = [];
+
+    for (const v of incoming) {
+      if (v.id && existingById.has(v.id)) {
+        incomingIds.add(v.id);
+        toUpdate.push({
+          id: v.id,
+          data: {
+            sku: v.sku ?? null,
+            colorName: v.colorName,
+            colorHex: v.colorHex ?? null,
+            size: v.size,
+            price: v.price,
+            compareAtPrice: v.compareAtPrice ?? null,
+            currency: v.currency ?? "USD",
+            stock: v.stock ?? 0,
+            images: v.images ?? [],
+          },
+        });
+      } else {
+        toCreate.push({
+          productId: data.id,
           sku: v.sku ?? null,
           colorName: v.colorName,
           colorHex: v.colorHex ?? null,
@@ -262,16 +292,34 @@ export async function updateAdminProduct(data: UpsertProductInput & { id: string
           currency: v.currency ?? "USD",
           stock: v.stock ?? 0,
           images: v.images ?? [],
-        }))
-      : undefined;
+        });
+      }
+    }
 
-  const minVariantPrice =
-    variantsPayload && variantsPayload.length
-      ? variantsPayload.reduce((min, v) => Math.min(min, Number(v.price)), Infinity)
+    const toDeleteIds = existingVariants
+      .filter((v) => !incomingIds.has(v.id))
+      .map((v) => v.id);
+
+    if (toUpdate.length) {
+      await Promise.all(
+        toUpdate.map(({ id, data: variantData }) =>
+          tx.productVariant.update({ where: { id }, data: variantData }),
+        ),
+      );
+    }
+    if (toDeleteIds.length) {
+      await tx.productVariant.deleteMany({ where: { id: { in: toDeleteIds } } });
+    }
+    if (toCreate.length) {
+      await tx.productVariant.createMany({ data: toCreate });
+    }
+
+    const minVariantPrice = incoming.length
+      ? incoming.reduce((min, v) => Math.min(min, Number(v.price)), Infinity)
       : Infinity;
-  const finalPrice = minVariantPrice === Infinity ? computedFinalPrice : minVariantPrice;
+    const finalPrice =
+      minVariantPrice === Infinity ? computedFinalPrice : minVariantPrice;
 
-  const product = await db.$transaction(async (tx) => {
     const updated = await tx.product.update({
       where: { id: data.id },
       data: {
@@ -288,12 +336,6 @@ export async function updateAdminProduct(data: UpsertProductInput & { id: string
       select: { id: true, slug: true },
     });
 
-    if (variantsPayload) {
-      await tx.productVariant.deleteMany({ where: { productId: data.id } });
-      await tx.productVariant.createMany({
-        data: variantsPayload.map((v) => ({ ...v, productId: data.id })),
-      });
-    }
     return updated;
   });
 

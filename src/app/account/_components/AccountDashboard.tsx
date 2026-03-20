@@ -137,7 +137,7 @@ export default function AccountDashboard({ session }: Props) {
       <div>
         {activeTab === "profile" && <AccountProfile session={session} />}
         {activeTab === "orders" && <AccountOrders />}
-        {activeTab === "settings" && <AccountSettings userEmail={user.email} />}
+        {activeTab === "settings" && <AccountSettings />}
       </div>
     </div>
   );

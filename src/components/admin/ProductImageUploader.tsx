@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useId, useState } from "react";
 import { Upload, X, Star } from "lucide-react";
 import Image from "next/image";
 import { uploadImage, UploadError } from "@/lib/storage/uploadImage";
@@ -40,6 +40,7 @@ export default function ProductImageUploader({
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const inputId = useId();
 
   const emitChange = useCallback(
     async (next: ImageItem[]) => {
@@ -90,25 +91,11 @@ export default function ProductImageUploader({
 
   const removeImage = async (url: string) => {
     setError(null);
-    try {
-      const res = await fetch(`/api/products/${productId}/images`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new UploadError(body.error ?? "Failed to delete image");
-      }
-      const next = images.filter((img) => img.url !== url);
-      if (next.length > 0 && !next.some((img) => img.isCover)) {
-        next[0].isCover = true;
-      }
-      await emitChange([...next]);
-    } catch (err) {
-      const message = err instanceof UploadError ? err.message : "Failed to delete image";
-      setError(message);
+    const next = images.filter((img) => img.url !== url);
+    if (next.length > 0 && !next.some((img) => img.isCover)) {
+      next[0].isCover = true;
     }
+    await emitChange([...next]);
   };
 
   const setCover = async (url: string) => {
@@ -139,9 +126,9 @@ export default function ProductImageUploader({
           multiple
           onChange={onFileInput}
           className="hidden"
-          id="product-images-input"
+          id={inputId}
         />
-        <label htmlFor="product-images-input" className="cursor-pointer space-y-2 block">
+        <label htmlFor={inputId} className="cursor-pointer space-y-2 block">
           <div className="mx-auto w-12 h-12 rounded-full bg-surface-section flex items-center justify-center text-primary">
             <Upload size={20} />
           </div>
@@ -169,6 +156,7 @@ export default function ProductImageUploader({
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition flex items-start justify-end p-2 gap-2">
                 <Button
+                  type="button"
                   size="icon"
                   variant="secondary"
                   className="h-8 w-8 opacity-0 group-hover:opacity-100 transition"
@@ -178,6 +166,7 @@ export default function ProductImageUploader({
                   <X size={16} />
                 </Button>
                 <Button
+                  type="button"
                   size="icon"
                   variant={img.isCover ? "default" : "secondary"}
                   className="h-8 w-8 opacity-0 group-hover:opacity-100 transition"

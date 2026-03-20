@@ -11,7 +11,6 @@ import { translateAttribute } from "@/lib/i18n/messages";
 type LegacyCartItem = CartItem & {
   price?: number;
   discount?: { percentage?: number };
-  vatRate?: number;
 };
 
 const getBasePrice = (item: LegacyCartItem): number => item.basePrice ?? item.price ?? 0;
@@ -20,17 +19,7 @@ const getFinalPrice = (item: LegacyCartItem): number => {
   if (typeof item.finalPrice === "number") return item.finalPrice;
   const base = getBasePrice(item);
   const pct = item.discountPercentage ?? item.discount?.percentage ?? 0;
-  const net = base - (base * pct) / 100;
-  const vat = item.vatRate ?? 0;
-  return Math.round(net * (1 + vat / 100));
-};
-
-const getVatPortion = (item: LegacyCartItem): number => {
-  const vat = item.vatRate ?? 0;
-  if (vat <= 0) return 0;
-  const gross = getFinalPrice(item);
-  const net = gross / (1 + vat / 100);
-  return Math.round(gross - net);
+  return Math.round(base - (base * pct) / 100);
 };
 
 type OrderSummaryProps = {
@@ -48,11 +37,6 @@ const OrderSummary = ({ items, isSubmitting }: OrderSummaryProps) => {
     (sum, item) => sum + getFinalPrice(item) * item.quantity,
     0,
   );
-  const totalVat = items.reduce(
-    (sum, item) => sum + getVatPortion(item) * item.quantity,
-    0,
-  );
-  const subtotalExclVat = Math.max(0, Math.round(totalFinalPrice - totalVat));
   const discountAmount = Math.max(0, Math.round(totalBasePrice - totalFinalPrice));
   const discountPercentage =
     totalBasePrice > 0 ? Math.round((discountAmount / totalBasePrice) * 100) : 0;
@@ -98,8 +82,8 @@ const OrderSummary = ({ items, isSubmitting }: OrderSummaryProps) => {
       {/* Totals */}
       <div className="flex flex-col space-y-4">
         <div className="flex items-center justify-between">
-          <span className="text-muted-foreground">{t("checkout.subtotalExclVat")}</span>
-          <span className="font-bold text-foreground">${subtotalExclVat}</span>
+          <span className="text-muted-foreground">{t("checkout.subtotal")}</span>
+          <span className="font-bold text-foreground">${totalBasePrice}</span>
         </div>
         {discountAmount > 0 && (
           <div className="flex items-center justify-between">
@@ -109,10 +93,6 @@ const OrderSummary = ({ items, isSubmitting }: OrderSummaryProps) => {
             <span className="font-bold text-red-500">-${discountAmount}</span>
           </div>
         )}
-        <div className="flex items-center justify-between">
-          <span className="text-muted-foreground">{t("checkout.vat")}</span>
-          <span className="font-bold text-foreground">${totalVat}</span>
-        </div>
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground">{t("checkout.delivery")}</span>
           <span className="font-bold text-foreground">{t("checkout.free")}</span>
