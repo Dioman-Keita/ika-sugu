@@ -11,6 +11,7 @@ import { translateAttribute } from "@/lib/i18n/messages";
 type LegacyCartItem = CartItem & {
   price?: number;
   discount?: { percentage?: number };
+  vatRate?: number;
 };
 
 const getBasePrice = (item: LegacyCartItem): number => item.basePrice ?? item.price ?? 0;

@@ -7,13 +7,9 @@ import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
 import { Locale, parseLocale } from "@/lib/i18n/locale";
 import { messages } from "@/lib/i18n/messages";
 
-export default function NotFound() {
-  const cookieStore = cookies();
-  const locale: Locale = parseLocale(
-    typeof cookieStore?.get === "function"
-      ? cookieStore.get(LOCALE_COOKIE_KEY)?.value
-      : undefined,
-  );
+export default async function NotFound() {
+  const cookieStore = await cookies();
+  const locale: Locale = parseLocale(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
   const m = messages[locale];
 
   return (

@@ -15,11 +15,11 @@ const assertAdmin = async () => {
   return Boolean(userEmail && adminEmails.includes(userEmail));
 };
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const isAdmin = await assertAdmin();
   if (!isAdmin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const productId = params.id;
+  const { id: productId } = await params;
   const body = await req.json();
   const images = Array.isArray(body.images)
     ? (body.images as Array<{ url: string; isCover?: boolean }>)
