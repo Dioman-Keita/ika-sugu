@@ -18,7 +18,8 @@ export default function AccountSettings() {
       try {
         const adminStatus = await checkIsAdmin();
         setIsAdmin(adminStatus);
-      } catch {
+      } catch (error) {
+        console.error("Failled to fetch admin status:", error);
         setIsAdmin(false);
       } finally {
         setIsLoading(false);
