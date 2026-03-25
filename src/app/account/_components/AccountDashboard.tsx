@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut, User, Package, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import AccountProfile from "./AccountProfile";
 import AccountOrders from "./AccountOrders";
 import AccountSettings from "./AccountSettings";
 import { mockOrders } from "../_data/mockOrders";
+import { checkIsAdmin } from "@/app/actions/user";
 
 type Tab = "profile" | "orders" | "settings";
 
@@ -39,6 +40,20 @@ export default function AccountDashboard({ session }: Props) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>("profile");
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const fetchAdminStatus = async () => {
+      try {
+        const adminStatus = await checkIsAdmin();
+        setIsAdmin(adminStatus);
+      } catch {
+        setIsAdmin(false);
+      }
+    };
+
+    fetchAdminStatus();
+  }, []);
 
   const cartTotalQuantities = useSelector(
     (state: RootState) => state.carts.cart?.totalQuantities ?? 0,
@@ -75,9 +90,16 @@ export default function AccountDashboard({ session }: Props) {
 
           {/* User info */}
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-bold text-foreground truncate">
-              {user.name || user.email}
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold text-foreground truncate">
+                {user.name || user.email}
+              </h1>
+              {isAdmin && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary text-primary-foreground">
+                  {t("account.adminBadge")}
+                </span>
+              )}
+            </div>
             <p className="text-sm text-muted-foreground truncate">{user.email}</p>
             {memberSince && (
               <p className="text-xs text-muted-foreground mt-0.5">
