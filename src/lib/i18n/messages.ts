@@ -309,6 +309,7 @@ export const messages: Record<Locale, Messages> = {
     "account.settings.adminCta": "You have admin access",
     "account.settings.adminLinkLabel": "Go to administration",
     "account.settings.adminButton": "Open admin",
+    "account.adminBadge": "Admin",
 
     "account.guest.title": "Your Account",
     "account.guest.subtitle":
@@ -754,6 +755,7 @@ export const messages: Record<Locale, Messages> = {
     "account.settings.adminCta": "Vous avez un accès administrateur",
     "account.settings.adminLinkLabel": "Accéder à l'administration",
     "account.settings.adminButton": "Ouvrir l'administration",
+    "account.adminBadge": "Admin",
 
     "account.guest.title": "Votre compte",
     "account.guest.subtitle":

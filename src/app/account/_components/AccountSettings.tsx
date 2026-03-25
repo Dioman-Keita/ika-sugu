@@ -1,20 +1,38 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Moon, Sun, Shield } from "lucide-react";
+import Link from "next/link";
 import { useUiPreferences } from "@/lib/ui-preferences";
 import { cn } from "@/lib/utils";
+import { checkIsAdmin } from "@/app/actions/user";
 import type { Locale } from "@/lib/i18n/locale";
 
 export default function AccountSettings() {
   const { t, theme, setTheme, locale, setLocale } = useUiPreferences();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAdminStatus = async () => {
+      try {
+        const adminStatus = await checkIsAdmin();
+        setIsAdmin(adminStatus);
+      } catch (error) {
+        console.error("Failled to fetch admin status:", error);
+        setIsAdmin(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAdminStatus();
+  }, []);
 
   const languages: { value: Locale; labelKey: string }[] = [
     { value: "en", labelKey: "account.settings.languageEn" },
     { value: "fr", labelKey: "account.settings.languageFr" },
   ];
-
-  // Admin CTA removed from client to avoid exposing admin list publicly.
-  const isAdmin = false;
 
   return (
     <div className="space-y-4">
@@ -79,7 +97,24 @@ export default function AccountSettings() {
           </div>
         </div>
 
-        {isAdmin && null}
+        {/* Admin Access */}
+        {!isLoading && isAdmin && (
+          <div className="px-5 py-5">
+            <p className="text-xs text-muted-foreground mb-3">
+              {t("account.settings.adminCta")}
+            </p>
+            <Link
+              href="/admin/overview"
+              className={cn(
+                "inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-colors",
+                "bg-foreground text-background border-foreground hover:bg-foreground/90",
+              )}
+            >
+              <Shield size={14} />
+              {t("account.settings.adminButton")}
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
