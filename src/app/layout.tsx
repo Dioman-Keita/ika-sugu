@@ -10,6 +10,7 @@ import Providers from "./providers";
 import { cookies } from "next/headers";
 import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
 import { Locale, parseLocale } from "@/lib/i18n/locale";
+import { getCartCountAction } from "@/app/actions/cart";
 
 export const metadata: Metadata = {
   title: "Ika sugu",

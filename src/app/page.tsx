@@ -7,6 +7,12 @@ import { getHomeCatalogAction } from "@/app/actions/catalog";
 import { cookies } from "next/headers";
 import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
 import { Locale, parseLocale } from "@/lib/i18n/locale";
+import { 
+  dehydrate, 
+  HydrationBoundary, 
+  QueryClient 
+} from "@tanstack/react-query";
+import { PRODUCT_QUERY_KEYS } from "@/hooks/query-keys";
 
 export const dynamic = "force-dynamic";
 
@@ -14,11 +20,19 @@ export default async function Home() {
   const cookieStore = await cookies();
   const locale: Locale = parseLocale(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
 
+  const queryClient = new QueryClient();
+
+  // Prefetch data on the server
+  await queryClient.prefetchQuery({
+    queryKey: [...PRODUCT_QUERY_KEYS.home, locale],
+    queryFn: () => getHomeCatalogAction(locale),
+  });
+
   const { newArrivalsData, topSellingData, reviewsData } =
     await getHomeCatalogAction(locale);
 
   return (
-    <>
+    <HydrationBoundary state={dehydrate(queryClient)}>
       <Header />
       <Brands />
       <main className="my-[50px] sm:my-[72px]">
@@ -42,6 +56,6 @@ export default async function Home() {
         </div>
         <Reviews data={reviewsData} />
       </main>
-    </>
+    </HydrationBoundary>
   );
 }

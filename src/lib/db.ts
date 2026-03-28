@@ -29,6 +29,13 @@ const prismaClientSingleton = () => {
 
   const normalizedConnectionString = parsedUrl.toString();
 
+  if (process.env.NODE_ENV !== "production") {
+    console.log(`[db] Connecting to ${hostname} on port ${parsedUrl.port || "5432"}`);
+    if (isSupabasePooler) {
+      console.log(`[db] Supabase pooler detected. Using port ${parsedUrl.port}`);
+    }
+  }
+
   const allowInsecureDbSsl = process.env.ALLOW_INSECURE_DB_SSL === "true";
   const supabaseCa = process.env.SUPABASE_CA_CERT;
   const ssl = isSupabase
@@ -54,10 +61,13 @@ const prismaClientSingleton = () => {
   const pool = new Pool({
     connectionString: normalizedConnectionString,
     ...(ssl ? { ssl } : {}),
-    // Fail fast instead of hanging forever when DB is unreachable.
-    // 5s was too aggressive in dev; allow slower connects while still bounded.
     connectionTimeoutMillis: 15000,
   });
+
+  pool.on("error", (err) => {
+    console.error("[db] Unexpected error on idle client", err);
+  });
+
   const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
 };

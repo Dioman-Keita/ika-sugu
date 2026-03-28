@@ -20,6 +20,13 @@ import { cookies } from "next/headers";
 import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
 import { messages } from "@/lib/i18n/messages";
 import { Locale, parseLocale } from "@/lib/i18n/locale";
+import { 
+  dehydrate, 
+  HydrationBoundary, 
+  QueryClient 
+} from "@tanstack/react-query";
+import { PRODUCT_QUERY_KEYS } from "@/hooks/query-keys";
+import ShopProductGrid from "@/components/shop-page/ShopProductGrid";
 
 const PAGE_SIZE = 9;
 export const dynamic = "force-dynamic";
@@ -97,7 +104,7 @@ export default async function ShopPage({
     ? messages[locale][sectionKey] || sectionKey
     : messages[locale]["nav.shop"];
 
-  const { products, totalProducts, totalPages } = await getShopProductsAction({
+  const filters = {
     page: requestedPage,
     pageSize: PAGE_SIZE,
     locale,
@@ -108,7 +115,18 @@ export default async function ShopPage({
     minPrice: typeof minPrice === "number" && Number.isFinite(minPrice) ? minPrice : null,
     maxPrice: typeof maxPrice === "number" && Number.isFinite(maxPrice) ? maxPrice : null,
     sort,
+  };
+
+  const queryClient = new QueryClient();
+
+  // Prefetch data
+  await queryClient.prefetchQuery({
+    queryKey: PRODUCT_QUERY_KEYS.shop(filters),
+    queryFn: () => getShopProductsAction(filters),
   });
+
+  const { products, totalProducts, totalPages } = await getShopProductsAction(filters);
+
   const currentPage = Math.min(requestedPage, totalPages);
   const startProduct = totalProducts === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
   const endProduct = Math.min(currentPage * PAGE_SIZE, totalProducts);
@@ -118,49 +136,41 @@ export default async function ShopPage({
 
   return (
     <main className="pb-20">
-      <div className="max-w-frame mx-auto px-4 xl:px-0">
-        <hr className="h-px border-t-black/10 dark:border-t-white/10 mb-5 sm:mb-6" />
-        <BreadcrumbShop />
-        <div className="flex md:space-x-5 items-start">
-          <div className="hidden md:block min-w-73.75 max-w-73.75 border border-border rounded-[20px] px-5 md:px-6 py-5 space-y-5 md:space-y-6">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-foreground text-xl">
-                {messages[locale]["shop.filters"]}
-              </span>
-              <FiSliders className="text-2xl text-foreground/40" />
-            </div>
-            <Filters locale={locale} />
-          </div>
-          <div className="flex flex-col w-full space-y-5">
-            <div className="flex flex-col lg:flex-row lg:justify-between">
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <div className="max-w-frame mx-auto px-4 xl:px-0">
+          <hr className="h-px border-t-black/10 dark:border-t-white/10 mb-5 sm:mb-6" />
+          <BreadcrumbShop />
+          <div className="flex md:space-x-5 items-start">
+            <div className="hidden md:block min-w-73.75 max-w-73.75 border border-border rounded-[20px] px-5 md:px-6 py-5 space-y-5 md:space-y-6">
               <div className="flex items-center justify-between">
-                <h1 className="font-bold text-2xl md:text-[32px]">{pageTitle}</h1>
-                <MobileFilters locale={locale} />
-              </div>
-              <div className="flex flex-col sm:items-center sm:flex-row">
-                <span className="text-sm md:text-base text-muted-foreground mr-3">
-                  {messages[locale]["shop.showing"]
-                    .replace("{start}", String(startProduct))
-                    .replace("{end}", String(endProduct))
-                    .replace("{total}", String(totalProducts))}
+                <span className="font-bold text-foreground text-xl">
+                  {messages[locale]["shop.filters"]}
                 </span>
-                <ShopSortSelect locale={locale} />
+                <FiSliders className="text-2xl text-foreground/40" />
               </div>
+              <Filters locale={locale} />
             </div>
-            {products.length > 0 ? (
-              <div className="w-full grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
-                {products.map((product) => (
-                  <ProductCard key={product.id} data={product} />
-                ))}
+            <div className="flex flex-col w-full space-y-5">
+              <div className="flex flex-col lg:flex-row lg:justify-between">
+                <div className="flex items-center justify-between">
+                  <h1 className="font-bold text-2xl md:text-[32px]">{pageTitle}</h1>
+                  <MobileFilters locale={locale} />
+                </div>
+                <div className="flex flex-col sm:items-center sm:flex-row">
+                  <span className="text-sm md:text-base text-muted-foreground mr-3">
+                    {messages[locale]["shop.showing"]
+                      .replace("{start}", String(startProduct))
+                      .replace("{end}", String(endProduct))
+                      .replace("{total}", String(totalProducts))}
+                  </span>
+                  <ShopSortSelect locale={locale} />
+                </div>
               </div>
-            ) : (
-              <div className="w-full py-10 text-center border border-border rounded-[20px]">
-                <p className="text-muted-foreground text-sm sm:text-base">
-                  {messages[locale]["shop.noProducts"]}
-                </p>
-              </div>
-            )}
-            <hr className="border-t-border" />
+              
+              <ShopProductGrid filters={filters} locale={locale} />
+              
+              <hr className="border-t-border" />
+
             <Pagination className="justify-between">
               <PaginationPrevious
                 href={buildPageHref(Math.max(1, currentPage - 1))}
@@ -203,7 +213,8 @@ export default async function ShopPage({
             </Pagination>
           </div>
         </div>
-      </div>
+        </div>
+      </HydrationBoundary>
     </main>
   );
 }

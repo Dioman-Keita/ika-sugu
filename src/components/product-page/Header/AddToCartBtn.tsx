@@ -1,7 +1,6 @@
 "use client";
 
-import { addToCart } from "@/lib/features/carts/cartsSlice";
-import { useAppDispatch } from "@/lib/hooks/redux";
+import { useAddToCartMutation } from "@/hooks/use-cart";
 import { cn } from "@/lib/utils";
 import { Product } from "@/types/product.types";
 import { useUiPreferences } from "@/lib/ui-preferences";
@@ -17,36 +16,38 @@ const AddToCartBtn = ({
     disabled?: boolean;
   };
 }) => {
-  const dispatch = useAppDispatch();
+  const { mutate, isPending } = useAddToCartMutation();
   const { t } = useUiPreferences();
-  const isDisabled = Boolean(data.disabled);
+  const isDisabled = Boolean(data.disabled) || isPending;
+
+  const handleAddToCart = () => {
+    if (!data.selectedVariantId) return;
+
+    mutate({
+      variantId: data.selectedVariantId,
+      quantity: data.quantity,
+    });
+  };
 
   return (
     <button
       type="button"
       disabled={isDisabled}
       className={cn(
-        "bg-foreground text-background w-full ml-3 sm:ml-5 rounded-full h-11 md:h-[52px] text-sm sm:text-base hover:bg-foreground/80 transition-all",
+        "bg-foreground text-background w-full ml-3 sm:ml-5 rounded-full h-11 md:h-[52px] text-sm sm:text-base hover:bg-foreground/80 transition-all flex items-center justify-center",
         isDisabled && "bg-foreground/40 cursor-not-allowed hover:bg-foreground/40",
       )}
-      onClick={() =>
-        dispatch(
-          addToCart({
-            id: data.id,
-            slug: data.slug,
-            variantId: data.selectedVariantId,
-            name: data.title,
-            srcUrl: data.srcUrl,
-            basePrice: data.basePrice,
-            finalPrice: data.finalPrice,
-            attributes: [data.selectedSize, data.selectedColor],
-            discountPercentage: data.discountPercentage,
-            quantity: data.quantity,
-          }),
-        )
-      }
+      onClick={handleAddToCart}
     >
-      {isDisabled ? t("product.outOfStock") : t("product.addToCart")}
+      {isPending ? (
+        <span className="flex items-center gap-2">
+          {t("product.addingToCart")}...
+        </span>
+      ) : isDisabled ? (
+        t("product.outOfStock")
+      ) : (
+        t("product.addToCart")
+      )}
     </button>
   );
 };

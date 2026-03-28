@@ -902,3 +902,20 @@ export const translateAttribute = (value: string, locale: Locale): string => {
   const key = `attr.${value.toLowerCase()}`;
   return messages[locale][key] ?? value;
 };
+
+/**
+ * Returns a translation function for the given locale.
+ * Useful for Server Components.
+ */
+export const getMessages = (locale: Locale) => {
+  const dict = messages[locale] || messages.en;
+  return (key: string, variables?: Record<string, string | number>) => {
+    let msg = dict[key] || key;
+    if (variables) {
+      Object.entries(variables).forEach(([k, v]) => {
+        msg = msg.replace(`{${k}}`, String(v));
+      });
+    }
+    return msg;
+  };
+};

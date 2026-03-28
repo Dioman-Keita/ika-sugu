@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import PhotoSection from "./PhotoSection";
 import { Product } from "@/types/product.types";
 import { integralCF } from "@/styles/fonts";
@@ -10,9 +10,14 @@ import ColorSelection from "./ColorSelection";
 import SizeSelection from "./SizeSelection";
 import AddToCardSection from "./AddToCardSection";
 import { useUiPreferences } from "@/lib/ui-preferences";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 const Header = ({ data }: { data: Product }) => {
   const { t } = useUiPreferences();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const activeVariants = useMemo(
     () => data.variants.filter((variant) => variant.isActive),
     [data.variants],
@@ -48,7 +53,8 @@ const Header = ({ data }: { data: Product }) => {
 
   const defaultColor =
     colorOptions.find((color) => color.isAvailable)?.name ?? colorOptions[0]?.name ?? "";
-  const [selectedColor, setSelectedColor] = useState(defaultColor);
+
+  const selectedColor = searchParams.get("color") ?? defaultColor;
   const resolvedColor =
     selectedColor && colorOptions.some((color) => color.name === selectedColor)
       ? selectedColor
@@ -71,7 +77,8 @@ const Header = ({ data }: { data: Product }) => {
 
   const fallbackSize =
     sizeOptions.find((size) => size.isAvailable)?.name ?? sizeOptions[0]?.name ?? "";
-  const [selectedSize, setSelectedSize] = useState(fallbackSize);
+
+  const selectedSize = searchParams.get("size") ?? fallbackSize;
   const resolvedSize =
     selectedSize && sizeOptions.some((size) => size.name === selectedSize)
       ? selectedSize
@@ -106,6 +113,12 @@ const Header = ({ data }: { data: Product }) => {
             100,
         )
       : 0;
+
+  const updateUrl = (name: string, value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set(name, value);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   return (
     <>
@@ -164,20 +177,24 @@ const Header = ({ data }: { data: Product }) => {
             colors={colorOptions}
             selectedColor={resolvedColor}
             onSelect={(colorName) => {
-              setSelectedColor(colorName);
+              const params = new URLSearchParams(searchParams.toString());
+              params.set("color", colorName);
+
               const nextSize =
                 activeVariants.find(
-                  (variant) => variant.colorName === colorName && variant.stock > 0,
+                  (v) => v.colorName === colorName && v.stock > 0,
                 )?.size ??
-                activeVariants.find((variant) => variant.colorName === colorName)?.size;
-              if (nextSize) setSelectedSize(nextSize);
+                activeVariants.find((v) => v.colorName === colorName)?.size;
+
+              if (nextSize) params.set("size", nextSize);
+              router.replace(`${pathname}?${params.toString()}`, { scroll: false });
             }}
           />
           <hr className="h-px border-t-border my-5" />
           <SizeSelection
             sizes={sizeOptions}
             selectedSize={resolvedSize}
-            onSelect={setSelectedSize}
+            onSelect={(size) => updateUrl("size", size)}
           />
           {selectedVariantStock <= 0 && (
             <p className="text-sm text-[#FF3333] mt-3">
