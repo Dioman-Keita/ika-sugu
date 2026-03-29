@@ -12,7 +12,7 @@ type OrderSummaryMoney = number | { toNumber: () => number };
 const toMoneyNumber = (value: OrderSummaryMoney): number =>
   typeof value === "number" ? value : value.toNumber();
 
-type OrderSummaryLine = {
+export type OrderSummaryLine = {
   id: string;
   quantity: number;
   variant: {

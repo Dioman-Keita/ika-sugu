@@ -13,7 +13,9 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import ShippingForm from "@/components/checkout-page/ShippingForm";
-import OrderSummary from "@/components/checkout-page/OrderSummary";
+import OrderSummary, {
+  type OrderSummaryLine,
+} from "@/components/checkout-page/OrderSummary";
 
 import { useCartQuery } from "@/hooks/use-cart";
 import { useUiPreferences } from "@/lib/ui-preferences";
@@ -26,7 +28,7 @@ export default function CheckoutContainer() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
 
-  const cartItems = cart?.items ?? [];
+  const cartItems = (cart?.items ?? []) as OrderSummaryLine[];
 
   if (isLoading) {
     return (

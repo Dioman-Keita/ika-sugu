@@ -9,7 +9,7 @@ export default async function CartPage() {
   // Prefetch cart data on the server
   await queryClient.prefetchQuery({
     queryKey: CART_QUERY_KEY,
-    queryFn: () => getCartAction(),
+    queryFn: () => getCartAction({ readOnly: true }),
   });
 
   return (

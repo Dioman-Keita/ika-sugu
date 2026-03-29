@@ -5,9 +5,27 @@ import { auth } from "@/lib/auth";
 import { cookies, headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import crypto from "node:crypto";
+import type { Prisma } from "@/generated/prisma/client";
 
 const GUEST_CART_COOKIE_NAME =
   process.env.NEXT_PUBLIC_GUEST_CART_COOKIE_NAME || "guest_cart_id";
+
+const cartWithInclude = {
+  items: {
+    include: {
+      variant: {
+        include: {
+          product: {
+            include: {
+              translations: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: { createdAt: "asc" as const },
+  },
+} satisfies Prisma.CartInclude;
 
 function isDecimalLike(value: unknown): value is { toNumber: () => number } {
   return (
@@ -39,6 +57,23 @@ function serializeDecimals<T>(obj: T): T {
   return obj;
 }
 
+/** Shape returned by `getCartAction` after serialization (client-safe). */
+export type CartDTO = {
+  id: string;
+  items: unknown[];
+} & Record<string, unknown>;
+
+function emptyCartShell(): CartDTO {
+  return {
+    id: "",
+    userId: null,
+    guestId: null,
+    items: [],
+    createdAt: new Date(0).toISOString(),
+    updatedAt: new Date(0).toISOString(),
+  };
+}
+
 /**
  * Gets or creates a guest ID from cookies.
  */
@@ -60,65 +95,59 @@ async function getOrCreateGuestId() {
   return guestId;
 }
 
+export type GetCartOptions = {
+  /**
+   * RSC prefetch only: no cookie writes, no guest-cart merge, no new cart/persisted guest rows.
+   * Avoids Next.js restrictions on mutating cookies during static/SSR render paths.
+   */
+  readOnly?: boolean;
+};
+
 /**
  * Retrieves the current cart for the user or guest.
- * Creates one if it doesn't exist.
+ * Creates one if it doesn't exist (unless `readOnly`).
  */
-export async function getCartAction() {
+export async function getCartAction(options: GetCartOptions = {}): Promise<CartDTO> {
+  const readOnly = options.readOnly ?? false;
+
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
   const userId = session?.user?.id;
-  if (userId) {
-    // Avoid empty-cart flash on /cart SSR and refetches: merge guest cookie before resolving user cart.
+  if (userId && !readOnly) {
     await mergeGuestCartForUserId(userId);
   }
 
-  const guestId = userId ? null : await getOrCreateGuestId();
+  let guestId: string | null = null;
+  if (!userId) {
+    guestId = readOnly
+      ? ((await cookies()).get(GUEST_CART_COOKIE_NAME)?.value ?? null)
+      : await getOrCreateGuestId();
+  }
+
+  if (!userId && !guestId) {
+    return serializeDecimals(emptyCartShell()) as CartDTO;
+  }
+
+  const where = userId ? { userId } : { guestId: guestId! };
 
   let cart = await db.cart.findUnique({
-    where: userId ? { userId } : { guestId: guestId! },
-    include: {
-      items: {
-        include: {
-          variant: {
-            include: {
-              product: {
-                include: {
-                  translations: true,
-                },
-              },
-            },
-          },
-        },
-        orderBy: { createdAt: "asc" },
-      },
-    },
+    where,
+    include: cartWithInclude,
   });
 
   if (!cart) {
+    if (readOnly) {
+      return serializeDecimals(emptyCartShell()) as CartDTO;
+    }
     cart = await db.cart.create({
       data: userId ? { userId } : { guestId: guestId! },
-      include: {
-        items: {
-          include: {
-            variant: {
-              include: {
-                product: {
-                  include: {
-                    translations: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+      include: cartWithInclude,
     });
   }
 
-  return serializeDecimals(cart);
+  return serializeDecimals(cart) as CartDTO;
 }
 
 /**
@@ -157,27 +186,45 @@ export async function addToCartAction(variantId: string, quantity: number = 1) {
 }
 
 /**
- * Updates the quantity of a cart item.
+ * Updates the quantity of a cart item (caller's cart only).
  */
 export async function updateCartQuantityAction(itemId: string, quantity: number) {
+  const cart = await getCartAction();
+  if (!cart.id) {
+    throw new Error("Cart not initialized");
+  }
+
   if (quantity < 1) return removeFromCartAction(itemId);
 
-  await db.cartItem.update({
-    where: { id: itemId },
+  const result = await db.cartItem.updateMany({
+    where: { id: itemId, cartId: cart.id },
     data: { quantity },
   });
+
+  if (result.count !== 1) {
+    throw new Error("Cart item not found");
+  }
 
   revalidatePath("/cart");
   return { success: true };
 }
 
 /**
- * Removes an item from the cart.
+ * Removes an item from the cart (caller's cart only).
  */
 export async function removeFromCartAction(itemId: string) {
-  await db.cartItem.delete({
-    where: { id: itemId },
+  const cart = await getCartAction();
+  if (!cart.id) {
+    throw new Error("Cart not initialized");
+  }
+
+  const result = await db.cartItem.deleteMany({
+    where: { id: itemId, cartId: cart.id },
   });
+
+  if (result.count !== 1) {
+    throw new Error("Cart item not found");
+  }
 
   revalidatePath("/cart");
   revalidatePath("/");
@@ -186,7 +233,6 @@ export async function removeFromCartAction(itemId: string) {
 
 /**
  * Merges the guest cart (guest_cart_id cookie) into the user's cart.
- * Idempotent: safe on every read for logged-in users; no-ops if there is no guest cart.
  */
 async function mergeGuestCartForUserId(userId: string): Promise<boolean> {
   const cookieStore = await cookies();
@@ -204,12 +250,14 @@ async function mergeGuestCartForUserId(userId: string): Promise<boolean> {
     return false;
   }
 
-  const userCart = await db.cart.findUnique({
+  const userCart = await db.cart.upsert({
     where: { userId },
+    create: { userId },
+    update: {},
     include: { items: true },
   });
 
-  const targetCartId = userCart?.id ?? (await db.cart.create({ data: { userId } })).id;
+  const targetCartId = userCart.id;
 
   for (const item of guestCart.items) {
     const existingInUser = await db.cartItem.findUnique({

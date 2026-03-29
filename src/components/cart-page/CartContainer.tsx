@@ -5,7 +5,10 @@ import Link from "next/link";
 import { useCartQuery, useSyncCartMutation } from "@/hooks/use-cart";
 import { useUiPreferences } from "@/lib/ui-preferences";
 import BreadcrumbCart from "@/components/cart-page/BreadcrumbCart";
-import ProductCard, { type ProductCardProps } from "@/components/cart-page/ProductCard";
+import ProductCard, {
+  type ProductCardProps,
+  unitPrice,
+} from "@/components/cart-page/ProductCard";
 import { Button } from "@/components/ui/button";
 import InputGroup from "@/components/ui/input-group";
 import { cn } from "@/lib/utils";
@@ -48,16 +51,16 @@ export default function CartContainer() {
   }
 
   const totalBasePrice = items.reduce((sum: number, item: ProductCardProps["data"]) => {
-    const finalPrice = Number(item.variant.price);
+    const finalPrice = unitPrice(item.variant.price);
     const basePrice =
       item.variant.compareAtPrice != null
-        ? Number(item.variant.compareAtPrice)
+        ? unitPrice(item.variant.compareAtPrice)
         : finalPrice;
     return sum + basePrice * item.quantity;
   }, 0);
 
   const totalFinalPrice = items.reduce((sum: number, item: ProductCardProps["data"]) => {
-    return sum + Number(item.variant.price) * item.quantity;
+    return sum + unitPrice(item.variant.price) * item.quantity;
   }, 0);
 
   const discountAmount = Math.max(0, Math.round(totalBasePrice - totalFinalPrice));

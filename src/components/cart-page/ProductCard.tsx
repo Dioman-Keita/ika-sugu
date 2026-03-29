@@ -10,6 +10,21 @@ import { translateAttribute } from "@/lib/i18n/messages";
 import { useRemoveItemMutation, useUpdateQuantityMutation } from "@/hooks/use-cart";
 import { cn } from "@/lib/utils";
 
+export type CartVariantMoney = number | { toNumber: () => number };
+
+export function unitPrice(value: CartVariantMoney | null | undefined): number {
+  if (value == null) return 0;
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (
+    typeof value === "object" &&
+    "toNumber" in value &&
+    typeof value.toNumber === "function"
+  ) {
+    return value.toNumber();
+  }
+  return Number(value) || 0;
+}
+
 export type ProductCardProps = {
   data: {
     id: string; // CartItem ID
@@ -20,8 +35,8 @@ export type ProductCardProps = {
       colorName: string;
       size: string;
       images: string[];
-      price: { toNumber: () => number };
-      compareAtPrice: { toNumber: () => number } | null;
+      price: CartVariantMoney;
+      compareAtPrice: CartVariantMoney | null;
       product: {
         id: string;
         slug: string;
@@ -38,17 +53,22 @@ const ProductCard = ({ data }: ProductCardProps) => {
   const { mutate: updateQuantity, isPending: isUpdating } = useUpdateQuantityMutation();
 
   const isPending = isRemoving || isUpdating;
+  const isOptimisticLine = data.id.startsWith("temp-");
 
   const productTranslation = data.variant.product.translations.find(
     (tr) => tr.locale === locale,
   );
   const productName = productTranslation?.name ?? data.variant.product.name;
   const productSlug = data.variant.product.slug;
+  const productHref =
+    data.variant.product.id && productSlug
+      ? `/shop/product/${data.variant.product.id}/${productSlug}`
+      : null;
 
-  const finalPrice = Number(data.variant.price);
+  const finalPrice = unitPrice(data.variant.price);
   const basePrice =
     data.variant.compareAtPrice != null
-      ? Number(data.variant.compareAtPrice)
+      ? unitPrice(data.variant.compareAtPrice)
       : finalPrice;
   const discountPercentage =
     basePrice > finalPrice ? Math.round(((basePrice - finalPrice) / basePrice) * 100) : 0;
@@ -83,12 +103,18 @@ const ProductCard = ({ data }: ProductCardProps) => {
       </Link>
       <div className="flex w-full self-stretch flex-col">
         <div className="flex items-center justify-between">
-          <Link
-            href={`/shop/product/${data.variant.product.id}/${productSlug}`}
-            className="text-foreground font-bold text-base xl:text-xl"
-          >
-            {productName}
-          </Link>
+          {productHref && !isOptimisticLine ? (
+            <Link
+              href={productHref}
+              className="text-foreground font-bold text-base xl:text-xl"
+            >
+              {productName}
+            </Link>
+          ) : (
+            <span className="text-foreground font-bold text-base xl:text-xl">
+              {productName}
+            </span>
+          )}
           <Button
             variant="ghost"
             size="icon"

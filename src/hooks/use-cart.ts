@@ -8,29 +8,27 @@ import {
   removeFromCartAction,
   syncCartAction,
 } from "@/app/actions/cart";
+import type { CartDTO } from "@/app/actions/cart";
+import type { ProductCardProps } from "@/components/cart-page/ProductCard";
 import { CART_QUERY_KEY } from "./query-keys";
 import { toast } from "sonner";
 import { useUiPreferences } from "@/lib/ui-preferences";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type CartItem = {
-  id: string;
-  quantity: number;
-  variantId: string;
-  variant: unknown;
+export type CartLine = ProductCardProps["data"];
+
+export type AppCart = Omit<CartDTO, "items"> & {
+  items: CartLine[];
 };
 
-type Cart = {
-  id: string;
-  items: CartItem[];
-} & Record<string, unknown>;
+type Cart = AppCart;
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
 
 export function useCartQuery() {
   return useQuery({
     queryKey: CART_QUERY_KEY,
-    queryFn: () => getCartAction(),
+    queryFn: () => getCartAction() as Promise<AppCart>,
   });
 }
 
@@ -42,7 +40,7 @@ export function useCartCount() {
   const { data: cart } = useCartQuery();
   return (
     (cart as Cart | undefined)?.items.reduce(
-      (sum: number, item: CartItem) => sum + item.quantity,
+      (sum: number, item: CartLine) => sum + item.quantity,
       0,
     ) ?? 0
   );
@@ -72,15 +70,33 @@ export function useAddToCartMutation() {
       // 3. Optimistically update the cache
       if (previousCart) {
         const existingItem = previousCart.items.find(
-          (i: CartItem) => i.variantId === variantId,
+          (i: CartLine) => i.variantId === variantId,
         );
         const updatedItems = existingItem
-          ? previousCart.items.map((i: CartItem) =>
+          ? previousCart.items.map((i: CartLine) =>
               i.variantId === variantId ? { ...i, quantity: i.quantity + quantity } : i,
             )
           : [
               ...previousCart.items,
-              { id: `temp-${Date.now()}`, variantId, quantity, variant: {} },
+              {
+                id: `temp-${Date.now()}`,
+                variantId,
+                quantity,
+                variant: {
+                  id: variantId,
+                  colorName: "",
+                  size: "",
+                  images: [] as string[],
+                  price: 0,
+                  compareAtPrice: null as number | null,
+                  product: {
+                    id: "",
+                    slug: "",
+                    name: t("account.loading"),
+                    translations: [] as { locale: string; name: string }[],
+                  },
+                },
+              },
             ];
 
         queryClient.setQueryData<Cart>(CART_QUERY_KEY, {
@@ -126,7 +142,7 @@ export function useUpdateQuantityMutation() {
       if (previousCart) {
         queryClient.setQueryData<Cart>(CART_QUERY_KEY, {
           ...previousCart,
-          items: previousCart.items.map((i: CartItem) =>
+          items: previousCart.items.map((i: CartLine) =>
             i.id === itemId ? { ...i, quantity } : i,
           ),
         });
@@ -166,7 +182,7 @@ export function useRemoveItemMutation() {
       if (previousCart) {
         queryClient.setQueryData<Cart>(CART_QUERY_KEY, {
           ...previousCart,
-          items: previousCart.items.filter((i: CartItem) => i.id !== itemId),
+          items: previousCart.items.filter((i: CartLine) => i.id !== itemId),
         });
       }
 

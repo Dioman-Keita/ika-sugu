@@ -38,7 +38,9 @@ export default function QueryProvider({ children }: { children: React.ReactNode 
     <QueryClientProvider client={queryClient}>
       <CartAuthSyncer />
       {children}
-      <ReactQueryDevtools initialIsOpen={false} />
+      {process.env.NODE_ENV === "development" ? (
+        <ReactQueryDevtools initialIsOpen={false} />
+      ) : null}
     </QueryClientProvider>
   );
 }
