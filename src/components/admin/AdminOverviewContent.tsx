@@ -145,9 +145,7 @@ export default function AdminOverviewContent({ locale }: { locale: Locale }) {
                 <div key={key}>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs text-muted-foreground">{label}</span>
-                    <span className="text-xs font-semibold text-foreground">
-                      {count}
-                    </span>
+                    <span className="text-xs font-semibold text-foreground">{count}</span>
                   </div>
                   <div className="h-1.5 rounded-full bg-surface-section overflow-hidden">
                     <div
@@ -206,9 +204,7 @@ export default function AdminOverviewContent({ locale }: { locale: Locale }) {
                       <p className="font-medium text-foreground">{order.userName}</p>
                       <p className="text-xs text-muted-foreground">{order.userEmail}</p>
                     </td>
-                    <td className="px-5 py-3 text-muted-foreground">
-                      {order.itemCount}
-                    </td>
+                    <td className="px-5 py-3 text-muted-foreground">{order.itemCount}</td>
                     <td className="px-5 py-3 font-semibold text-foreground">
                       {new Intl.NumberFormat(locale, {
                         style: "currency",

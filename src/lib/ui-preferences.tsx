@@ -1,6 +1,13 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { messages } from "./i18n/messages";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
@@ -28,7 +35,8 @@ const getInitialLocale = (): Locale => {
 
 const getInitialTheme = (): ThemeMode => {
   if (typeof window === "undefined") return "light";
-  const savedTheme = Cookies.get(THEME_COOKIE_KEY) || localStorage.getItem(THEME_COOKIE_KEY);
+  const savedTheme =
+    Cookies.get(THEME_COOKIE_KEY) || localStorage.getItem(THEME_COOKIE_KEY);
   if (savedTheme === "light" || savedTheme === "dark") return savedTheme;
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 };
@@ -46,19 +54,22 @@ export const UiPreferencesProvider = ({
   const [theme, setThemeState] = useState<ThemeMode>(getInitialTheme);
   const router = useRouter();
 
-  const setLocale = (newLocale: Locale) => {
-    setLocaleState(newLocale);
-    localStorage.setItem(LOCALE_COOKIE_KEY, newLocale);
-    Cookies.set(LOCALE_COOKIE_KEY, newLocale, { expires: 365, path: "/" });
-    document.documentElement.lang = newLocale;
-    router.refresh();
-  };
+  const setLocale = useCallback(
+    (newLocale: Locale) => {
+      setLocaleState(newLocale);
+      localStorage.setItem(LOCALE_COOKIE_KEY, newLocale);
+      Cookies.set(LOCALE_COOKIE_KEY, newLocale, { expires: 365, path: "/" });
+      document.documentElement.lang = newLocale;
+      router.refresh();
+    },
+    [router],
+  );
 
-  const setTheme = (newTheme: ThemeMode) => {
+  const setTheme = useCallback((newTheme: ThemeMode) => {
     setThemeState(newTheme);
     localStorage.setItem(THEME_COOKIE_KEY, newTheme);
     Cookies.set(THEME_COOKIE_KEY, newTheme, { expires: 365, path: "/" });
-  };
+  }, []);
 
   useEffect(() => {
     document.documentElement.lang = locale;
@@ -76,15 +87,23 @@ export const UiPreferencesProvider = ({
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
 
+  const t = useCallback(
+    (key: string) => {
+      const dict = messages[locale];
+      return dict[key] ?? key;
+    },
+    [locale],
+  );
+
   const value = useMemo<UiPreferencesContextValue>(
     () => ({
       locale,
       setLocale,
       theme,
       setTheme,
-      t: (key: string) => (messages[locale] as any)[key] ?? key,
+      t,
     }),
-    [locale, theme, router]
+    [locale, setLocale, theme, setTheme, t],
   );
 
   return (

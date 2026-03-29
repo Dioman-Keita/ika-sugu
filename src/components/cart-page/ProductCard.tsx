@@ -10,7 +10,7 @@ import { translateAttribute } from "@/lib/i18n/messages";
 import { useRemoveItemMutation, useUpdateQuantityMutation } from "@/hooks/use-cart";
 import { cn } from "@/lib/utils";
 
-type ProductCardProps = {
+export type ProductCardProps = {
   data: {
     id: string; // CartItem ID
     quantity: number;
@@ -46,7 +46,10 @@ const ProductCard = ({ data }: ProductCardProps) => {
   const productSlug = data.variant.product.slug;
 
   const finalPrice = Number(data.variant.price);
-  const basePrice = data.variant.compareAtPrice != null ? Number(data.variant.compareAtPrice) : finalPrice;
+  const basePrice =
+    data.variant.compareAtPrice != null
+      ? Number(data.variant.compareAtPrice)
+      : finalPrice;
   const discountPercentage =
     basePrice > finalPrice ? Math.round(((basePrice - finalPrice) / basePrice) * 100) : 0;
 

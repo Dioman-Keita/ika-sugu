@@ -7,11 +7,7 @@ import { getHomeCatalogAction } from "@/app/actions/catalog";
 import { cookies } from "next/headers";
 import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
 import { Locale, parseLocale } from "@/lib/i18n/locale";
-import { 
-  dehydrate, 
-  HydrationBoundary, 
-  QueryClient 
-} from "@tanstack/react-query";
+import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import { PRODUCT_QUERY_KEYS } from "@/hooks/query-keys";
 
 export const dynamic = "force-dynamic";

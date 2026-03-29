@@ -17,12 +17,12 @@ export function useSessionQuery() {
 }
 
 /**
- * Re-exposes the better-auth logic but synchronized with 
+ * Re-exposes the better-auth logic but synchronized with
  * TanStack Query's invalidation system if needed.
  */
 export function useAuth() {
   const { data: session, isLoading, error } = useSessionQuery();
-  
+
   return {
     session,
     user: session?.user,

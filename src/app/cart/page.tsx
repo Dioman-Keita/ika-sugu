@@ -1,9 +1,5 @@
 import { getCartAction } from "@/app/actions/cart";
-import { 
-  dehydrate, 
-  HydrationBoundary, 
-  QueryClient 
-} from "@tanstack/react-query";
+import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import { CART_QUERY_KEY } from "@/hooks/query-keys";
 import CartContainer from "@/components/cart-page/CartContainer";
 

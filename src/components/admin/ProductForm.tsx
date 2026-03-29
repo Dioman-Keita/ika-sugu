@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useCreateProductMutation, useUpdateProductMutation } from "@/hooks/use-admin";
 import ProductImageUploader from "./ProductImageUploader";
+import type { createAdminProduct } from "@/app/actions/admin";
+
+type CreateProductResult = Awaited<ReturnType<typeof createAdminProduct>>;
 
 type Category = { id: string; name: string };
 
@@ -150,12 +153,12 @@ export default function ProductForm({
     };
 
     const mutationOptions = {
-      onSuccess: (result: any) => {
+      onSuccess: (result: CreateProductResult) => {
         router.push(`/admin/products/${result.id}`);
         router.refresh();
       },
-      onError: (err: any) => {
-        setError(err.message ?? "Error");
+      onError: (err: unknown) => {
+        setError(err instanceof Error ? err.message : "Error");
       },
     };
 

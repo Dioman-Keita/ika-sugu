@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import React, { useMemo, useState, useTransition } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Select,
   SelectContent,
@@ -27,6 +27,7 @@ import { useCreateReviewMutation } from "@/hooks/use-products";
 import { authClient } from "@/lib/auth-client";
 import { ReviewSubmissionErrorCode } from "@/lib/errors/review-errors";
 import { REVIEW_MAX_CHARACTERS, REVIEW_MIN_CHARACTERS } from "@/lib/review-config";
+import type { CreateProductReviewResult } from "@/app/actions/reviews";
 
 const ReviewsContent = ({
   reviews,
@@ -57,7 +58,7 @@ const ReviewsContent = ({
     submit(
       { rating, content },
       {
-        onSuccess: (result: any) => {
+        onSuccess: (result: CreateProductReviewResult) => {
           if (!result.ok) {
             switch (result.errorCode) {
               case ReviewSubmissionErrorCode.Unauthorized:

@@ -12,7 +12,6 @@ export default defineConfig([
   },
   {
     files: [
-      "src/components/storage/index.tsx",
       "src/components/ui/SpinnerbLoader/index.tsx",
       "src/components/ui/input-group.tsx",
       "src/lib/utils.ts",

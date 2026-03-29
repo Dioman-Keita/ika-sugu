@@ -19,11 +19,7 @@ import { cookies } from "next/headers";
 import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
 import { messages } from "@/lib/i18n/messages";
 import { Locale, parseLocale } from "@/lib/i18n/locale";
-import {
-  dehydrate,
-  HydrationBoundary,
-  QueryClient
-} from "@tanstack/react-query";
+import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import { PRODUCT_QUERY_KEYS } from "@/hooks/query-keys";
 import ShopProductGrid from "@/components/shop-page/ShopProductGrid";
 
@@ -124,7 +120,7 @@ export default async function ShopPage({
     queryFn: () => getShopProductsAction(filters),
   });
 
-  const { products, totalProducts, totalPages } = await getShopProductsAction(filters);
+  const { totalProducts, totalPages } = await getShopProductsAction(filters);
 
   const currentPage = Math.min(requestedPage, totalPages);
   const startProduct = totalProducts === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;

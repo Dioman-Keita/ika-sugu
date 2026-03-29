@@ -3,11 +3,7 @@ import { cookies } from "next/headers";
 import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
 import { Locale, parseLocale } from "@/lib/i18n/locale";
 import { messages } from "@/lib/i18n/messages";
-import { 
-  dehydrate, 
-  HydrationBoundary, 
-  QueryClient 
-} from "@tanstack/react-query";
+import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import { ADMIN_QUERY_KEYS } from "@/hooks/query-keys";
 import AdminOverviewContent from "@/components/admin/AdminOverviewContent";
 

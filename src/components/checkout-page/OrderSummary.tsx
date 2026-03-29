@@ -6,23 +6,47 @@ import { FaArrowRight } from "react-icons/fa6";
 import { Loader2 } from "lucide-react";
 import { useUiPreferences } from "@/lib/ui-preferences";
 import { translateAttribute } from "@/lib/i18n/messages";
+/** Cart payloads may still be typed with Prisma `Decimal` before serialization. */
+type OrderSummaryMoney = number | { toNumber: () => number };
+
+const toMoneyNumber = (value: OrderSummaryMoney): number =>
+  typeof value === "number" ? value : value.toNumber();
+
+type OrderSummaryLine = {
+  id: string;
+  quantity: number;
+  variant: {
+    price: OrderSummaryMoney;
+    compareAtPrice?: OrderSummaryMoney | null;
+    images: string[];
+    size: string;
+    colorName: string;
+    product: {
+      name: string;
+      translations: Array<{ locale: string; name: string }>;
+    };
+  };
+};
 
 type OrderSummaryProps = {
-  items: any[]; // Prisma CartItem with variant and product
+  items: OrderSummaryLine[];
   isSubmitting: boolean;
 };
 
 const OrderSummary = ({ items, isSubmitting }: OrderSummaryProps) => {
   const { t, locale } = useUiPreferences();
 
-  const totalBasePrice = items.reduce((sum: number, item: any) => {
-    const finalPrice = Number(item.variant.price);
-    const basePrice = item.variant.compareAtPrice != null ? Number(item.variant.compareAtPrice) : finalPrice;
+  const totalBasePrice = items.reduce((sum: number, item: OrderSummaryLine) => {
+    const finalPrice = toMoneyNumber(item.variant.price);
+    const basePrice =
+      item.variant.compareAtPrice != null
+        ? toMoneyNumber(item.variant.compareAtPrice)
+        : finalPrice;
     return sum + basePrice * item.quantity;
   }, 0);
 
-  const totalFinalPrice = items.reduce((sum: number, item: any) => {
-    return sum + Number(item.variant.price) * item.quantity;
+  const totalFinalPrice = items.reduce((sum: number, item: OrderSummaryLine) => {
+    return sum + toMoneyNumber(item.variant.price) * item.quantity;
   }, 0);
 
   const discountAmount = Math.max(0, Math.round(totalBasePrice - totalFinalPrice));
@@ -39,10 +63,10 @@ const OrderSummary = ({ items, isSubmitting }: OrderSummaryProps) => {
       <div className="flex flex-col space-y-4 max-h-80 overflow-y-auto pr-1">
         {items.map((item, idx) => {
           const productTranslation = item.variant.product.translations.find(
-            (tr: any) => tr.locale === locale,
+            (tr) => tr.locale === locale,
           );
           const name = productTranslation?.name ?? item.variant.product.name;
-          const finalPrice = Number(item.variant.price);
+          const finalPrice = toMoneyNumber(item.variant.price);
 
           return (
             <div key={`${item.id}-${idx}`} className="flex items-center gap-3">
@@ -61,7 +85,9 @@ const OrderSummary = ({ items, isSubmitting }: OrderSummaryProps) => {
                     .map((attr) => translateAttribute(attr, locale))
                     .join(" · ")}
                 </p>
-                <p className="text-xs text-muted-foreground mt-0.5">Qty: {item.quantity}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Qty: {item.quantity}
+                </p>
               </div>
               <span className="font-bold text-sm text-foreground shrink-0">
                 ${Math.round(finalPrice * item.quantity)}

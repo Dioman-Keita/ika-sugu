@@ -6,7 +6,17 @@ import { cookies, headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import crypto from "node:crypto";
 
-const GUEST_CART_COOKIE_NAME = process.env.NEXT_PUBLIC_GUEST_CART_COOKIE_NAME || "guest_cart_id";
+const GUEST_CART_COOKIE_NAME =
+  process.env.NEXT_PUBLIC_GUEST_CART_COOKIE_NAME || "guest_cart_id";
+
+function isDecimalLike(value: unknown): value is { toNumber: () => number } {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "toNumber" in value &&
+    typeof (value as { toNumber: unknown }).toNumber === "function"
+  );
+}
 
 /**
  * Recursively converts Prisma Decimal objects to plain numbers
@@ -14,14 +24,14 @@ const GUEST_CART_COOKIE_NAME = process.env.NEXT_PUBLIC_GUEST_CART_COOKIE_NAME ||
  */
 function serializeDecimals<T>(obj: T): T {
   if (obj === null || obj === undefined) return obj;
-  if (typeof obj === "object" && "toNumber" in (obj as any) && typeof (obj as any).toNumber === "function") {
-    return (obj as any).toNumber() as T;
+  if (isDecimalLike(obj)) {
+    return obj.toNumber() as T;
   }
   if (obj instanceof Date) return obj;
   if (Array.isArray(obj)) return obj.map(serializeDecimals) as T;
   if (typeof obj === "object") {
-    const result: any = {};
-    for (const [key, value] of Object.entries(obj as any)) {
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
       result[key] = serializeDecimals(value);
     }
     return result as T;

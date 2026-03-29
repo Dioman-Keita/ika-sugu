@@ -86,17 +86,16 @@ const Header = ({ data }: { data: Product }) => {
 
   const urlSize = searchParams.get("size") ?? fallbackSize;
   const initialResolvedSize =
-    urlSize && sizeOptions.some((size) => size.name === urlSize)
-      ? urlSize
-      : fallbackSize;
+    urlSize && sizeOptions.some((size) => size.name === urlSize) ? urlSize : fallbackSize;
 
   const [optimisticSize, setOptimisticSize] = useOptimistic(initialResolvedSize);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   const selectedVariant = useMemo(
     () =>
       activeVariants.find(
-        (variant) => variant.colorName === optimisticColor && variant.size === optimisticSize,
+        (variant) =>
+          variant.colorName === optimisticColor && variant.size === optimisticSize,
       ) ??
       activeVariants.find((variant) => variant.colorName === optimisticColor) ??
       activeVariants[0],
@@ -137,9 +136,7 @@ const Header = ({ data }: { data: Product }) => {
       setOptimisticColor(colorName);
 
       const nextSize =
-        activeVariants.find(
-          (v) => v.colorName === colorName && v.stock > 0,
-        )?.size ??
+        activeVariants.find((v) => v.colorName === colorName && v.stock > 0)?.size ??
         activeVariants.find((v) => v.colorName === colorName)?.size;
 
       if (nextSize) {

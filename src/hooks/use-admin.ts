@@ -13,9 +13,40 @@ import {
   updateOrderStatusAction,
   updateReviewStatusAction,
 } from "@/app/actions/admin";
+import { OrderStatus, ReviewStatus } from "@/generated/prisma/client";
 import { PRODUCT_QUERY_KEYS, ADMIN_QUERY_KEYS } from "./query-keys";
 import { toast } from "sonner";
 import { useUiPreferences } from "@/lib/ui-preferences";
+
+type CreateProductInput = Parameters<typeof createAdminProduct>[0];
+type UpdateProductInput = Parameters<typeof updateAdminProduct>[0];
+type UpdateProductResult = Awaited<ReturnType<typeof updateAdminProduct>>;
+
+type AdminOrdersCache = {
+  orders: Array<{ id: string; status: OrderStatus } & Record<string, unknown>>;
+} & Record<string, unknown>;
+
+type AdminReviewsCache = {
+  reviews: Array<{ id: string; status: ReviewStatus } & Record<string, unknown>>;
+} & Record<string, unknown>;
+
+function isAdminOrdersCache(data: unknown): data is AdminOrdersCache {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    "orders" in data &&
+    Array.isArray((data as AdminOrdersCache).orders)
+  );
+}
+
+function isAdminReviewsCache(data: unknown): data is AdminReviewsCache {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    "reviews" in data &&
+    Array.isArray((data as AdminReviewsCache).reviews)
+  );
+}
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
 
@@ -40,7 +71,7 @@ export function useAdminProducts(page: number = 1) {
   });
 }
 
-export function useAdminOrders(page: number = 1, status?: any) {
+export function useAdminOrders(page: number = 1, status?: OrderStatus) {
   return useQuery({
     queryKey: ADMIN_QUERY_KEYS.orders(page, status),
     queryFn: () => getAdminOrders({ page, status }),
@@ -54,7 +85,7 @@ export function useAdminUsers(page: number = 1) {
   });
 }
 
-export function useAdminReviews(page: number = 1, status?: any) {
+export function useAdminReviews(page: number = 1, status?: ReviewStatus) {
   return useQuery({
     queryKey: ADMIN_QUERY_KEYS.reviews(page, status),
     queryFn: () => getAdminReviews({ page, status }),
@@ -67,7 +98,7 @@ export function useCreateProductMutation() {
   const queryClient = useQueryClient();
   const { t } = useUiPreferences();
   return useMutation({
-    mutationFn: (data: any) => createAdminProduct(data),
+    mutationFn: (data: CreateProductInput) => createAdminProduct(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
       queryClient.invalidateQueries({ queryKey: PRODUCT_QUERY_KEYS.home });
@@ -83,8 +114,8 @@ export function useUpdateProductMutation() {
   const queryClient = useQueryClient();
   const { t } = useUiPreferences();
   return useMutation({
-    mutationFn: (data: any) => updateAdminProduct(data),
-    onSuccess: (data: any) => {
+    mutationFn: (data: UpdateProductInput) => updateAdminProduct(data),
+    onSuccess: (data: UpdateProductResult) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
       queryClient.invalidateQueries({ queryKey: PRODUCT_QUERY_KEYS.details(data.id) });
       toast.success(t("toast.success.updateProduct"));
@@ -102,22 +133,21 @@ export function useUpdateOrderStatusMutation() {
   const queryClient = useQueryClient();
   const { t } = useUiPreferences();
   return useMutation({
-    mutationFn: ({ id, status }: { id: string; status: any }) =>
+    mutationFn: ({ id, status }: { id: string; status: OrderStatus }) =>
       updateOrderStatusAction(id, status),
 
     onMutate: async ({ id, status }) => {
-      // Cancel all admin order queries
       await queryClient.cancelQueries({ queryKey: ["admin", "orders"] });
 
-      // Snapshot all order caches (we don't know which page/status tab is active)
-      const previousQueries = queryClient.getQueriesData({ queryKey: ["admin", "orders"] });
+      const previousQueries = queryClient.getQueriesData({
+        queryKey: ["admin", "orders"],
+      });
 
-      // Optimistically update the status in every cached page
-      queryClient.setQueriesData<any>({ queryKey: ["admin", "orders"] }, (old: any) => {
-        if (!old?.orders) return old;
+      queryClient.setQueriesData({ queryKey: ["admin", "orders"] }, (old) => {
+        if (!isAdminOrdersCache(old)) return old;
         return {
           ...old,
-          orders: old.orders.map((o: any) => (o.id === id ? { ...o, status } : o)),
+          orders: old.orders.map((o) => (o.id === id ? { ...o, status } : o)),
         };
       });
 
@@ -125,7 +155,6 @@ export function useUpdateOrderStatusMutation() {
     },
 
     onError: (_err, _vars, context) => {
-      // Rollback all order caches
       if (context?.previousQueries) {
         for (const [key, data] of context.previousQueries) {
           queryClient.setQueryData(key, data);
@@ -149,19 +178,21 @@ export function useUpdateReviewStatusMutation() {
   const queryClient = useQueryClient();
   const { t } = useUiPreferences();
   return useMutation({
-    mutationFn: ({ id, status }: { id: string; status: any }) =>
+    mutationFn: ({ id, status }: { id: string; status: ReviewStatus }) =>
       updateReviewStatusAction(id, status),
 
     onMutate: async ({ id, status }) => {
       await queryClient.cancelQueries({ queryKey: ["admin", "reviews"] });
 
-      const previousQueries = queryClient.getQueriesData({ queryKey: ["admin", "reviews"] });
+      const previousQueries = queryClient.getQueriesData({
+        queryKey: ["admin", "reviews"],
+      });
 
-      queryClient.setQueriesData<any>({ queryKey: ["admin", "reviews"] }, (old: any) => {
-        if (!old?.reviews) return old;
+      queryClient.setQueriesData({ queryKey: ["admin", "reviews"] }, (old) => {
+        if (!isAdminReviewsCache(old)) return old;
         return {
           ...old,
-          reviews: old.reviews.map((r: any) => (r.id === id ? { ...r, status } : r)),
+          reviews: old.reviews.map((r) => (r.id === id ? { ...r, status } : r)),
         };
       });
 

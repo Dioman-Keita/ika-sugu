@@ -40,9 +40,7 @@ const AddToCartBtn = ({
       onClick={handleAddToCart}
     >
       {isPending ? (
-        <span className="flex items-center gap-2">
-          {t("product.addingToCart")}...
-        </span>
+        <span className="flex items-center gap-2">{t("product.addingToCart")}...</span>
       ) : isDisabled ? (
         t("product.outOfStock")
       ) : (

@@ -29,5 +29,4 @@ const Providers = ({ children, initialLocale }: Props) => {
   );
 };
 
-
 export default Providers;

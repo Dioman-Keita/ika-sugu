@@ -17,14 +17,13 @@ type CartItem = {
   id: string;
   quantity: number;
   variantId: string;
-  variant: any;
+  variant: unknown;
 };
 
 type Cart = {
   id: string;
   items: CartItem[];
-  [key: string]: any;
-};
+} & Record<string, unknown>;
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
 
@@ -41,7 +40,12 @@ export function useCartQuery() {
  */
 export function useCartCount() {
   const { data: cart } = useCartQuery();
-  return (cart as Cart | undefined)?.items.reduce((sum: number, item: CartItem) => sum + item.quantity, 0) ?? 0;
+  return (
+    (cart as Cart | undefined)?.items.reduce(
+      (sum: number, item: CartItem) => sum + item.quantity,
+      0,
+    ) ?? 0
+  );
 }
 
 // ─── Optimistic Mutations ─────────────────────────────────────────────────────
@@ -67,12 +71,17 @@ export function useAddToCartMutation() {
 
       // 3. Optimistically update the cache
       if (previousCart) {
-        const existingItem = previousCart.items.find((i: CartItem) => i.variantId === variantId);
+        const existingItem = previousCart.items.find(
+          (i: CartItem) => i.variantId === variantId,
+        );
         const updatedItems = existingItem
           ? previousCart.items.map((i: CartItem) =>
-            i.variantId === variantId ? { ...i, quantity: i.quantity + quantity } : i
-          )
-          : [...previousCart.items, { id: `temp-${Date.now()}`, variantId, quantity, variant: {} }];
+              i.variantId === variantId ? { ...i, quantity: i.quantity + quantity } : i,
+            )
+          : [
+              ...previousCart.items,
+              { id: `temp-${Date.now()}`, variantId, quantity, variant: {} },
+            ];
 
         queryClient.setQueryData<Cart>(CART_QUERY_KEY, {
           ...previousCart,
@@ -118,7 +127,7 @@ export function useUpdateQuantityMutation() {
         queryClient.setQueryData<Cart>(CART_QUERY_KEY, {
           ...previousCart,
           items: previousCart.items.map((i: CartItem) =>
-            i.id === itemId ? { ...i, quantity } : i
+            i.id === itemId ? { ...i, quantity } : i,
           ),
         });
       }

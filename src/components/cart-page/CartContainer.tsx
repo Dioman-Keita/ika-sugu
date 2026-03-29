@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useCartQuery, useSyncCartMutation } from "@/hooks/use-cart";
 import { useUiPreferences } from "@/lib/ui-preferences";
 import BreadcrumbCart from "@/components/cart-page/BreadcrumbCart";
-import ProductCard from "@/components/cart-page/ProductCard";
+import ProductCard, { type ProductCardProps } from "@/components/cart-page/ProductCard";
 import { Button } from "@/components/ui/button";
 import InputGroup from "@/components/ui/input-group";
 import { cn } from "@/lib/utils";
@@ -47,13 +47,16 @@ export default function CartContainer() {
     );
   }
 
-  const totalBasePrice = items.reduce((sum: number, item: any) => {
+  const totalBasePrice = items.reduce((sum: number, item: ProductCardProps["data"]) => {
     const finalPrice = Number(item.variant.price);
-    const basePrice = item.variant.compareAtPrice != null ? Number(item.variant.compareAtPrice) : finalPrice;
+    const basePrice =
+      item.variant.compareAtPrice != null
+        ? Number(item.variant.compareAtPrice)
+        : finalPrice;
     return sum + basePrice * item.quantity;
   }, 0);
 
-  const totalFinalPrice = items.reduce((sum: number, item: any) => {
+  const totalFinalPrice = items.reduce((sum: number, item: ProductCardProps["data"]) => {
     return sum + Number(item.variant.price) * item.quantity;
   }, 0);
 
@@ -77,7 +80,7 @@ export default function CartContainer() {
         <div className="w-full p-3.5 md:px-6 flex flex-col space-y-4 md:space-y-6 rounded-[20px] border border-border">
           {items.map((item, idx) => (
             <React.Fragment key={item.id}>
-              <ProductCard data={item as any} />
+              <ProductCard data={item as ProductCardProps["data"]} />
               {items.length - 1 !== idx && <hr className="border-t-border" />}
             </React.Fragment>
           ))}
@@ -115,9 +118,7 @@ export default function CartContainer() {
             </div>
             <hr className="border-t-border" />
             <div className="flex items-center justify-between">
-              <span className="md:text-xl text-foreground">
-                {t("checkout.total")}
-              </span>
+              <span className="md:text-xl text-foreground">{t("checkout.total")}</span>
               <span className="text-xl md:text-2xl font-bold text-foreground">
                 ${totalFinalPrice.toFixed(2)}
               </span>
