@@ -121,6 +121,7 @@ export const messages: Record<Locale, Messages> = {
     "product.selectColors": "Select Colors",
     "product.outOfStock": "Out of stock",
     "product.addToCart": "Add to Cart",
+    "product.addingToCart": "Adding",
     "product.inStock": "{count} in stock",
     "product.noProducts": "No products available right now.",
     "product.related": "You might also like",
@@ -444,6 +445,17 @@ export const messages: Record<Locale, Messages> = {
     "admin.reviews.table.actions": "Actions",
     "admin.reviews.verifiedPurchase": "Verified purchase",
     "admin.reviews.view": "View review",
+
+    "toast.error.addToCart": "Failed to add to cart. Please try again.",
+    "toast.error.updateQuantity": "Failed to update quantity. Please try again.",
+    "toast.error.removeItem": "Failed to remove item. Please try again.",
+    "toast.success.createProduct": "Product created successfully.",
+    "toast.error.createProduct": "Failed to create product.",
+    "toast.success.updateProduct": "Product updated successfully.",
+    "toast.error.updateProduct": "Failed to update product.",
+    "toast.error.updateOrderStatus": "Failed to update order status.",
+    "toast.error.updateReviewStatus": "Failed to update review status.",
+    "toast.error.createReview": "Failed to submit review. Please try again.",
   },
   fr: {
     "common.close": "Fermer",
@@ -566,6 +578,7 @@ export const messages: Record<Locale, Messages> = {
     "product.selectColors": "Sélectionner les couleurs",
     "product.outOfStock": "Rupture de stock",
     "product.addToCart": "Ajouter au panier",
+    "product.addingToCart": "Ajout en cours",
     "product.inStock": "{count} en stock",
     "product.noProducts": "Aucun produit disponible pour le moment.",
     "product.related": "Vous pourriez aussi aimer",
@@ -891,6 +904,17 @@ export const messages: Record<Locale, Messages> = {
     "admin.reviews.table.actions": "Actions",
     "admin.reviews.verifiedPurchase": "Achat vérifié",
     "admin.reviews.view": "Voir l'avis",
+
+    "toast.error.addToCart": "Impossible d'ajouter au panier. Réessayez.",
+    "toast.error.updateQuantity": "Erreur lors de la mise à jour. Réessayez.",
+    "toast.error.removeItem": "Impossible de supprimer l'article. Réessayez.",
+    "toast.success.createProduct": "Produit créé avec succès.",
+    "toast.error.createProduct": "Erreur lors de la création du produit.",
+    "toast.success.updateProduct": "Produit mis à jour.",
+    "toast.error.updateProduct": "Erreur lors de la mise à jour du produit.",
+    "toast.error.updateOrderStatus": "Impossible de mettre à jour le statut.",
+    "toast.error.updateReviewStatus": "Impossible de mettre à jour le statut de l'avis.",
+    "toast.error.createReview": "Impossible de publier l'avis. Réessayez.",
   },
 };
 
@@ -901,4 +925,21 @@ export const translateAttribute = (value: string, locale: Locale): string => {
   if (!value) return value;
   const key = `attr.${value.toLowerCase()}`;
   return messages[locale][key] ?? value;
+};
+
+/**
+ * Returns a translation function for the given locale.
+ * Useful for Server Components.
+ */
+export const getMessages = (locale: Locale) => {
+  const dict = messages[locale] || messages.en;
+  return (key: string, variables?: Record<string, string | number>) => {
+    let msg = dict[key] || key;
+    if (variables) {
+      Object.entries(variables).forEach(([k, v]) => {
+        msg = msg.replace(`{${k}}`, String(v));
+      });
+    }
+    return msg;
+  };
 };

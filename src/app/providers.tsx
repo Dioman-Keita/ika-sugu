@@ -1,12 +1,10 @@
 "use client";
 
 import React from "react";
-import { Provider } from "react-redux";
-import { makeStore } from "../lib/store";
-import { PersistGate } from "redux-persist/integration/react";
-import SpinnerbLoader from "@/components/ui/SpinnerbLoader";
 import { UiPreferencesProvider } from "@/lib/ui-preferences";
 import { Locale } from "@/lib/i18n/messages";
+import QueryProvider from "@/components/providers/query-provider";
+import { Toaster } from "sonner";
 
 type Props = {
   children: React.ReactNode;
@@ -14,23 +12,20 @@ type Props = {
 };
 
 const Providers = ({ children, initialLocale }: Props) => {
-  const { store, persistor } = makeStore();
-
   return (
-    <UiPreferencesProvider initialLocale={initialLocale}>
-      <Provider store={store}>
-        <PersistGate
-          loading={
-            <div className="flex items-center justify-center h-96">
-              <SpinnerbLoader className="w-10 border-2 border-gray-300 border-r-gray-600" />
-            </div>
-          }
-          persistor={persistor}
-        >
-          {children}
-        </PersistGate>
-      </Provider>
-    </UiPreferencesProvider>
+    <QueryProvider>
+      <UiPreferencesProvider initialLocale={initialLocale}>
+        {children}
+        <Toaster
+          position="bottom-right"
+          toastOptions={{
+            className: "!bg-surface-card !text-foreground !border-border !shadow-lg",
+          }}
+          richColors
+          closeButton
+        />
+      </UiPreferencesProvider>
+    </QueryProvider>
   );
 };
 

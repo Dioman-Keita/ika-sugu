@@ -2,41 +2,53 @@
 
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { CartItem } from "@/lib/features/carts/cartsSlice";
 import { FaArrowRight } from "react-icons/fa6";
 import { Loader2 } from "lucide-react";
 import { useUiPreferences } from "@/lib/ui-preferences";
 import { translateAttribute } from "@/lib/i18n/messages";
+/** Cart payloads may still be typed with Prisma `Decimal` before serialization. */
+type OrderSummaryMoney = number | { toNumber: () => number };
 
-type LegacyCartItem = CartItem & {
-  price?: number;
-  discount?: { percentage?: number };
-};
+const toMoneyNumber = (value: OrderSummaryMoney): number =>
+  typeof value === "number" ? value : value.toNumber();
 
-const getBasePrice = (item: LegacyCartItem): number => item.basePrice ?? item.price ?? 0;
-
-const getFinalPrice = (item: LegacyCartItem): number => {
-  if (typeof item.finalPrice === "number") return item.finalPrice;
-  const base = getBasePrice(item);
-  const pct = item.discountPercentage ?? item.discount?.percentage ?? 0;
-  return Math.round(base - (base * pct) / 100);
+export type OrderSummaryLine = {
+  id: string;
+  quantity: number;
+  variant: {
+    price: OrderSummaryMoney;
+    compareAtPrice?: OrderSummaryMoney | null;
+    images: string[];
+    size: string;
+    colorName: string;
+    product: {
+      name: string;
+      translations: Array<{ locale: string; name: string }>;
+    };
+  };
 };
 
 type OrderSummaryProps = {
-  items: LegacyCartItem[];
+  items: OrderSummaryLine[];
   isSubmitting: boolean;
 };
 
 const OrderSummary = ({ items, isSubmitting }: OrderSummaryProps) => {
   const { t, locale } = useUiPreferences();
-  const totalBasePrice = items.reduce(
-    (sum, item) => sum + getBasePrice(item) * item.quantity,
-    0,
-  );
-  const totalFinalPrice = items.reduce(
-    (sum, item) => sum + getFinalPrice(item) * item.quantity,
-    0,
-  );
+
+  const totalBasePrice = items.reduce((sum: number, item: OrderSummaryLine) => {
+    const finalPrice = toMoneyNumber(item.variant.price);
+    const basePrice =
+      item.variant.compareAtPrice != null
+        ? toMoneyNumber(item.variant.compareAtPrice)
+        : finalPrice;
+    return sum + basePrice * item.quantity;
+  }, 0);
+
+  const totalFinalPrice = items.reduce((sum: number, item: OrderSummaryLine) => {
+    return sum + toMoneyNumber(item.variant.price) * item.quantity;
+  }, 0);
+
   const discountAmount = Math.max(0, Math.round(totalBasePrice - totalFinalPrice));
   const discountPercentage =
     totalBasePrice > 0 ? Math.round((discountAmount / totalBasePrice) * 100) : 0;
@@ -49,32 +61,40 @@ const OrderSummary = ({ items, isSubmitting }: OrderSummaryProps) => {
 
       {/* Items */}
       <div className="flex flex-col space-y-4 max-h-80 overflow-y-auto pr-1">
-        {items.map((item, idx) => (
-          <div key={`${item.id}-${idx}`} className="flex items-center gap-3">
-            <div className="relative w-16 h-16 shrink-0 rounded-[10px] overflow-hidden bg-surface-product">
-              <Image
-                src={item.srcUrl || "/images/pic1.png"}
-                alt={item.name}
-                fill
-                className="object-cover"
-              />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm text-foreground truncate">{item.name}</p>
-              {item.attributes?.length > 0 && (
+        {items.map((item, idx) => {
+          const productTranslation = item.variant.product.translations.find(
+            (tr) => tr.locale === locale,
+          );
+          const name = productTranslation?.name ?? item.variant.product.name;
+          const finalPrice = toMoneyNumber(item.variant.price);
+
+          return (
+            <div key={`${item.id}-${idx}`} className="flex items-center gap-3">
+              <div className="relative w-16 h-16 shrink-0 rounded-[10px] overflow-hidden bg-surface-section">
+                <Image
+                  src={item.variant.images[0] || "/images/pic1.png"}
+                  alt={name}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm text-foreground truncate">{name}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {item.attributes
+                  {[item.variant.size, item.variant.colorName]
                     .map((attr) => translateAttribute(attr, locale))
                     .join(" · ")}
                 </p>
-              )}
-              <p className="text-xs text-muted-foreground mt-0.5">Qty: {item.quantity}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Qty: {item.quantity}
+                </p>
+              </div>
+              <span className="font-bold text-sm text-foreground shrink-0">
+                ${Math.round(finalPrice * item.quantity)}
+              </span>
             </div>
-            <span className="font-bold text-sm text-foreground shrink-0">
-              ${Math.round(getFinalPrice(item) * item.quantity)}
-            </span>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <hr className="border-t-border" />
@@ -83,14 +103,14 @@ const OrderSummary = ({ items, isSubmitting }: OrderSummaryProps) => {
       <div className="flex flex-col space-y-4">
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground">{t("checkout.subtotal")}</span>
-          <span className="font-bold text-foreground">${totalBasePrice}</span>
+          <span className="font-bold text-foreground">${totalBasePrice.toFixed(2)}</span>
         </div>
         {discountAmount > 0 && (
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">
               {t("checkout.discount")} (-{discountPercentage}%)
             </span>
-            <span className="font-bold text-red-500">-${discountAmount}</span>
+            <span className="font-bold text-red-500">-${discountAmount.toFixed(2)}</span>
           </div>
         )}
         <div className="flex items-center justify-between">
@@ -101,7 +121,7 @@ const OrderSummary = ({ items, isSubmitting }: OrderSummaryProps) => {
         <div className="flex items-center justify-between">
           <span className="text-foreground font-medium">{t("checkout.total")}</span>
           <span className="text-xl md:text-2xl font-bold text-foreground">
-            ${Math.round(totalFinalPrice)}
+            ${totalFinalPrice.toFixed(2)}
           </span>
         </div>
       </div>

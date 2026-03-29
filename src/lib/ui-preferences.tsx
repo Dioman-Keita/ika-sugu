@@ -1,15 +1,22 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { messages } from "./i18n/messages";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
-import { LOCALE_COOKIE_KEY } from "./ui-preferences-keys";
+import { LOCALE_COOKIE_KEY, THEME_COOKIE_KEY } from "./ui-preferences-keys";
 import { Locale, parseLocale } from "./i18n/locale";
 
-type ThemeMode = "light" | "dark";
+export type ThemeMode = "light" | "dark";
 
-type UiPreferencesContextValue = {
+export type UiPreferencesContextValue = {
   locale: Locale;
   setLocale: (locale: Locale) => void;
   theme: ThemeMode;
@@ -18,8 +25,6 @@ type UiPreferencesContextValue = {
 };
 
 const UiPreferencesContext = createContext<UiPreferencesContextValue | null>(null);
-
-const THEME_STORAGE_KEY = "ui-theme";
 
 const getInitialLocale = (): Locale => {
   if (typeof window === "undefined") return "en";
@@ -30,7 +35,8 @@ const getInitialLocale = (): Locale => {
 
 const getInitialTheme = (): ThemeMode => {
   if (typeof window === "undefined") return "light";
-  const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+  const savedTheme =
+    Cookies.get(THEME_COOKIE_KEY) || localStorage.getItem(THEME_COOKIE_KEY);
   if (savedTheme === "light" || savedTheme === "dark") return savedTheme;
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 };
@@ -45,16 +51,25 @@ export const UiPreferencesProvider = ({
   const [locale, setLocaleState] = useState<Locale>(
     () => initialLocale ?? getInitialLocale(),
   );
-  const [theme, setTheme] = useState<ThemeMode>(getInitialTheme);
+  const [theme, setThemeState] = useState<ThemeMode>(getInitialTheme);
   const router = useRouter();
 
-  const setLocale = (newLocale: Locale) => {
-    setLocaleState(newLocale);
-    localStorage.setItem(LOCALE_COOKIE_KEY, newLocale);
-    Cookies.set(LOCALE_COOKIE_KEY, newLocale, { expires: 365, path: "/" });
-    document.documentElement.lang = newLocale;
-    router.refresh();
-  };
+  const setLocale = useCallback(
+    (newLocale: Locale) => {
+      setLocaleState(newLocale);
+      localStorage.setItem(LOCALE_COOKIE_KEY, newLocale);
+      Cookies.set(LOCALE_COOKIE_KEY, newLocale, { expires: 365, path: "/" });
+      document.documentElement.lang = newLocale;
+      router.refresh();
+    },
+    [router],
+  );
+
+  const setTheme = useCallback((newTheme: ThemeMode) => {
+    setThemeState(newTheme);
+    localStorage.setItem(THEME_COOKIE_KEY, newTheme);
+    Cookies.set(THEME_COOKIE_KEY, newTheme, { expires: 365, path: "/" });
+  }, []);
 
   useEffect(() => {
     document.documentElement.lang = locale;
@@ -69,9 +84,16 @@ export const UiPreferencesProvider = ({
   }, [initialLocale, locale, router]);
 
   useEffect(() => {
-    localStorage.setItem(THEME_STORAGE_KEY, theme);
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
+
+  const t = useCallback(
+    (key: string) => {
+      const dict = messages[locale];
+      return dict[key] ?? key;
+    },
+    [locale],
+  );
 
   const value = useMemo<UiPreferencesContextValue>(
     () => ({
@@ -79,10 +101,9 @@ export const UiPreferencesProvider = ({
       setLocale,
       theme,
       setTheme,
-      t: (key) => messages[locale][key] ?? key,
+      t,
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [locale, theme],
+    [locale, setLocale, theme, setTheme, t],
   );
 
   return (

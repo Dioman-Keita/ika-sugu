@@ -13,6 +13,7 @@ import { authClient } from "@/lib/auth-client";
 import { translateAuthError } from "@/lib/i18n/auth-errors";
 import { AuthNotice } from "@/components/auth/AuthNotice";
 import { getSafeNext } from "@/lib/safe-next";
+import { useSyncCartMutation } from "@/hooks/use-cart";
 
 export default function RegisterClient({ googleEnabled }: { googleEnabled: boolean }) {
   const router = useRouter();
@@ -30,6 +31,7 @@ export default function RegisterClient({ googleEnabled }: { googleEnabled: boole
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { t, locale } = useUiPreferences();
+  const { mutateAsync: syncCart } = useSyncCartMutation();
 
   useEffect(() => {
     if (!isSessionPending && session) router.replace(safeNext);
@@ -91,6 +93,9 @@ export default function RegisterClient({ googleEnabled }: { googleEnabled: boole
                   setError(translateAuthError(error.message ?? String(error), locale));
                   return;
                 }
+
+                await syncCart().catch(() => {});
+
                 router.push(safeNext);
               } finally {
                 setIsSubmitting(false);
