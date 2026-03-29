@@ -9,6 +9,27 @@ import crypto from "node:crypto";
 const GUEST_CART_COOKIE_NAME = process.env.NEXT_PUBLIC_GUEST_CART_COOKIE_NAME || "guest_cart_id";
 
 /**
+ * Recursively converts Prisma Decimal objects to plain numbers
+ * so the data can be serialized across the Server → Client boundary.
+ */
+function serializeDecimals<T>(obj: T): T {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj === "object" && "toNumber" in (obj as any) && typeof (obj as any).toNumber === "function") {
+    return (obj as any).toNumber() as T;
+  }
+  if (obj instanceof Date) return obj;
+  if (Array.isArray(obj)) return obj.map(serializeDecimals) as T;
+  if (typeof obj === "object") {
+    const result: any = {};
+    for (const [key, value] of Object.entries(obj as any)) {
+      result[key] = serializeDecimals(value);
+    }
+    return result as T;
+  }
+  return obj;
+}
+
+/**
  * Gets or creates a guest ID from cookies.
  */
 async function getOrCreateGuestId() {
@@ -39,6 +60,11 @@ export async function getCartAction() {
   });
 
   const userId = session?.user?.id;
+  if (userId) {
+    // Avoid empty-cart flash on /cart SSR and refetches: merge guest cookie before resolving user cart.
+    await mergeGuestCartForUserId(userId);
+  }
+
   const guestId = userId ? null : await getOrCreateGuestId();
 
   let cart = await db.cart.findUnique({
@@ -82,7 +108,7 @@ export async function getCartAction() {
     });
   }
 
-  return cart;
+  return serializeDecimals(cart);
 }
 
 /**
@@ -149,20 +175,14 @@ export async function removeFromCartAction(itemId: string) {
 }
 
 /**
- * Merges a guest cart into a user cart.
- * Should be called after login.
+ * Merges the guest cart (guest_cart_id cookie) into the user's cart.
+ * Idempotent: safe on every read for logged-in users; no-ops if there is no guest cart.
  */
-export async function syncCartAction() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) return;
-
+async function mergeGuestCartForUserId(userId: string): Promise<boolean> {
   const cookieStore = await cookies();
   const guestId = cookieStore.get(GUEST_CART_COOKIE_NAME)?.value;
 
-  if (!guestId) return;
+  if (!guestId) return false;
 
   const guestCart = await db.cart.findUnique({
     where: { guestId },
@@ -171,17 +191,16 @@ export async function syncCartAction() {
 
   if (!guestCart || guestCart.items.length === 0) {
     cookieStore.delete(GUEST_CART_COOKIE_NAME);
-    return;
+    return false;
   }
 
   const userCart = await db.cart.findUnique({
-    where: { userId: session.user.id },
+    where: { userId },
     include: { items: true },
   });
 
-  const targetCartId = userCart?.id || (await db.cart.create({ data: { userId: session.user.id } })).id;
+  const targetCartId = userCart?.id ?? (await db.cart.create({ data: { userId } })).id;
 
-  // Merge items
   for (const item of guestCart.items) {
     const existingInUser = await db.cartItem.findUnique({
       where: {
@@ -205,11 +224,25 @@ export async function syncCartAction() {
     }
   }
 
-  // Cleanup guest cart
   await db.cart.delete({ where: { id: guestCart.id } });
   cookieStore.delete(GUEST_CART_COOKIE_NAME);
 
   revalidatePath("/cart");
+  return true;
+}
+
+/**
+ * Merges a guest cart into a user cart.
+ * Should be called after login (client can trigger refetch afterward).
+ */
+export async function syncCartAction(): Promise<boolean> {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user) return false;
+
+  return mergeGuestCartForUserId(session.user.id);
 }
 
 /**
@@ -222,8 +255,12 @@ export async function getCartCountAction() {
   });
 
   const userId = session?.user?.id;
+  if (userId) {
+    await mergeGuestCartForUserId(userId);
+  }
+
   const cookieStore = await cookies();
-  const guestId = cookieStore.get(GUEST_CART_COOKIE_NAME)?.value;
+  const guestId = userId ? null : cookieStore.get(GUEST_CART_COOKIE_NAME)?.value;
 
   if (!userId && !guestId) return 0;
 

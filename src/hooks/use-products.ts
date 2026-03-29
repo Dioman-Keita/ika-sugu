@@ -43,3 +43,62 @@ export function useCategories(locale: Locale = "en") {
     staleTime: 60 * 60 * 1000, // 1 hour fresh
   });
 }
+
+// Mutations
+import { createProductReviewAction } from "@/app/actions/reviews";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { useUiPreferences } from "@/lib/ui-preferences";
+
+export function useCreateReviewMutation(productId: string) {
+  const queryClient = useQueryClient();
+  const { t } = useUiPreferences();
+  return useMutation({
+    mutationFn: (data: { rating: number; content: string }) => 
+      createProductReviewAction({ productId, ...data }),
+
+    onMutate: async (newReview) => {
+      // Cancel queries to avoid racing with the optimistic update
+      await queryClient.cancelQueries({ queryKey: PRODUCT_QUERY_KEYS.details(productId) });
+
+      // Snapshot the current state
+      const previousProductData = queryClient.getQueriesData({ queryKey: PRODUCT_QUERY_KEYS.details(productId) });
+
+      // Optimistically update the UI in all locales for this product
+      queryClient.setQueriesData<any>({ queryKey: PRODUCT_QUERY_KEYS.details(productId) }, (old: any) => {
+        if (!old?.reviews) return old;
+        const fakeReview = {
+          id: `temp-${Date.now()}`,
+          rating: newReview.rating,
+          content: newReview.content,
+          status: "PENDING",
+          createdAt: new Date(),
+          user: {
+            name: "Vous", // Optimistic placeholder
+          }
+        };
+        return {
+          ...old,
+          reviews: [fakeReview, ...old.reviews],
+        };
+      });
+
+      return { previousProductData };
+    },
+
+    onError: (_err, _newReview, context) => {
+      // Rollback on error
+      if (context?.previousProductData) {
+        for (const [key, data] of context.previousProductData) {
+          queryClient.setQueryData(key, data);
+        }
+      }
+      toast.error(t("toast.error.createReview"));
+    },
+
+    onSettled: () => {
+      // Refetch after error or success to sync with server state
+      queryClient.invalidateQueries({ queryKey: PRODUCT_QUERY_KEYS.details(productId) });
+    },
+  });
+}

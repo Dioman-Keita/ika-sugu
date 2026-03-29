@@ -15,14 +15,38 @@ import {
 import ShippingForm from "@/components/checkout-page/ShippingForm";
 import OrderSummary from "@/components/checkout-page/OrderSummary";
 
-type CheckoutContainerProps = {
-  cartItems: any[];
-  t: (key: string) => string;
-};
+import { useCartQuery } from "@/hooks/use-cart";
+import { useUiPreferences } from "@/lib/ui-preferences";
+import { TbBasketExclamation } from "react-icons/tb";
+import { Button } from "@/components/ui/button";
 
-export default function CheckoutContainer({ cartItems, t }: CheckoutContainerProps) {
+export default function CheckoutContainer() {
+  const { t } = useUiPreferences();
+  const { data: cart, isLoading } = useCartQuery();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
+
+  const cartItems = cart?.items ?? [];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-32">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-foreground" />
+      </div>
+    );
+  }
+
+  if (cartItems.length === 0 && !orderPlaced) {
+    return (
+      <div className="flex items-center flex-col text-muted-foreground mt-32 space-y-4 text-center">
+        <TbBasketExclamation strokeWidth={1} className="text-6xl" />
+        <span>{t("cart.empty")}</span>
+        <Button className="rounded-full w-24" asChild>
+          <Link href="/shop">{t("cart.shop")}</Link>
+        </Button>
+      </div>
+    );
+  }
 
   const handleSubmit = async () => {
     setIsSubmitting(true);

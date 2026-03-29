@@ -15,14 +15,14 @@ type OrderSummaryProps = {
 const OrderSummary = ({ items, isSubmitting }: OrderSummaryProps) => {
   const { t, locale } = useUiPreferences();
 
-  const totalBasePrice = items.reduce((sum, item) => {
-    const finalPrice = item.variant.price.toNumber();
-    const basePrice = item.variant.compareAtPrice?.toNumber() ?? finalPrice;
+  const totalBasePrice = items.reduce((sum: number, item: any) => {
+    const finalPrice = Number(item.variant.price);
+    const basePrice = item.variant.compareAtPrice != null ? Number(item.variant.compareAtPrice) : finalPrice;
     return sum + basePrice * item.quantity;
   }, 0);
 
-  const totalFinalPrice = items.reduce((sum, item) => {
-    return sum + item.variant.price.toNumber() * item.quantity;
+  const totalFinalPrice = items.reduce((sum: number, item: any) => {
+    return sum + Number(item.variant.price) * item.quantity;
   }, 0);
 
   const discountAmount = Math.max(0, Math.round(totalBasePrice - totalFinalPrice));
@@ -42,7 +42,7 @@ const OrderSummary = ({ items, isSubmitting }: OrderSummaryProps) => {
             (tr: any) => tr.locale === locale,
           );
           const name = productTranslation?.name ?? item.variant.product.name;
-          const finalPrice = item.variant.price.toNumber();
+          const finalPrice = Number(item.variant.price);
 
           return (
             <div key={`${item.id}-${idx}`} className="flex items-center gap-3">

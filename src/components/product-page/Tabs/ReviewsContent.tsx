@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import Rating from "@/components/ui/Rating";
 import { Label } from "@/components/ui/label";
-import { createProductReviewAction } from "@/app/actions/reviews";
+import { useCreateReviewMutation } from "@/hooks/use-products";
 import { authClient } from "@/lib/auth-client";
 import { ReviewSubmissionErrorCode } from "@/lib/errors/review-errors";
 import { REVIEW_MAX_CHARACTERS, REVIEW_MIN_CHARACTERS } from "@/lib/review-config";
@@ -43,7 +43,8 @@ const ReviewsContent = ({
   const [content, setContent] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [didSubmit, setDidSubmit] = useState(false);
-  const [isSubmitting, startTransition] = useTransition();
+
+  const { mutate: submit, isPending: isSubmitting } = useCreateReviewMutation(productId);
 
   const canSubmit = useMemo(() => {
     if (!session?.user?.id) return false;
@@ -53,41 +54,40 @@ const ReviewsContent = ({
 
   const submitReview = () => {
     setError(null);
-    startTransition(async () => {
-      try {
-        const result = await createProductReviewAction({
-          productId,
-          rating,
-          content,
-        });
-        if (!result.ok) {
-          switch (result.errorCode) {
-            case ReviewSubmissionErrorCode.Unauthorized:
-              setError(t("product.reviews.error.unauthorized"));
-              break;
-            case ReviewSubmissionErrorCode.DuplicateReview:
-              setError(t("product.reviews.error.duplicate"));
-              break;
-            case ReviewSubmissionErrorCode.ReviewTooShort:
-              setError(t("product.reviews.error.tooShort"));
-              break;
-            case ReviewSubmissionErrorCode.InvalidProductId:
-              setError(t("product.reviews.error.generic"));
-              break;
-            default:
-              setError(t("product.reviews.error.generic"));
+    submit(
+      { rating, content },
+      {
+        onSuccess: (result: any) => {
+          if (!result.ok) {
+            switch (result.errorCode) {
+              case ReviewSubmissionErrorCode.Unauthorized:
+                setError(t("product.reviews.error.unauthorized"));
+                break;
+              case ReviewSubmissionErrorCode.DuplicateReview:
+                setError(t("product.reviews.error.duplicate"));
+                break;
+              case ReviewSubmissionErrorCode.ReviewTooShort:
+                setError(t("product.reviews.error.tooShort"));
+                break;
+              case ReviewSubmissionErrorCode.InvalidProductId:
+                setError(t("product.reviews.error.generic"));
+                break;
+              default:
+                setError(t("product.reviews.error.generic"));
+            }
+            return;
           }
-          return;
-        }
 
-        setDidSubmit(true);
-        setIsDialogOpen(false);
-        setContent("");
-        setRating(5);
-      } catch {
-        setError(t("product.reviews.error.generic"));
-      }
-    });
+          setDidSubmit(true);
+          setIsDialogOpen(false);
+          setContent("");
+          setRating(5);
+        },
+        onError: () => {
+          setError(t("product.reviews.error.generic"));
+        },
+      },
+    );
   };
 
   return (

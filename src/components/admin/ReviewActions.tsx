@@ -1,10 +1,10 @@
 "use client";
 
-import { useTransition, useMemo } from "react";
+import { useMemo } from "react";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { updateReviewStatusAction } from "@/app/actions/admin";
 import { ReviewStatus } from "@/generated/prisma/client";
+import { useUpdateReviewStatusMutation } from "@/hooks/use-admin";
 
 type Props = {
   reviewId: string;
@@ -12,7 +12,7 @@ type Props = {
 };
 
 export default function ReviewActions({ reviewId, currentStatus }: Props) {
-  const [isPending, startTransition] = useTransition();
+  const { mutate: updateStatus, isPending } = useUpdateReviewStatusMutation();
 
   const isApproved = currentStatus === "APPROVED";
   const nextStatus = isApproved ? ReviewStatus.REJECTED : ReviewStatus.APPROVED;
@@ -27,9 +27,7 @@ export default function ReviewActions({ reviewId, currentStatus }: Props) {
       variant="outline"
       size="sm"
       className={`h-7 px-2 text-xs rounded-lg ${color}`}
-      onClick={() =>
-        startTransition(() => updateReviewStatusAction(reviewId, nextStatus))
-      }
+      onClick={() => updateStatus({ id: reviewId, status: nextStatus })}
       disabled={isPending}
     >
       {isPending ? <Loader2 size={12} className="animate-spin" /> : <Icon size={12} />}

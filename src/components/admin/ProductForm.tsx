@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { createAdminProduct, updateAdminProduct } from "@/app/actions/admin";
+import { useCreateProductMutation, useUpdateProductMutation } from "@/hooks/use-admin";
 import ProductImageUploader from "./ProductImageUploader";
 
 type Category = { id: string; name: string };
@@ -46,7 +46,10 @@ export default function ProductForm({
   labels,
 }: ProductFormProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const { mutate: create, isPending: isCreating } = useCreateProductMutation();
+  const { mutate: update, isPending: isUpdating } = useUpdateProductMutation();
+  const isPending = isCreating || isUpdating;
+
   const [error, setError] = useState<string | null>(null);
 
   const [productId] = useState(initial?.id ?? crypto.randomUUID());
@@ -118,44 +121,49 @@ export default function ProductForm({
       return;
     }
     setError(null);
-    startTransition(async () => {
-      try {
-        const payload = {
-          id: productId,
-          name,
-          slug,
-          description,
-          dressStyle: dressStyle || null,
-          categoryId,
-          basePrice: Number(basePrice),
-          discountPercentage: Number(discountPercentage) || 0,
-          vatRate: Number(vatRate) || 0,
-          variants: variants.map((v) => ({
-            sku: v.sku ?? null,
-            colorName: v.colorName || "Default",
-            colorHex: v.colorHex ?? null,
-            size: v.size || "Unique",
-            price: Number(v.price) || 0,
-            compareAtPrice: v.compareAtPrice ? Number(v.compareAtPrice) : null,
-            currency: v.currency || "USD",
-            stock: Number(v.stock) || 0,
-            images:
-              v.images
-                ?.slice()
-                .sort((a, b) => Number(b.isCover) - Number(a.isCover))
-                .map((img) => img.url) ?? [],
-          })),
-        };
-        const result =
-          mode === "create"
-            ? await createAdminProduct(payload)
-            : await updateAdminProduct({ ...payload, id: initial!.id });
+
+    const payload = {
+      id: productId,
+      name,
+      slug,
+      description,
+      dressStyle: dressStyle || null,
+      categoryId,
+      basePrice: Number(basePrice),
+      discountPercentage: Number(discountPercentage) || 0,
+      vatRate: Number(vatRate) || 0,
+      variants: variants.map((v) => ({
+        sku: v.sku ?? null,
+        colorName: v.colorName || "Default",
+        colorHex: v.colorHex ?? null,
+        size: v.size || "Unique",
+        price: Number(v.price) || 0,
+        compareAtPrice: v.compareAtPrice ? Number(v.compareAtPrice) : null,
+        currency: v.currency || "USD",
+        stock: Number(v.stock) || 0,
+        images:
+          v.images
+            ?.slice()
+            .sort((a, b) => Number(b.isCover) - Number(a.isCover))
+            .map((img) => img.url) ?? [],
+      })),
+    };
+
+    const mutationOptions = {
+      onSuccess: (result: any) => {
         router.push(`/admin/products/${result.id}`);
         router.refresh();
-      } catch (err) {
-        setError((err as Error).message ?? "Error");
-      }
-    });
+      },
+      onError: (err: any) => {
+        setError(err.message ?? "Error");
+      },
+    };
+
+    if (mode === "create") {
+      create(payload, mutationOptions);
+    } else {
+      update({ ...payload, id: initial!.id }, mutationOptions);
+    }
   };
 
   return (

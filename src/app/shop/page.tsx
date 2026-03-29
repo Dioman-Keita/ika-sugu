@@ -5,7 +5,6 @@ import MobileFilters from "@/components/shop-page/filters/MobileFilters";
 import Filters from "@/components/shop-page/filters";
 import { FiSliders } from "react-icons/fi";
 import { getShopProductsAction } from "@/app/actions/catalog";
-import ProductCard from "@/components/common/ProductCard";
 import ShopSortSelect from "@/components/shop-page/ShopSortSelect";
 import {
   Pagination,
@@ -20,10 +19,10 @@ import { cookies } from "next/headers";
 import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
 import { messages } from "@/lib/i18n/messages";
 import { Locale, parseLocale } from "@/lib/i18n/locale";
-import { 
-  dehydrate, 
-  HydrationBoundary, 
-  QueryClient 
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient
 } from "@tanstack/react-query";
 import { PRODUCT_QUERY_KEYS } from "@/hooks/query-keys";
 import ShopProductGrid from "@/components/shop-page/ShopProductGrid";
@@ -166,53 +165,53 @@ export default async function ShopPage({
                   <ShopSortSelect locale={locale} />
                 </div>
               </div>
-              
+
               <ShopProductGrid filters={filters} locale={locale} />
-              
+
               <hr className="border-t-border" />
 
-            <Pagination className="justify-between">
-              <PaginationPrevious
-                href={buildPageHref(Math.max(1, currentPage - 1))}
-                className="border border-border"
-                label={messages[locale]["pagination.previous"]}
-                ariaLabel={messages[locale]["pagination.goToPreviousPage"]}
-              />
-              <PaginationContent>
-                {pageNumbers.map((page, idx) => {
-                  const previous = pageNumbers[idx - 1];
-                  const showEllipsis =
-                    typeof previous === "number" && page - previous > 1;
+              <Pagination className="justify-between">
+                <PaginationPrevious
+                  href={buildPageHref(Math.max(1, currentPage - 1))}
+                  className="border border-border"
+                  label={messages[locale]["pagination.previous"]}
+                  ariaLabel={messages[locale]["pagination.goToPreviousPage"]}
+                />
+                <PaginationContent>
+                  {pageNumbers.map((page, idx) => {
+                    const previous = pageNumbers[idx - 1];
+                    const showEllipsis =
+                      typeof previous === "number" && page - previous > 1;
 
-                  return (
-                    <React.Fragment key={page}>
-                      {showEllipsis && (
+                    return (
+                      <React.Fragment key={page}>
+                        {showEllipsis && (
+                          <PaginationItem>
+                            <PaginationEllipsis className="text-muted-foreground font-medium text-sm" />
+                          </PaginationItem>
+                        )}
                         <PaginationItem>
-                          <PaginationEllipsis className="text-muted-foreground font-medium text-sm" />
+                          <PaginationLink
+                            href={buildPageHref(page)}
+                            className="text-muted-foreground font-medium text-sm"
+                            isActive={page === currentPage}
+                          >
+                            {page}
+                          </PaginationLink>
                         </PaginationItem>
-                      )}
-                      <PaginationItem>
-                        <PaginationLink
-                          href={buildPageHref(page)}
-                          className="text-muted-foreground font-medium text-sm"
-                          isActive={page === currentPage}
-                        >
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    </React.Fragment>
-                  );
-                })}
-              </PaginationContent>
-              <PaginationNext
-                href={buildPageHref(Math.min(totalPages, currentPage + 1))}
-                className="border border-border"
-                label={messages[locale]["pagination.next"]}
-                ariaLabel={messages[locale]["pagination.goToNextPage"]}
-              />
-            </Pagination>
+                      </React.Fragment>
+                    );
+                  })}
+                </PaginationContent>
+                <PaginationNext
+                  href={buildPageHref(Math.min(totalPages, currentPage + 1))}
+                  className="border border-border"
+                  label={messages[locale]["pagination.next"]}
+                  ariaLabel={messages[locale]["pagination.goToNextPage"]}
+                />
+              </Pagination>
+            </div>
           </div>
-        </div>
         </div>
       </HydrationBoundary>
     </main>

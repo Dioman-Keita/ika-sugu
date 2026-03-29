@@ -6,8 +6,7 @@ import { LogOut, User, Package, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUiPreferences } from "@/lib/ui-preferences";
 import { authClient } from "@/lib/auth-client";
-import { useSelector } from "react-redux";
-import type { RootState } from "@/lib/store";
+import { useCartCount } from "@/hooks/use-cart";
 import type { AuthSession } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { formatMonthYear } from "@/lib/i18n/format";
@@ -55,9 +54,7 @@ export default function AccountDashboard({ session }: Props) {
     fetchAdminStatus();
   }, []);
 
-  const cartTotalQuantities = useSelector(
-    (state: RootState) => state.carts.cart?.totalQuantities ?? 0,
-  );
+  const cartTotalQuantities = useCartCount();
 
   const user = session.user;
   const initials = getInitials(user.name, user.email);

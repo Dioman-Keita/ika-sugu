@@ -1,6 +1,5 @@
 "use client";
 
-import { useTransition } from "react";
 import { PiTrashFill } from "react-icons/pi";
 import Image from "next/image";
 import Link from "next/link";
@@ -8,7 +7,7 @@ import CartCounter from "@/components/ui/CartCounter";
 import { Button } from "../ui/button";
 import { useUiPreferences } from "@/lib/ui-preferences";
 import { translateAttribute } from "@/lib/i18n/messages";
-import { removeFromCartAction, updateCartQuantityAction } from "@/app/actions/cart";
+import { useRemoveItemMutation, useUpdateQuantityMutation } from "@/hooks/use-cart";
 import { cn } from "@/lib/utils";
 
 type ProductCardProps = {
@@ -34,8 +33,11 @@ type ProductCardProps = {
 };
 
 const ProductCard = ({ data }: ProductCardProps) => {
-  const [isPending, startTransition] = useTransition();
   const { t, locale } = useUiPreferences();
+  const { mutate: remove, isPending: isRemoving } = useRemoveItemMutation();
+  const { mutate: updateQuantity, isPending: isUpdating } = useUpdateQuantityMutation();
+
+  const isPending = isRemoving || isUpdating;
 
   const productTranslation = data.variant.product.translations.find(
     (tr) => tr.locale === locale,
@@ -43,21 +45,17 @@ const ProductCard = ({ data }: ProductCardProps) => {
   const productName = productTranslation?.name ?? data.variant.product.name;
   const productSlug = data.variant.product.slug;
 
-  const finalPrice = data.variant.price.toNumber();
-  const basePrice = data.variant.compareAtPrice?.toNumber() ?? finalPrice;
+  const finalPrice = Number(data.variant.price);
+  const basePrice = data.variant.compareAtPrice != null ? Number(data.variant.compareAtPrice) : finalPrice;
   const discountPercentage =
     basePrice > finalPrice ? Math.round(((basePrice - finalPrice) / basePrice) * 100) : 0;
 
   const handleRemove = () => {
-    startTransition(async () => {
-      await removeFromCartAction(data.id);
-    });
+    remove(data.id);
   };
 
   const handleUpdateQuantity = (newQty: number) => {
-    startTransition(async () => {
-      await updateCartQuantityAction(data.id, newQty);
-    });
+    updateQuantity({ itemId: data.id, quantity: newQty });
   };
 
   return (

@@ -2,7 +2,6 @@
 
 import { useShopProducts } from "@/hooks/use-products";
 import ProductCard from "@/components/common/ProductCard";
-import { useUiPreferences } from "@/lib/ui-preferences";
 import { messages } from "@/lib/i18n/messages";
 import { Locale } from "@/lib/i18n/locale";
 

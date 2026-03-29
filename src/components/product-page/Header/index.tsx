@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useOptimistic, useTransition } from "react";
 import PhotoSection from "./PhotoSection";
 import { Product } from "@/types/product.types";
 import { integralCF } from "@/styles/fonts";
@@ -18,11 +18,13 @@ const Header = ({ data }: { data: Product }) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  // Active variants available
   const activeVariants = useMemo(
     () => data.variants.filter((variant) => variant.isActive),
     [data.variants],
   );
 
+  // Derive Color Options
   const colorOptions = useMemo(() => {
     const map = new Map<string, { name: string; hex?: string | null; stock: number }>();
 
@@ -54,16 +56,20 @@ const Header = ({ data }: { data: Product }) => {
   const defaultColor =
     colorOptions.find((color) => color.isAvailable)?.name ?? colorOptions[0]?.name ?? "";
 
-  const selectedColor = searchParams.get("color") ?? defaultColor;
-  const resolvedColor =
-    selectedColor && colorOptions.some((color) => color.name === selectedColor)
-      ? selectedColor
+  const urlColor = searchParams.get("color") ?? defaultColor;
+  const initialResolvedColor =
+    urlColor && colorOptions.some((color) => color.name === urlColor)
+      ? urlColor
       : defaultColor;
 
+  // React 19: useOptimistic for instant UI switching while URL updates
+  const [optimisticColor, setOptimisticColor] = useOptimistic(initialResolvedColor);
+
+  // Derive Size Options based on optimistically selected color
   const sizeOptions = useMemo(() => {
     const map = new Map<string, number>();
     activeVariants
-      .filter((variant) => variant.colorName === resolvedColor)
+      .filter((variant) => variant.colorName === optimisticColor)
       .forEach((variant) => {
         map.set(variant.size, (map.get(variant.size) ?? 0) + Math.max(0, variant.stock));
       });
@@ -73,25 +79,28 @@ const Header = ({ data }: { data: Product }) => {
       stock,
       isAvailable: stock > 0,
     }));
-  }, [activeVariants, resolvedColor]);
+  }, [activeVariants, optimisticColor]);
 
   const fallbackSize =
     sizeOptions.find((size) => size.isAvailable)?.name ?? sizeOptions[0]?.name ?? "";
 
-  const selectedSize = searchParams.get("size") ?? fallbackSize;
-  const resolvedSize =
-    selectedSize && sizeOptions.some((size) => size.name === selectedSize)
-      ? selectedSize
+  const urlSize = searchParams.get("size") ?? fallbackSize;
+  const initialResolvedSize =
+    urlSize && sizeOptions.some((size) => size.name === urlSize)
+      ? urlSize
       : fallbackSize;
+
+  const [optimisticSize, setOptimisticSize] = useOptimistic(initialResolvedSize);
+  const [isPending, startTransition] = useTransition();
 
   const selectedVariant = useMemo(
     () =>
       activeVariants.find(
-        (variant) => variant.colorName === resolvedColor && variant.size === resolvedSize,
+        (variant) => variant.colorName === optimisticColor && variant.size === optimisticSize,
       ) ??
-      activeVariants.find((variant) => variant.colorName === resolvedColor) ??
+      activeVariants.find((variant) => variant.colorName === optimisticColor) ??
       activeVariants[0],
-    [activeVariants, resolvedColor, resolvedSize],
+    [activeVariants, optimisticColor, optimisticSize],
   );
 
   const photos =
@@ -114,10 +123,34 @@ const Header = ({ data }: { data: Product }) => {
         )
       : 0;
 
-  const updateUrl = (name: string, value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set(name, value);
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  const handleSizeSelect = (size: string) => {
+    startTransition(() => {
+      setOptimisticSize(size);
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("size", size);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    });
+  };
+
+  const handleColorSelect = (colorName: string) => {
+    startTransition(() => {
+      setOptimisticColor(colorName);
+
+      const nextSize =
+        activeVariants.find(
+          (v) => v.colorName === colorName && v.stock > 0,
+        )?.size ??
+        activeVariants.find((v) => v.colorName === colorName)?.size;
+
+      if (nextSize) {
+        setOptimisticSize(nextSize);
+      }
+
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("color", colorName);
+      if (nextSize) params.set("size", nextSize);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    });
   };
 
   return (
@@ -175,26 +208,14 @@ const Header = ({ data }: { data: Product }) => {
           <hr className="h-px border-t-border mb-5" />
           <ColorSelection
             colors={colorOptions}
-            selectedColor={resolvedColor}
-            onSelect={(colorName) => {
-              const params = new URLSearchParams(searchParams.toString());
-              params.set("color", colorName);
-
-              const nextSize =
-                activeVariants.find(
-                  (v) => v.colorName === colorName && v.stock > 0,
-                )?.size ??
-                activeVariants.find((v) => v.colorName === colorName)?.size;
-
-              if (nextSize) params.set("size", nextSize);
-              router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-            }}
+            selectedColor={optimisticColor}
+            onSelect={handleColorSelect}
           />
           <hr className="h-px border-t-border my-5" />
           <SizeSelection
             sizes={sizeOptions}
-            selectedSize={resolvedSize}
-            onSelect={(size) => updateUrl("size", size)}
+            selectedSize={optimisticSize}
+            onSelect={handleSizeSelect}
           />
           {selectedVariantStock <= 0 && (
             <p className="text-sm text-[#FF3333] mt-3">
@@ -214,8 +235,8 @@ const Header = ({ data }: { data: Product }) => {
               finalPrice: selectedVariantPrice,
               discountPercentage: selectedVariantDiscountPercentage,
             }}
-            selectedColor={resolvedColor}
-            selectedSize={resolvedSize}
+            selectedColor={optimisticColor}
+            selectedSize={optimisticSize}
             selectedVariantId={selectedVariant?.id}
             maxQuantity={selectedVariantStock}
           />
