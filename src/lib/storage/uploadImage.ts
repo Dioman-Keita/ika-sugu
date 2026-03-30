@@ -44,8 +44,14 @@ export const uploadImage = async (file: File, opts: UploadOptions): Promise<stri
   const { productId, bucket = "products" } = opts;
   validateFile(file);
 
+  let supabase;
+  try {
+    supabase = getSupabaseClient();
+  } catch (err) {
+    throw new UploadError(err instanceof Error ? err.message : "Supabase is not configured");
+  }
+
   const compressed = await compress(file);
-  const supabase = getSupabaseClient();
 
   const safeName = file.name.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9.\-_]/g, "");
   const fileName = `${crypto.randomUUID()}-${safeName}`;

@@ -108,6 +108,8 @@ model Product {
   name               String
   slug               String               @unique
   description        String
+  sourceLocale       String               @default("fr")
+  status             ProductStatus        @default(DRAFT)
   dressStyle         String?
   basePrice          Decimal              @db.Decimal(10, 2)
   vatRate            Decimal              @default(20.00) @db.Decimal(5, 2) // VAT percentage
@@ -125,6 +127,8 @@ model Product {
   @@index([categoryId])
   @@index([dressStyle])
   @@index([createdAt])
+  @@index([status, createdAt])
+  @@index([sourceLocale])
 }
 
 model ProductTranslation {
@@ -245,6 +249,12 @@ enum ReviewStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+enum ProductStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
 }
 
 model Cart {

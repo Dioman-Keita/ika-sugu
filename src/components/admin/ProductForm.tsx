@@ -1,19 +1,35 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useCreateProductMutation, useUpdateProductMutation } from "@/hooks/use-admin";
 import ProductImageUploader from "./ProductImageUploader";
 import type { createAdminProduct } from "@/app/actions/admin";
+import { deleteAdminProductImagesAction } from "@/app/actions/admin";
+import {
+  CURRENCY_OPTIONS,
+  DRESS_STYLE_OPTIONS,
+  SIZE_OPTIONS,
+} from "@/lib/catalog-options";
+import { translateAttribute } from "@/lib/i18n/messages";
+import { useUiPreferences } from "@/lib/ui-preferences";
+import { ProductStatus } from "@/generated/prisma/client";
 
 type CreateProductResult = Awaited<ReturnType<typeof createAdminProduct>>;
 
 type Category = { id: string; name: string };
+type LocaleCode = "fr" | "en";
+
+type TranslationFields = {
+  name: string;
+  description: string;
+  specs: Partial<Record<"material" | "care" | "fit" | "pattern", string>>;
+};
 
 type VariantInput = {
   id: string;
-  sku?: string;
+  sku?: string | null;
   colorName: string;
   colorHex?: string;
   size: string;
@@ -21,6 +37,7 @@ type VariantInput = {
   compareAtPrice?: number | null;
   currency?: string;
   stock?: number;
+  isActive?: boolean;
   images: { url: string; isCover: boolean }[];
 };
 
@@ -29,14 +46,15 @@ type ProductFormProps = {
   categories: Category[];
   initial?: {
     id: string;
-    name: string;
     slug: string;
-    description: string;
+    sourceLocale: LocaleCode;
+    status: ProductStatus;
     dressStyle?: string | null;
     categoryId: string;
     basePrice: number;
     discountPercentage: number;
     vatRate: number;
+    translations: Record<LocaleCode, TranslationFields>;
     variants?: VariantInput[];
   };
   labels: Record<string, string>;
@@ -49,18 +67,21 @@ export default function ProductForm({
   labels,
 }: ProductFormProps) {
   const router = useRouter();
+  const { locale, t } = useUiPreferences();
   const { mutate: create, isPending: isCreating } = useCreateProductMutation();
   const { mutate: update, isPending: isUpdating } = useUpdateProductMutation();
   const isPending = isCreating || isUpdating;
 
   const [error, setError] = useState<string | null>(null);
-
   const [productId] = useState(initial?.id ?? crypto.randomUUID());
   const [slugEdited, setSlugEdited] = useState(false);
-
-  const [name, setName] = useState(initial?.name ?? "");
   const [slug, setSlug] = useState(initial?.slug ?? "");
-  const [description, setDescription] = useState(initial?.description ?? "");
+  const [sourceLocale, setSourceLocale] = useState<LocaleCode>(
+    initial?.sourceLocale ?? "fr",
+  );
+  const [status, setStatus] = useState<ProductStatus>(
+    initial?.status ?? ProductStatus.DRAFT,
+  );
   const [dressStyle, setDressStyle] = useState(initial?.dressStyle ?? "");
   const [categoryId, setCategoryId] = useState(
     initial?.categoryId ?? categories[0]?.id ?? "",
@@ -70,6 +91,18 @@ export default function ProductForm({
     initial?.discountPercentage ?? 0,
   );
   const [vatRate, setVatRate] = useState(initial?.vatRate ?? 20);
+  const [translations, setTranslations] = useState<Record<LocaleCode, TranslationFields>>(
+    initial?.translations ?? {
+      fr: { name: "", description: "", specs: {} },
+      en: { name: "", description: "", specs: {} },
+    },
+  );
+  const [pendingCleanupUrls, setPendingCleanupUrls] = useState<string[]>([]);
+  const pendingCleanupRef = useRef<string[]>([]);
+
+  useEffect(() => {
+    pendingCleanupRef.current = pendingCleanupUrls;
+  }, [pendingCleanupUrls]);
 
   const finalPrice = useMemo(() => {
     const pct = Math.max(0, Math.min(100, discountPercentage || 0));
@@ -79,10 +112,9 @@ export default function ProductForm({
   }, [basePrice, discountPercentage, vatRate]);
 
   const [variants, setVariants] = useState<VariantInput[]>(
-    initial?.variants?.map((v) => ({
-      ...v,
-      id: v.id,
-      images: v.images ?? [],
+    initial?.variants?.map((variant) => ({
+      ...variant,
+      images: variant.images ?? [],
     })) ?? [
       {
         id: crypto.randomUUID(),
@@ -90,13 +122,54 @@ export default function ProductForm({
         size: "Unique",
         price: basePrice || 0,
         stock: 0,
+        isActive: true,
         images: [],
       },
     ],
   );
 
   const updateVariant = (id: string, patch: Partial<VariantInput>) => {
-    setVariants((prev) => prev.map((v) => (v.id === id ? { ...v, ...patch } : v)));
+    setVariants((prev) => prev.map((variant) => (variant.id === id ? { ...variant, ...patch } : variant)));
+  };
+
+  const updateTranslation = (
+    targetLocale: LocaleCode,
+    field: keyof TranslationFields,
+    value:
+      | string
+      | Partial<Record<"material" | "care" | "fit" | "pattern", string>>,
+  ) => {
+    setTranslations((prev) => {
+      const next = {
+        ...prev,
+        [targetLocale]: {
+          ...prev[targetLocale],
+          [field]: value,
+        },
+      };
+
+      if (!slugEdited && targetLocale === sourceLocale && field === "name") {
+        const autoSlug = String(value)
+          .toLowerCase()
+          .trim()
+          .replace(/\s+/g, "-")
+          .replace(/[^a-z0-9-_]/g, "");
+        setSlug(autoSlug);
+      }
+
+      return next;
+    });
+  };
+
+  const updateSpec = (
+    targetLocale: LocaleCode,
+    specKey: "material" | "care" | "fit" | "pattern",
+    value: string,
+  ) => {
+    updateTranslation(targetLocale, "specs", {
+      ...translations[targetLocale].specs,
+      [specKey]: value,
+    });
   };
 
   const addVariant = () => {
@@ -108,52 +181,160 @@ export default function ProductForm({
         size: "",
         price: 0,
         stock: 0,
+        isActive: true,
         images: [],
       },
     ]);
   };
 
   const removeVariant = (id: string) => {
-    setVariants((prev) => prev.filter((v) => v.id !== id));
+    setVariants((prev) => prev.filter((variant) => variant.id !== id));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const registerPendingUploads = (urls: string[]) => {
+    if (urls.length === 0) return;
+    setPendingCleanupUrls((prev) => {
+      const next = Array.from(new Set([...prev, ...urls]));
+      pendingCleanupRef.current = next;
+      return next;
+    });
+  };
+
+  const clearPendingUploads = (urls: string[]) => {
+    if (urls.length === 0) return;
+    const urlSet = new Set(urls);
+    setPendingCleanupUrls((prev) => {
+      const next = prev.filter((url) => !urlSet.has(url));
+      pendingCleanupRef.current = next;
+      return next;
+    });
+  };
+
+  const replacePendingUploads = (urls: string[]) => {
+    pendingCleanupRef.current = urls;
+    setPendingCleanupUrls(urls);
+  };
+
+  useEffect(() => {
+    const flushPendingUploads = () => {
+      const urls = pendingCleanupRef.current;
+      if (urls.length === 0) return;
+
+      const body = JSON.stringify({ urls });
+
+      if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
+        const blob = new Blob([body], { type: "application/json" });
+        navigator.sendBeacon("/api/admin/product-assets/cleanup", blob);
+        return;
+      }
+
+      void fetch("/api/admin/product-assets/cleanup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+        keepalive: true,
+      });
+    };
+
+    const handlePageHide = () => {
+      flushPendingUploads();
+    };
+
+    window.addEventListener("pagehide", handlePageHide);
+    window.addEventListener("beforeunload", handlePageHide);
+
+    return () => {
+      window.removeEventListener("pagehide", handlePageHide);
+      window.removeEventListener("beforeunload", handlePageHide);
+    };
+  }, []);
+
+  const handleCancel = async () => {
+    const uploadedImages = pendingCleanupRef.current;
+    if (uploadedImages.length > 0) {
+      try {
+        await deleteAdminProductImagesAction(uploadedImages);
+        replacePendingUploads([]);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to cleanup uploaded images",
+        );
+        return;
+      }
+    }
+
+    router.back();
+  };
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
     if (!categoryId) {
       setError(labels["error.category"]);
       return;
     }
+
+    if (!translations.fr.name || !translations.fr.description) {
+      setError(labels["error.translation.fr"]);
+      return;
+    }
+    if (!translations.en.name || !translations.en.description) {
+      setError(labels["error.translation.en"]);
+      return;
+    }
+
     setError(null);
 
     const payload = {
       id: productId,
-      name,
       slug,
-      description,
+      sourceLocale,
+      status,
       dressStyle: dressStyle || null,
       categoryId,
       basePrice: Number(basePrice),
       discountPercentage: Number(discountPercentage) || 0,
       vatRate: Number(vatRate) || 0,
-      variants: variants.map((v) => ({
-        sku: v.sku ?? null,
-        colorName: v.colorName || "Default",
-        colorHex: v.colorHex ?? null,
-        size: v.size || "Unique",
-        price: Number(v.price) || 0,
-        compareAtPrice: v.compareAtPrice ? Number(v.compareAtPrice) : null,
-        currency: v.currency || "USD",
-        stock: Number(v.stock) || 0,
+      translations: (["fr", "en"] as const).map((targetLocale) => ({
+        locale: targetLocale,
+        name: translations[targetLocale].name,
+        description: translations[targetLocale].description,
+        specs: translations[targetLocale].specs,
+      })),
+      variants: variants.map((variant) => ({
+        colorName: variant.colorName || "Default",
+        colorHex: variant.colorHex ?? null,
+        size: variant.size || "Unique",
+        price: Number(variant.price) || 0,
+        compareAtPrice: variant.compareAtPrice ? Number(variant.compareAtPrice) : null,
+        currency: variant.currency || "USD",
+        stock: Number(variant.stock) || 0,
+        isActive: variant.isActive ?? true,
         images:
-          v.images
+          variant.images
             ?.slice()
             .sort((a, b) => Number(b.isCover) - Number(a.isCover))
-            .map((img) => img.url) ?? [],
+            .map((image) => image.url) ?? [],
+        ...(variant.id ? { id: variant.id } : {}),
       })),
     };
 
+    const submittedImageUrls = payload.variants.flatMap((variant) => variant.images);
     const mutationOptions = {
-      onSuccess: (result: CreateProductResult) => {
+      onSuccess: async (result: CreateProductResult) => {
+        const submittedImageSet = new Set(submittedImageUrls);
+        const leftoverUploads = pendingCleanupRef.current.filter(
+          (url) => !submittedImageSet.has(url),
+        );
+
+        if (leftoverUploads.length > 0) {
+          try {
+            await deleteAdminProductImagesAction(leftoverUploads);
+          } catch (err) {
+            console.error("[admin] Failed to cleanup orphaned uploads after save", err);
+          }
+        }
+
+        replacePendingUploads([]);
         router.push(`/admin/products/${result.id}`);
         router.refresh();
       },
@@ -164,9 +345,10 @@ export default function ProductForm({
 
     if (mode === "create") {
       create(payload, mutationOptions);
-    } else {
-      update({ ...payload, id: initial!.id }, mutationOptions);
+      return;
     }
+
+    update({ ...payload, id: initial!.id }, mutationOptions);
   };
 
   return (
@@ -174,27 +356,35 @@ export default function ProductForm({
       <div className="grid md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground">
-            {labels["field.name"]}
+            {labels["field.sourceLocale"]}
           </label>
-          <input
-            value={name}
-            onChange={(e) => {
-              const nextName = e.target.value;
-              setName(nextName);
-              if (!slugEdited) {
-                const autoSlug = nextName
-                  .toLowerCase()
-                  .trim()
-                  .replace(/\s+/g, "-")
-                  .replace(/[^a-z0-9-_]/g, "");
-                setSlug(autoSlug);
-              }
-            }}
-            required
+          <select
+            value={sourceLocale}
+            onChange={(e) => setSourceLocale(e.target.value as LocaleCode)}
             className="w-full rounded-xl border border-border bg-surface-section px-4 py-3 text-sm text-foreground focus:ring-2 focus:ring-foreground/10 outline-none"
-            placeholder={labels["placeholder.name"]}
-          />
+          >
+            <option value="fr">{labels["locale.fr"]}</option>
+            <option value="en">{labels["locale.en"]}</option>
+          </select>
         </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-foreground">
+            {labels["field.status"]}
+          </label>
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value as ProductStatus)}
+            className="w-full rounded-xl border border-border bg-surface-section px-4 py-3 text-sm text-foreground focus:ring-2 focus:ring-foreground/10 outline-none"
+          >
+            <option value={ProductStatus.DRAFT}>{labels["status.draft"]}</option>
+            <option value={ProductStatus.PUBLISHED}>{labels["status.published"]}</option>
+            <option value={ProductStatus.ARCHIVED}>{labels["status.archived"]}</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground">
             {labels["field.slug"]}
@@ -210,22 +400,7 @@ export default function ProductForm({
             placeholder={labels["placeholder.slug"]}
           />
         </div>
-      </div>
 
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-foreground">
-          {labels["field.description"]}
-        </label>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          required
-          className="w-full rounded-xl border border-border bg-surface-section px-4 py-3 text-sm text-foreground focus:ring-2 focus:ring-foreground/10 outline-none min-h-[120px]"
-          placeholder={labels["placeholder.description"]}
-        />
-      </div>
-
-      <div className="grid md:grid-cols-3 gap-4">
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground">
             {labels["field.category"]}
@@ -235,14 +410,16 @@ export default function ProductForm({
             onChange={(e) => setCategoryId(e.target.value)}
             className="w-full rounded-xl border border-border bg-surface-section px-4 py-3 text-sm text-foreground focus:ring-2 focus:ring-foreground/10 outline-none"
           >
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
               </option>
             ))}
           </select>
         </div>
+      </div>
 
+      <div className="grid md:grid-cols-3 gap-4">
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground">
             {labels["field.basePrice"]}
@@ -273,6 +450,7 @@ export default function ProductForm({
             placeholder="0"
           />
         </div>
+
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground">
             {labels["field.vat"]}
@@ -290,18 +468,25 @@ export default function ProductForm({
         </div>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-4">
+      <div className="grid md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground">
             {labels["field.dressStyle"]}
           </label>
-          <input
+          <select
             value={dressStyle}
             onChange={(e) => setDressStyle(e.target.value)}
             className="w-full rounded-xl border border-border bg-surface-section px-4 py-3 text-sm text-foreground focus:ring-2 focus:ring-foreground/10 outline-none"
-            placeholder={labels["placeholder.dressStyle"]}
-          />
+          >
+            <option value="">{labels["placeholder.dressStyle"]}</option>
+            {DRESS_STYLE_OPTIONS.map((style) => (
+              <option key={style} value={style}>
+                {translateAttribute(style, locale)}
+              </option>
+            ))}
+          </select>
         </div>
+
         <div className="space-y-2">
           <label className="text-sm font-medium text-muted-foreground">
             {labels["field.finalPrice"]}
@@ -311,15 +496,116 @@ export default function ProductForm({
           </div>
           {labels["field.vatHint"] && (
             <p className="text-xs text-muted-foreground">
-              {labels["field.vatHint"]?.replace("{rate}", vatRate.toFixed(1))}
+              {labels["field.vatHint"].replace("{rate}", vatRate.toFixed(1))}
             </p>
           )}
         </div>
       </div>
 
+      <div className="space-y-4">
+        <div>
+          <p className="text-sm font-semibold text-foreground">
+            {labels["section.translations"]}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {labels["section.translations.hint"]}
+          </p>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-4">
+          {(["fr", "en"] as const).map((targetLocale) => (
+            <div
+              key={targetLocale}
+              className="border border-border rounded-2xl p-4 bg-surface-section space-y-3"
+            >
+              <div className="text-sm font-semibold text-foreground">
+                {targetLocale === "fr" ? labels["locale.fr"] : labels["locale.en"]}
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  {targetLocale === "fr"
+                    ? labels["field.name.fr"]
+                    : labels["field.name.en"]}
+                </label>
+                <input
+                  value={translations[targetLocale].name}
+                  onChange={(e) =>
+                    updateTranslation(targetLocale, "name", e.target.value)
+                  }
+                  className="w-full rounded-xl border border-border bg-surface-card px-4 py-3 text-sm text-foreground"
+                  placeholder={
+                    targetLocale === "fr"
+                      ? labels["placeholder.name.fr"]
+                      : labels["placeholder.name.en"]
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  {targetLocale === "fr"
+                    ? labels["field.description.fr"]
+                    : labels["field.description.en"]}
+                </label>
+                <textarea
+                  value={translations[targetLocale].description}
+                  onChange={(e) =>
+                    updateTranslation(targetLocale, "description", e.target.value)
+                  }
+                  className="w-full rounded-xl border border-border bg-surface-card px-4 py-3 text-sm text-foreground min-h-[140px]"
+                  placeholder={
+                    targetLocale === "fr"
+                      ? labels["placeholder.description.fr"]
+                      : labels["placeholder.description.en"]
+                  }
+                />
+              </div>
+
+              <div className="space-y-3">
+                <div className="text-sm font-medium text-foreground">
+                  {t("product.specsTitle")}
+                </div>
+                <div className="grid md:grid-cols-2 gap-3">
+                  <input
+                    value={translations[targetLocale].specs.material ?? ""}
+                    onChange={(e) =>
+                      updateSpec(targetLocale, "material", e.target.value)
+                    }
+                    className="w-full rounded-xl border border-border bg-surface-card px-4 py-3 text-sm text-foreground"
+                    placeholder={t("product.specs.material")}
+                  />
+                  <input
+                    value={translations[targetLocale].specs.care ?? ""}
+                    onChange={(e) =>
+                      updateSpec(targetLocale, "care", e.target.value)
+                    }
+                    className="w-full rounded-xl border border-border bg-surface-card px-4 py-3 text-sm text-foreground"
+                    placeholder={t("product.specs.care")}
+                  />
+                  <input
+                    value={translations[targetLocale].specs.fit ?? ""}
+                    onChange={(e) => updateSpec(targetLocale, "fit", e.target.value)}
+                    className="w-full rounded-xl border border-border bg-surface-card px-4 py-3 text-sm text-foreground"
+                    placeholder={t("product.specs.fit")}
+                  />
+                  <input
+                    value={translations[targetLocale].specs.pattern ?? ""}
+                    onChange={(e) =>
+                      updateSpec(targetLocale, "pattern", e.target.value)
+                    }
+                    className="w-full rounded-xl border border-border bg-surface-card px-4 py-3 text-sm text-foreground"
+                    placeholder={t("product.specs.pattern")}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {error && <p className="text-sm text-destructive">{error}</p>}
 
-      {/* Variants */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div>
@@ -339,14 +625,14 @@ export default function ProductForm({
         </div>
 
         <div className="space-y-4">
-          {variants.map((variant, idx) => (
+          {variants.map((variant, index) => (
             <div
               key={variant.id}
               className="border border-border rounded-2xl p-4 bg-surface-section space-y-3 shadow-sm"
             >
               <div className="flex items-center justify-between">
                 <div className="text-sm font-semibold text-foreground">
-                  Variante {idx + 1}
+                  Variante {index + 1}
                 </div>
                 {variants.length > 1 && (
                   <Button
@@ -369,18 +655,21 @@ export default function ProductForm({
                   className="w-full rounded-xl border border-border bg-surface-card px-4 py-3 text-sm text-foreground"
                   placeholder="Couleur (ex: Navy)"
                 />
-                <input
+                <select
                   value={variant.size}
                   onChange={(e) => updateVariant(variant.id, { size: e.target.value })}
                   className="w-full rounded-xl border border-border bg-surface-card px-4 py-3 text-sm text-foreground"
-                  placeholder="Taille (ex: M)"
-                />
-                <input
-                  value={variant.sku ?? ""}
-                  onChange={(e) => updateVariant(variant.id, { sku: e.target.value })}
-                  className="w-full rounded-xl border border-border bg-surface-card px-4 py-3 text-sm text-foreground"
-                  placeholder="SKU (optionnel)"
-                />
+                >
+                  <option value="">Choisir une taille</option>
+                  {SIZE_OPTIONS.map((size) => (
+                    <option key={size} value={size}>
+                      {translateAttribute(size, locale)}
+                    </option>
+                  ))}
+                </select>
+                <div className="w-full rounded-xl border border-border bg-surface-card px-4 py-3 text-sm text-muted-foreground flex items-center">
+                  {variant.sku ?? "SKU généré automatiquement"}
+                </div>
               </div>
 
               <div className="grid md:grid-cols-4 gap-3">
@@ -405,18 +694,21 @@ export default function ProductForm({
                     })
                   }
                   className="w-full rounded-xl border border-border bg-surface-card px-4 py-3 text-sm text-foreground"
-                  placeholder="Prix barré (optionnel)"
+                  placeholder="Prix barré"
                 />
-                <input
-                  type="number"
-                  step="1"
-                  value={variant.stock ?? 0}
+                <select
+                  value={variant.currency ?? "USD"}
                   onChange={(e) =>
-                    updateVariant(variant.id, { stock: Number(e.target.value) })
+                    updateVariant(variant.id, { currency: e.target.value })
                   }
                   className="w-full rounded-xl border border-border bg-surface-card px-4 py-3 text-sm text-foreground"
-                  placeholder="Stock"
-                />
+                >
+                  {CURRENCY_OPTIONS.map((currency) => (
+                    <option key={currency} value={currency}>
+                      {currency}
+                    </option>
+                  ))}
+                </select>
                 <input
                   value={variant.colorHex ?? ""}
                   onChange={(e) =>
@@ -427,10 +719,35 @@ export default function ProductForm({
                 />
               </div>
 
+              <input
+                type="number"
+                step="1"
+                min="0"
+                value={variant.stock ?? 0}
+                onChange={(e) =>
+                  updateVariant(variant.id, { stock: Number(e.target.value) })
+                }
+                className="w-full rounded-xl border border-border bg-surface-card px-4 py-3 text-sm text-foreground"
+                placeholder="Stock"
+              />
+
+              <select
+                value={variant.isActive === false ? "inactive" : "active"}
+                onChange={(e) =>
+                  updateVariant(variant.id, { isActive: e.target.value === "active" })
+                }
+                className="w-full rounded-xl border border-border bg-surface-card px-4 py-3 text-sm text-foreground"
+              >
+                <option value="active">{t("admin.product.variant.active")}</option>
+                <option value="inactive">{t("admin.product.variant.inactive")}</option>
+              </select>
+
               <ProductImageUploader
                 productId={productId}
                 initialImages={variant.images}
-                onPersist={async (imgs) => updateVariant(variant.id, { images: imgs })}
+                onPersist={async (images) => updateVariant(variant.id, { images })}
+                onUploadComplete={registerPendingUploads}
+                onDeleteComplete={clearPendingUploads}
                 labels={{
                   drop: "Glissez-déposez ou cliquez",
                   hint: "JPG, PNG, WEBP · max 5MB · compression auto",
@@ -450,7 +767,7 @@ export default function ProductForm({
           type="button"
           variant="outline"
           className="rounded-full"
-          onClick={() => router.back()}
+          onClick={() => void handleCancel()}
           disabled={isPending}
         >
           {labels["action.cancel"]}

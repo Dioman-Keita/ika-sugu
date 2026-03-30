@@ -3,7 +3,7 @@
 import db from "@/lib/db";
 import { Product } from "@/types/product.types";
 import { Review } from "@/types/review.types";
-import { Prisma, ReviewStatus } from "@/generated/prisma/client";
+import { Prisma, ProductStatus, ReviewStatus } from "@/generated/prisma/client";
 import { Locale } from "@/lib/i18n/messages";
 
 type ProductSpecsJson = Partial<Record<"material" | "care" | "fit" | "pattern", string>>;
@@ -160,6 +160,7 @@ const toUiReview = (
 
 export const getHomeCatalogAction = async (locale: Locale = "en") => {
   const newArrivalsRaw = await db.product.findMany({
+    where: { status: ProductStatus.PUBLISHED },
     take: 4,
     orderBy: { createdAt: "desc" },
     include: {
@@ -189,7 +190,10 @@ export const getHomeCatalogAction = async (locale: Locale = "en") => {
 
   const topSellingRaw = topSellingIds.length
     ? await db.product.findMany({
-        where: { id: { in: topSellingIds.map((item) => item.productId) } },
+        where: {
+          id: { in: topSellingIds.map((item) => item.productId) },
+          status: ProductStatus.PUBLISHED,
+        },
         include: {
           translations: { where: { locale } },
           variants: {
@@ -257,6 +261,7 @@ export const getShopProductsAction = async ({
   };
 
   const where: Prisma.ProductWhereInput = {
+    status: ProductStatus.PUBLISHED,
     ...(category ? { category: { slug: category } } : {}),
     ...(style ? { dressStyle: style } : {}),
     variants: { some: variantWhere },
@@ -391,8 +396,8 @@ export const getShopProductsAction = async ({
 };
 
 export const getProductPageAction = async (productId: string, locale: Locale = "en") => {
-  const product = await db.product.findUnique({
-    where: { id: productId },
+  const product = await db.product.findFirst({
+    where: { id: productId, status: ProductStatus.PUBLISHED },
     include: {
       translations: { where: { locale } },
       variants: {
@@ -413,6 +418,7 @@ export const getProductPageAction = async (productId: string, locale: Locale = "
     where: {
       categoryId: product.categoryId,
       id: { not: product.id },
+      status: ProductStatus.PUBLISHED,
     },
     take: 4,
     orderBy: { createdAt: "desc" },

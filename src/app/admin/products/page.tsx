@@ -2,14 +2,16 @@ import Link from "next/link";
 import { Package } from "lucide-react";
 import { getAdminProducts } from "@/app/actions/admin";
 import AdminPagination from "@/components/admin/AdminPagination";
+import StatusBadge from "@/components/admin/StatusBadge";
 import { cookies } from "next/headers";
 import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
 import { Locale, parseLocale } from "@/lib/i18n/locale";
 import { messages } from "@/lib/i18n/messages";
 import { Button } from "@/components/ui/button";
+import { ProductStatus } from "@/generated/prisma/client";
 
 type Props = {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; status?: string }>;
 };
 
 export default async function AdminProductsPage({ searchParams }: Props) {
@@ -19,7 +21,23 @@ export default async function AdminProductsPage({ searchParams }: Props) {
 
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
-  const { products, total, totalPages, currentPage } = await getAdminProducts({ page });
+  const rawStatus = params.status;
+  const status =
+    rawStatus === ProductStatus.DRAFT ||
+    rawStatus === ProductStatus.PUBLISHED ||
+    rawStatus === ProductStatus.ARCHIVED
+      ? rawStatus
+      : undefined;
+  const tabs = [
+    { label: m["admin.products.tabs.all"], value: "ALL" },
+    { label: m["admin.product.status.draft"], value: ProductStatus.DRAFT },
+    { label: m["admin.product.status.published"], value: ProductStatus.PUBLISHED },
+    { label: m["admin.product.status.archived"], value: ProductStatus.ARCHIVED },
+  ] as const;
+  const { products, total, totalPages, currentPage } = await getAdminProducts({
+    page,
+    status,
+  });
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -40,6 +58,31 @@ export default async function AdminProductsPage({ searchParams }: Props) {
       </div>
 
       <div className="p-6">
+        <div className="flex items-center gap-2 mb-4 overflow-x-auto">
+          {tabs.map(({ label, value }) => {
+            const isActive = (value === "ALL" && !status) || value === (status ?? "ALL");
+            const href =
+              value === "ALL"
+                ? "/admin/products"
+                : `/admin/products?status=${value}`;
+
+            return (
+              <Link
+                key={value}
+                href={href}
+                className={[
+                  "px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors",
+                  isActive
+                    ? "bg-foreground text-background"
+                    : "bg-surface-section text-muted-foreground hover:text-foreground",
+                ].join(" ")}
+              >
+                {label}
+              </Link>
+            );
+          })}
+        </div>
+
         <div className="border border-border rounded-2xl bg-surface-card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -50,6 +93,9 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                   </th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground">
                     {m["admin.products.table.category"]}
+                  </th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground">
+                    {m["admin.products.table.status"]}
                   </th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-muted-foreground">
                     {m["admin.products.table.price"]}
@@ -75,7 +121,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                 {products.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={8}
+                      colSpan={9}
                       className="px-5 py-10 text-center text-muted-foreground"
                     >
                       {m["admin.products.noProducts"]}
@@ -101,6 +147,9 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                       </td>
                       <td className="px-5 py-3 text-muted-foreground">
                         {product.category}
+                      </td>
+                      <td className="px-5 py-3">
+                        <StatusBadge status={product.status} type="product" />
                       </td>
                       <td className="px-5 py-3 text-right font-semibold text-foreground">
                         {new Intl.NumberFormat(locale, {
@@ -160,7 +209,9 @@ export default async function AdminProductsPage({ searchParams }: Props) {
               <AdminPagination
                 currentPage={currentPage}
                 totalPages={totalPages}
-                baseUrl="/admin/products"
+                baseUrl={
+                  status ? `/admin/products?status=${status}` : "/admin/products"
+                }
               />
             </div>
           )}

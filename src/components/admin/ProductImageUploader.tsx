@@ -4,6 +4,7 @@ import { useCallback, useId, useState } from "react";
 import { Upload, X, Star } from "lucide-react";
 import Image from "next/image";
 import { uploadImage, UploadError } from "@/lib/storage/uploadImage";
+import { deleteAdminProductImagesAction } from "@/app/actions/admin";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +17,8 @@ type Props = {
   productId: string;
   initialImages?: ImageItem[];
   onPersist?: (images: ImageItem[]) => Promise<void>;
+  onUploadComplete?: (urls: string[]) => void;
+  onDeleteComplete?: (urls: string[]) => void;
   max?: number;
   labels: {
     drop: string;
@@ -33,6 +36,8 @@ export default function ProductImageUploader({
   productId,
   initialImages = [],
   onPersist,
+  onUploadComplete,
+  onDeleteComplete,
   labels,
   max = MAX_FILES,
 }: Props) {
@@ -67,6 +72,7 @@ export default function ProductImageUploader({
             ? [{ ...uploaded[0], isCover: true }, ...uploaded.slice(1), ...images]
             : [...images, ...uploaded];
         await emitChange(next);
+        onUploadComplete?.(uploaded.map((image) => image.url));
       } catch (err) {
         const message = err instanceof UploadError ? err.message : "Upload failed";
         setError(message);
@@ -96,6 +102,12 @@ export default function ProductImageUploader({
       next[0].isCover = true;
     }
     await emitChange([...next]);
+    try {
+      await deleteAdminProductImagesAction([url]);
+      onDeleteComplete?.([url]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Image delete failed");
+    }
   };
 
   const setCover = async (url: string) => {
@@ -134,6 +146,9 @@ export default function ProductImageUploader({
           </div>
           <p className="text-sm font-medium text-foreground">{labels.drop}</p>
           <p className="text-xs text-muted-foreground">{labels.hint}</p>
+          <p className="text-xs text-muted-foreground">
+            {images.length}/{max}
+          </p>
           {isUploading && <p className="text-xs text-primary">{labels.uploading}</p>}
         </label>
       </div>
