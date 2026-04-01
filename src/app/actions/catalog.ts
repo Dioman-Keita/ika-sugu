@@ -47,10 +47,15 @@ const isTransientDbError = (err: unknown): boolean => {
   const maybe = err as { code?: unknown; message?: unknown };
   const code = typeof maybe.code === "string" ? maybe.code : "";
   const message = typeof maybe.message === "string" ? maybe.message : "";
+  const normalizedMessage = message.toLowerCase();
   return (
     ["P1001", "P1008", "P1017", "P2037"].includes(code) ||
-    message.toLowerCase().includes("connection timeout") ||
-    message.toLowerCase().includes("can't reach database server")
+    normalizedMessage.includes("connection timeout") ||
+    normalizedMessage.includes("can't reach database server") ||
+    normalizedMessage.includes("connection terminated unexpectedly") ||
+    normalizedMessage.includes("server has closed the connection") ||
+    normalizedMessage.includes("terminating connection") ||
+    normalizedMessage.includes("connection ended unexpectedly")
   );
 };
 
@@ -63,6 +68,15 @@ const withDbRetry = async <T>(fn: () => Promise<T>): Promise<T> => {
     if (!isTransientDbError(err)) throw err;
     await sleep(250);
     return await fn();
+  }
+};
+
+const withDbFallback = async <T>(fn: () => Promise<T>, fallback: T): Promise<T> => {
+  try {
+    return await withDbRetry(fn);
+  } catch (err) {
+    if (!isTransientDbError(err)) throw err;
+    return fallback;
   }
 };
 
@@ -159,41 +173,12 @@ const toUiReview = (
 });
 
 export const getHomeCatalogAction = async (locale: Locale = "en") => {
-  const newArrivalsRaw = await db.product.findMany({
-    where: { status: ProductStatus.PUBLISHED },
-    take: 4,
-    orderBy: { createdAt: "desc" },
-    include: {
-      translations: { where: { locale } },
-      variants: {
-        where: { isActive: true },
-        orderBy: [{ colorName: "asc" }, { size: "asc" }],
-      },
-      reviews: {
-        where: { status: ReviewStatus.APPROVED },
-        select: { rating: true },
-      },
-    },
-  });
-  const topSellingIds = await db.orderItem.groupBy({
-    by: ["productId"],
-    _sum: { quantity: true },
-    orderBy: { _sum: { quantity: "desc" } },
-    take: 4,
-  });
-  const homeReviewsRaw = await db.review.findMany({
-    where: { status: ReviewStatus.APPROVED },
-    orderBy: { createdAt: "desc" },
-    take: 6,
-    include: { user: { select: { name: true } } },
-  });
-
-  const topSellingRaw = topSellingIds.length
-    ? await db.product.findMany({
-        where: {
-          id: { in: topSellingIds.map((item) => item.productId) },
-          status: ProductStatus.PUBLISHED,
-        },
+  const newArrivalsRaw = await withDbFallback(
+    () =>
+      db.product.findMany({
+        where: { status: ProductStatus.PUBLISHED },
+        take: 4,
+        orderBy: { createdAt: "desc" },
         include: {
           translations: { where: { locale } },
           variants: {
@@ -205,7 +190,54 @@ export const getHomeCatalogAction = async (locale: Locale = "en") => {
             select: { rating: true },
           },
         },
-      })
+      }),
+    [],
+  );
+
+  const topSellingIds = await withDbFallback(
+    () =>
+      db.orderItem.groupBy({
+        by: ["productId"],
+        _sum: { quantity: true },
+        orderBy: { _sum: { quantity: "desc" } },
+        take: 4,
+      }),
+    [],
+  );
+
+  const homeReviewsRaw = await withDbFallback(
+    () =>
+      db.review.findMany({
+        where: { status: ReviewStatus.APPROVED },
+        orderBy: { createdAt: "desc" },
+        take: 6,
+        include: { user: { select: { name: true } } },
+      }),
+    [],
+  );
+
+  const topSellingRaw = topSellingIds.length
+    ? await withDbFallback(
+        () =>
+          db.product.findMany({
+            where: {
+              id: { in: topSellingIds.map((item) => item.productId) },
+              status: ProductStatus.PUBLISHED,
+            },
+            include: {
+              translations: { where: { locale } },
+              variants: {
+                where: { isActive: true },
+                orderBy: [{ colorName: "asc" }, { size: "asc" }],
+              },
+              reviews: {
+                where: { status: ReviewStatus.APPROVED },
+                select: { rating: true },
+              },
+            },
+          }),
+        [],
+      )
     : [];
 
   const topSellingMap = new Map(topSellingRaw.map((product) => [product.id, product]));

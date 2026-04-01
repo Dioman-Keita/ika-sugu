@@ -36,7 +36,9 @@ export async function POST(request: Request) {
   const rawBody = await request.text();
   const payload = parseCleanupPayload(rawBody);
   const urls = Array.isArray(payload.urls)
-    ? payload.urls.filter((value): value is string => typeof value === "string" && value.length > 0)
+    ? payload.urls.filter(
+        (value): value is string => typeof value === "string" && value.length > 0,
+      )
     : [];
 
   await deleteStorageFiles(urls);

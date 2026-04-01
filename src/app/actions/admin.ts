@@ -11,6 +11,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { deleteStorageFiles } from "@/lib/storage/deleteImages";
+import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import {
   CURRENCY_OPTIONS,
   DRESS_STYLE_OPTIONS,
@@ -256,7 +257,11 @@ const normalizeProductInput = (data: UpsertProductInput) => {
   if (!Number.isFinite(basePrice) || basePrice < 0) {
     throw new Error("Base price must be a valid positive number");
   }
-  if (!Number.isFinite(discountPercentage) || discountPercentage < 0 || discountPercentage > 100) {
+  if (
+    !Number.isFinite(discountPercentage) ||
+    discountPercentage < 0 ||
+    discountPercentage > 100
+  ) {
     throw new Error("Discount percentage must be between 0 and 100");
   }
   if (!Number.isFinite(vatRate) || vatRate < 0 || vatRate > 100) {
@@ -308,7 +313,9 @@ const normalizeProductInput = (data: UpsertProductInput) => {
   const variants = (data.variants ?? []).map((variant, index) => {
     const colorName = String(variant.colorName ?? "").trim();
     const size = String(variant.size ?? "").trim();
-    const currency = String(variant.currency ?? "USD").trim().toUpperCase();
+    const currency = String(variant.currency ?? "USD")
+      .trim()
+      .toUpperCase();
     const price = Number(variant.price);
     const stock = Number(variant.stock ?? 0);
     const compareAtPrice =
@@ -320,7 +327,9 @@ const normalizeProductInput = (data: UpsertProductInput) => {
     if (!colorName) throw new Error(`Variant ${index + 1}: color is required`);
     if (!size) throw new Error(`Variant ${index + 1}: size is required`);
     if (!isSizeOption(size)) {
-      throw new Error(`Variant ${index + 1}: unsupported size. Allowed values: ${SIZE_OPTIONS.join(", ")}`);
+      throw new Error(
+        `Variant ${index + 1}: unsupported size. Allowed values: ${SIZE_OPTIONS.join(", ")}`,
+      );
     }
     if (!isCurrencyOption(currency)) {
       throw new Error(
@@ -333,8 +342,13 @@ const normalizeProductInput = (data: UpsertProductInput) => {
     if (!Number.isFinite(stock) || stock < 0) {
       throw new Error(`Variant ${index + 1}: stock must be zero or greater`);
     }
-    if (compareAtPrice !== null && (!Number.isFinite(compareAtPrice) || compareAtPrice < price)) {
-      throw new Error(`Variant ${index + 1}: compare-at price must be greater than or equal to price`);
+    if (
+      compareAtPrice !== null &&
+      (!Number.isFinite(compareAtPrice) || compareAtPrice < price)
+    ) {
+      throw new Error(
+        `Variant ${index + 1}: compare-at price must be greater than or equal to price`,
+      );
     }
 
     return {
@@ -412,6 +426,42 @@ async function generateUniqueSku(
     suffix += 1;
     candidate = `${base}-${suffix}`;
   }
+}
+
+export async function uploadAdminProductImageAction(formData: FormData) {
+  await assertAdmin();
+
+  const file = formData.get("file") as File;
+  const productId = formData.get("productId") as string;
+  const bucket = process.env.NEXT_PUBLIC_SUPABASE_BUCKET;
+
+  if (!file || !productId || !bucket) {
+    throw new Error("Missing required upload parameters");
+  }
+
+  const supabase = getSupabaseServiceClient();
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  const safeName = file.name.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9.\-_]/g, "");
+  const fileName = `${crypto.randomUUID()}-${safeName}`;
+  const path = `${productId}/${fileName}`;
+
+  const { error } = await supabase.storage.from(bucket).upload(path, buffer, {
+    contentType: file.type,
+    cacheControl: "3600",
+    upsert: false,
+  });
+
+  if (error) {
+    throw new Error(`Upload failed: ${error.message}`);
+  }
+
+  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+  if (!data?.publicUrl) {
+    throw new Error("Unable to get public URL");
+  }
+
+  return { url: data.publicUrl };
 }
 
 export async function deleteAdminProductImagesAction(publicUrls: string[]) {
@@ -566,7 +616,9 @@ export async function updateAdminProduct(data: UpsertProductInput & { id: string
       .map((v) => v.id);
 
     for (const existingVariant of existingVariants) {
-      const incomingVariant = incoming.find((variant) => variant.id === existingVariant.id);
+      const incomingVariant = incoming.find(
+        (variant) => variant.id === existingVariant.id,
+      );
       const nextImages = new Set(incomingVariant?.images ?? []);
       for (const existingImage of existingVariant.images) {
         if (!nextImages.has(existingImage)) {
@@ -650,7 +702,9 @@ export async function updateAdminProduct(data: UpsertProductInput & { id: string
         update: {
           name: translation.name,
           description: translation.description,
-          ...(translation.specs ? { specs: translation.specs } : { specs: Prisma.JsonNull }),
+          ...(translation.specs
+            ? { specs: translation.specs }
+            : { specs: Prisma.JsonNull }),
         },
         create: {
           productId: data.id,

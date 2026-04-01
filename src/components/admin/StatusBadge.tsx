@@ -20,8 +20,7 @@ const reviewStatusStyles: Record<string, string> = {
 const productStatusStyles: Record<string, string> = {
   [ProductStatus.DRAFT]:
     "bg-slate-500/10 text-slate-600 border border-slate-500/20 dark:text-slate-300",
-  [ProductStatus.PUBLISHED]:
-    "bg-green-500/10 text-green-600 border border-green-500/20",
+  [ProductStatus.PUBLISHED]: "bg-green-500/10 text-green-600 border border-green-500/20",
   [ProductStatus.ARCHIVED]:
     "bg-zinc-500/10 text-zinc-600 border border-zinc-500/20 dark:text-zinc-300",
 };

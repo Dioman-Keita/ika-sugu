@@ -6,6 +6,7 @@ export type Messages = Record<string, string>;
 export const messages: Record<Locale, Messages> = {
   en: {
     "common.close": "Close",
+    "common.remove": "Remove",
     "topBanner.text": "Sign up and get 20% off to your first order.",
     "topBanner.cta": "Sign Up Now",
 
@@ -123,6 +124,7 @@ export const messages: Record<Locale, Messages> = {
     "product.addToCart": "Add to Cart",
     "product.addingToCart": "Adding",
     "product.inStock": "{count} in stock",
+    "product.sku": "SKU",
     "product.noProducts": "No products available right now.",
     "product.related": "You might also like",
     "product.variantOutOfStock": "This variant is currently out of stock.",
@@ -224,15 +226,25 @@ export const messages: Record<Locale, Messages> = {
     "attr.blue": "Blue",
     "attr.gray": "Gray",
     "attr.brown": "Brown",
+    "attr.green": "Green",
+    "attr.red": "Red",
+    "attr.yellow": "Yellow",
+    "attr.orange": "Orange",
+    "attr.cyan": "Cyan",
+    "attr.purple": "Purple",
+    "attr.pink": "Pink",
     "attr.casual": "Casual",
     "attr.formal": "Formal",
     "attr.party": "Party",
     "attr.gym": "Gym",
+    "attr.street": "Streetwear",
+    "attr.business": "Business",
     "attr.xx-small": "XX-Small",
     "attr.x-small": "X-Small",
     "attr.xx-large": "XX-Large",
     "attr.3x-large": "3X-Large",
     "attr.4x-large": "4X-Large",
+    "attr.unique": "Standard",
 
     "footer.tagline":
       "We have clothes that suits your style and which you're proud to wear. From women to men.",
@@ -383,7 +395,11 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.form.title.new": "Create a product",
     "admin.product.form.subtitle": "Administration · Products",
     "admin.product.form.slug": "Slug",
+    "admin.product.form.slug.hint":
+      "The slug is generated from the source-locale name and remains editable.",
     "admin.product.form.sourceLocale": "Source locale",
+    "admin.product.form.sourceLocale.hint":
+      "The source locale is the product's reference language. It drives the main name, the main description, and automatic slug generation.",
     "admin.product.form.status": "Status",
     "admin.product.form.nameFr": "French name",
     "admin.product.form.nameEn": "English name",
@@ -392,21 +408,69 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.form.translations": "Translations",
     "admin.product.form.translations.hint":
       "Both French and English are required. The source locale defines the base product content.",
+    "admin.product.form.variants": "Variants",
+    "admin.product.form.variants.hint":
+      "Colors, sizes, pricing, stock, and variant-specific images.",
+    "admin.product.form.variantLabel": "Variant",
+    "admin.product.form.variant.colorLabel": "Color",
+    "admin.product.form.variant.colorHint": "Pick from the preset palette.",
+    "admin.product.form.variant.sizeLabel": "Size",
+    "admin.product.form.variant.sizeHint":
+      "Choose the closest matching size or leave as Unique.",
+    "admin.product.form.variant.stockLabel": "Stock",
+    "admin.product.form.variant.stockHint":
+      "Available units for this variant; keep it up to date with your inventory.",
+    "admin.product.form.variant.activeLabel": "Status",
+    "admin.product.form.variant.activeHint":
+      "Active variants show up for customers; mark Inactive to hide without deleting.",
+    "admin.product.form.variant.skuLabel": "SKU",
+    "admin.product.form.variant.skuHint":
+      "Generated from the product slug, color, and size. It stays stable after creation.",
+    "admin.product.form.variant.skuFallback": "Generated automatically",
+    "admin.product.form.variant.priceLabel": "Price",
+    "admin.product.form.variant.compareAtPriceLabel": "Compare-at price",
+    "admin.product.form.variant.currencyLabel": "Currency",
+    "admin.product.form.variant.mediaLabel": "Images",
+    "admin.product.form.variant.help":
+      "Color and size identify each variant; use Standard and Unique size for single-option products.",
+    "currency.usd": "US Dollar (USD)",
+    "currency.eur": "Euro (EUR)",
+    "currency.xof": "West African CFA franc (XOF)",
+    "admin.product.form.pricing": "Pricing",
+    "admin.product.form.pricing.hint":
+      "Define the commercial settings shared by the whole product page before variant-level pricing.",
     "admin.product.form.category": "Category",
     "admin.product.form.basePrice": "Base price",
+    "admin.product.form.basePrice.hint":
+      "Reference catalog price before discount. Decimal values are accepted.",
     "admin.product.form.discount": "Discount (%)",
+    "admin.product.form.discount.hint":
+      "Optional percentage applied to the base price before VAT.",
     "admin.product.form.vat": "VAT (%)",
+    "admin.product.form.vat.inputHint":
+      "Applicable tax rate for this product. Decimal values are accepted.",
     "admin.product.form.dressStyle": "Dress style",
+    "admin.product.form.dressStyle.hint":
+      "Used for merchandising, storefront filters, and style collections.",
     "admin.product.form.finalPrice": "Final price (incl. VAT)",
+    "admin.product.form.finalPrice.hint":
+      "Calculated automatically from the base price, discount, and VAT.",
     "admin.product.form.vatHint": "Includes VAT at {rate}%",
     "admin.product.form.placeholder.slug": "summer-linen-shirt",
     "admin.product.form.placeholder.name.fr": "Chemise en lin d'été",
     "admin.product.form.placeholder.name.en": "Summer linen shirt",
     "admin.product.form.placeholder.description.fr":
-      "Description courte du produit en français...",
+      "Short product description in French...",
     "admin.product.form.placeholder.description.en":
       "Short product description in English...",
     "admin.product.form.placeholder.dressStyle": "casual, street, business...",
+    "admin.product.form.placeholder.variant.color": "Color (e.g. Navy)",
+    "admin.product.form.placeholder.variant.size": "Choose a size",
+    "admin.product.form.placeholder.variant.price": "Price incl. VAT",
+    "admin.product.form.placeholder.variant.compareAtPrice": "Compare-at price",
+    "admin.product.form.placeholder.variant.colorHex": "Color code (hex)",
+    "admin.product.form.placeholder.variant.colorPalette": "Choose a preset color",
+    "admin.product.form.placeholder.variant.stock": "Stock",
     "admin.product.form.error.category": "Choose a category",
     "admin.product.form.error.translation.fr":
       "French translation requires both name and description.",
@@ -424,9 +488,17 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.form.action.save": "Save changes",
     "admin.product.form.action.cancel": "Cancel",
     "admin.product.form.action.saving": "Saving...",
+    "admin.product.form.action.regenerateSlug": "Regenerate",
+    "admin.product.form.action.addVariant": "Add variant",
+    "admin.product.form.uploader.drop": "Drag and drop or click",
+    "admin.product.form.uploader.hint": "JPG, PNG, WEBP · max 5MB · auto compression",
+    "admin.product.form.uploader.uploading": "Uploading...",
+    "admin.product.form.uploader.cover": "Cover",
+    "admin.product.form.uploader.deleteTitle": "Remove",
+    "admin.product.form.uploader.setCoverTitle": "Set as cover",
 
     "notFound.title": "Page not found",
-    "notFound.subtitle": "Oops! The page you’re looking for doesn’t exist or has moved.",
+    "notFound.subtitle": "Oops! The page you're looking for doesn't exist or has moved.",
     "notFound.home": "Back home",
     "notFound.shop": "Continue shopping",
 
@@ -483,6 +555,7 @@ export const messages: Record<Locale, Messages> = {
   },
   fr: {
     "common.close": "Fermer",
+    "common.remove": "Supprimer",
     "topBanner.text":
       "Inscrivez-vous et obtenez 20% de réduction sur votre première commande.",
     "topBanner.cta": "S'inscrire",
@@ -604,6 +677,7 @@ export const messages: Record<Locale, Messages> = {
     "product.addToCart": "Ajouter au panier",
     "product.addingToCart": "Ajout en cours",
     "product.inStock": "{count} en stock",
+    "product.sku": "SKU",
     "product.noProducts": "Aucun produit disponible pour le moment.",
     "product.related": "Vous pourriez aussi aimer",
     "product.variantOutOfStock": "Cette variante est actuellement en rupture de stock.",
@@ -631,11 +705,11 @@ export const messages: Record<Locale, Messages> = {
     "product.reviews.dialog.loginCta": "Se connecter",
     "product.reviews.dialog.cancel": "Annuler",
     "product.reviews.dialog.submit": "Envoyer l'avis",
-    "product.reviews.dialog.submitting": "Envoi…",
+    "product.reviews.dialog.submitting": "Envoi...",
     "product.reviews.form.rating": "Votre note",
     "product.reviews.form.comment": "Votre avis",
     "product.reviews.form.commentPlaceholder":
-      "Dites-nous ce que vous avez aimé (ou pas)…",
+      "Dites-nous ce que vous avez aimé (ou pas)...",
     "product.reviews.form.minChars": "Minimum 10 caractères",
     "product.reviews.error.unauthorized": "Connectez-vous pour envoyer un avis.",
     "product.reviews.error.duplicate": "Vous avez déjà laissé un avis sur ce produit.",
@@ -706,15 +780,25 @@ export const messages: Record<Locale, Messages> = {
     "attr.blue": "Bleu",
     "attr.gray": "Gris",
     "attr.brown": "Marron",
+    "attr.green": "Vert",
+    "attr.red": "Rouge",
+    "attr.yellow": "Jaune",
+    "attr.orange": "Orange",
+    "attr.cyan": "Cyan",
+    "attr.purple": "Violet",
+    "attr.pink": "Rose",
     "attr.casual": "Décontracté",
     "attr.formal": "Formel",
     "attr.party": "Fête",
     "attr.gym": "Sport",
+    "attr.street": "Streetwear",
+    "attr.business": "Business",
     "attr.xx-small": "XX-Petit",
     "attr.x-small": "Très petit",
     "attr.xx-large": "Très très grand",
     "attr.3x-large": "3X-Grand",
     "attr.4x-large": "4X-Grand",
+    "attr.unique": "Taille unique",
 
     "footer.tagline":
       "Nous avons des vêtements qui correspondent à votre style et que vous serez fier de porter. Pour femmes et hommes.",
@@ -865,7 +949,11 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.form.title.new": "Créer un produit",
     "admin.product.form.subtitle": "Administration · Produits",
     "admin.product.form.slug": "Slug",
+    "admin.product.form.slug.hint":
+      "Le slug est g\u00e9n\u00e9r\u00e9 depuis le nom de la langue source, puis reste modifiable.",
     "admin.product.form.sourceLocale": "Langue source",
+    "admin.product.form.sourceLocale.hint":
+      "La langue source est la langue de r\u00e9f\u00e9rence du produit. Elle pilote le nom principal, la description principale et la g\u00e9n\u00e9ration automatique du slug.",
     "admin.product.form.status": "Statut",
     "admin.product.form.nameFr": "Nom français",
     "admin.product.form.nameEn": "Nom anglais",
@@ -875,21 +963,70 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.form.translations.hint":
       "Le français et l'anglais sont obligatoires. La langue source définit le contenu principal du produit.",
     "admin.product.form.category": "Catégorie",
+    "admin.product.form.variants": "Variantes",
+    "admin.product.form.variants.hint":
+      "Couleurs, tailles, prix, stock et images spécifiques.",
+    "admin.product.form.variantLabel": "Variante",
+    "admin.product.form.variant.colorLabel": "Couleur",
+    "admin.product.form.variant.colorHint": "Choisissez une teinte prédéfinie.",
+    "admin.product.form.variant.sizeLabel": "Taille",
+    "admin.product.form.variant.sizeHint":
+      "Choisissez la taille appropriée ou laissez Taille unique.",
+    "admin.product.form.variant.stockLabel": "Stock",
+    "admin.product.form.variant.stockHint":
+      "Nombre d’unités disponibles pour cette variante ; mettez-le à jour en fonction de votre stock.",
+    "admin.product.form.variant.activeLabel": "Statut",
+    "admin.product.form.variant.activeHint":
+      "Une variante active est proposée aux clients ; passez-la en inactif pour la cacher sans la supprimer.",
+    "admin.product.form.variant.skuLabel": "SKU",
+    "admin.product.form.variant.skuHint":
+      "Généré à partir du slug produit, de la couleur et de la taille. Il reste stable après création.",
+    "admin.product.form.variant.skuFallback": "Généré automatiquement",
+    "admin.product.form.variant.priceLabel": "Prix",
+    "admin.product.form.variant.compareAtPriceLabel": "Prix barré",
+    "admin.product.form.variant.currencyLabel": "Devise",
+    "admin.product.form.variant.mediaLabel": "Images",
+    "admin.product.form.variant.help":
+      "Couleur et taille identifient la variante ; utilisez Standard et Taille unique si la fiche n'a qu'une seule option.",
+    "currency.usd": "Dollar américain (USD)",
+    "currency.eur": "Euro (EUR)",
+    "currency.xof": "Franc CFA BCEAO (XOF)",
     "admin.product.form.basePrice": "Prix de base",
     "admin.product.form.discount": "Remise (%)",
     "admin.product.form.vat": "TVA (%)",
     "admin.product.form.dressStyle": "Style vestimentaire",
     "admin.product.form.finalPrice": "Prix final (TTC)",
     "admin.product.form.vatHint": "TVA incluse à {rate}%",
+    "admin.product.form.pricing": "Tarification",
+    "admin.product.form.pricing.hint":
+      "Définissez les règles commerciales communes à toute la fiche produit avant le détail des variantes.",
+    "admin.product.form.basePrice.hint":
+      "Prix catalogue de référence avant remise. Les valeurs décimales sont acceptées.",
+    "admin.product.form.discount.hint":
+      "Pourcentage optionnel appliqué au prix de base avant TVA.",
+    "admin.product.form.vat.inputHint":
+      "Taux de taxe appliqué à ce produit. Les valeurs décimales sont acceptées.",
+    "admin.product.form.dressStyle.hint":
+      "Utilisé pour le merchandising, les filtres storefront et les collections de style.",
+    "admin.product.form.finalPrice.hint":
+      "Calculé automatiquement à partir du prix de base, de la remise et de la TVA.",
     "admin.product.form.placeholder.slug": "chemise-lin-ete",
     "admin.product.form.placeholder.name.fr": "Chemise en lin d'été",
     "admin.product.form.placeholder.name.en": "Summer linen shirt",
     "admin.product.form.placeholder.description.fr":
-      "Brève description du produit en français...",
+      "Description courte du produit en français...",
     "admin.product.form.placeholder.description.en":
       "Short product description in English...",
     "admin.product.form.placeholder.dressStyle": "casual, street, business...",
     "admin.product.form.error.category": "Choisissez une catégorie",
+    "admin.product.form.placeholder.variant.color": "Couleur (ex: Navy)",
+    "admin.product.form.placeholder.variant.size": "Choisir une taille",
+    "admin.product.form.placeholder.variant.price": "Prix TTC",
+    "admin.product.form.placeholder.variant.compareAtPrice": "Prix barré",
+    "admin.product.form.placeholder.variant.colorHex": "Code couleur (hex)",
+    "admin.product.form.placeholder.variant.colorPalette":
+      "Choisir une couleur prédéfinie",
+    "admin.product.form.placeholder.variant.stock": "Stock",
     "admin.product.form.error.translation.fr":
       "La traduction française requiert un nom et une description.",
     "admin.product.form.error.translation.en":
@@ -904,8 +1041,16 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.variant.inactive": "Inactive",
     "admin.product.form.action.create": "Ajouter un produit",
     "admin.product.form.action.save": "Enregistrer",
+    "admin.product.form.action.addVariant": "Ajouter une variante",
+    "admin.product.form.uploader.drop": "Glissez-déposez ou cliquez",
+    "admin.product.form.uploader.hint": "JPG, PNG, WEBP · max 5MB · compression auto",
+    "admin.product.form.uploader.uploading": "Upload...",
+    "admin.product.form.uploader.cover": "Principale",
+    "admin.product.form.uploader.deleteTitle": "Supprimer",
+    "admin.product.form.uploader.setCoverTitle": "Définir comme principale",
     "admin.product.form.action.cancel": "Annuler",
     "admin.product.form.action.saving": "Enregistrement...",
+    "admin.product.form.action.regenerateSlug": "R\u00e9g\u00e9n\u00e9rer",
 
     "notFound.title": "Page introuvable",
     "notFound.subtitle":

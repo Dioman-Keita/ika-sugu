@@ -62,9 +62,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
           {tabs.map(({ label, value }) => {
             const isActive = (value === "ALL" && !status) || value === (status ?? "ALL");
             const href =
-              value === "ALL"
-                ? "/admin/products"
-                : `/admin/products?status=${value}`;
+              value === "ALL" ? "/admin/products" : `/admin/products?status=${value}`;
 
             return (
               <Link
@@ -209,9 +207,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
               <AdminPagination
                 currentPage={currentPage}
                 totalPages={totalPages}
-                baseUrl={
-                  status ? `/admin/products?status=${status}` : "/admin/products"
-                }
+                baseUrl={status ? `/admin/products?status=${status}` : "/admin/products"}
               />
             </div>
           )}

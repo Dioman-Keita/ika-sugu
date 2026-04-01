@@ -15,7 +15,11 @@ export async function deleteStorageFiles(publicUrls: string[]) {
         existing.push(path);
         pathsByBucket.set(bucket, existing);
       } catch (err) {
-        console.warn("[storage] Skipping invalid public URL during cleanup", publicUrl, err);
+        console.warn(
+          "[storage] Skipping invalid public URL during cleanup",
+          publicUrl,
+          err,
+        );
       }
     }
 

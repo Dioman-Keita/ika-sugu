@@ -24,8 +24,10 @@ export default async function Home() {
     queryFn: () => getHomeCatalogAction(locale),
   });
 
-  const { newArrivalsData, topSellingData, reviewsData } =
-    await getHomeCatalogAction(locale);
+  const { newArrivalsData, topSellingData, reviewsData } = await queryClient.fetchQuery({
+    queryKey: [...PRODUCT_QUERY_KEYS.home, locale],
+    queryFn: () => getHomeCatalogAction(locale),
+  });
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

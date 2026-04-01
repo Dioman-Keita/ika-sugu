@@ -1,5 +1,5 @@
 import imageCompression from "browser-image-compression";
-import { getSupabaseClient } from "@/lib/supabase/client";
+import { uploadAdminProductImageAction } from "@/app/actions/admin";
 
 const MAX_FILE_MB = 5;
 const ACCEPTED_TYPES = [
@@ -37,40 +37,24 @@ const compress = async (file: File) =>
   });
 
 /**
- * Uploads an image to Supabase Storage and returns the public URL.
+ * Uploads an image via server action.
  * Files are validated and compressed client-side before upload.
  */
 export const uploadImage = async (file: File, opts: UploadOptions): Promise<string> => {
-  const { productId, bucket = "products" } = opts;
+  const { productId } = opts;
   validateFile(file);
 
-  let supabase;
+  const compressedFile = await compress(file);
+
+  // Create FormData to send to the server action
+  const formData = new FormData();
+  formData.append("file", compressedFile, file.name);
+  formData.append("productId", productId);
+
   try {
-    supabase = getSupabaseClient();
+    const { url } = await uploadAdminProductImageAction(formData);
+    return url;
   } catch (err) {
-    throw new UploadError(err instanceof Error ? err.message : "Supabase is not configured");
+    throw new UploadError(err instanceof Error ? err.message : "Upload failed");
   }
-
-  const compressed = await compress(file);
-
-  const safeName = file.name.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9.\-_]/g, "");
-  const fileName = `${crypto.randomUUID()}-${safeName}`;
-  const path = `${productId}/${fileName}`;
-
-  const { error } = await supabase.storage.from(bucket).upload(path, compressed, {
-    cacheControl: "3600",
-    contentType: file.type,
-    upsert: false,
-  });
-
-  if (error) {
-    throw new UploadError(error.message);
-  }
-
-  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-  if (!data?.publicUrl) {
-    throw new UploadError("Unable to get public URL");
-  }
-
-  return data.publicUrl;
 };

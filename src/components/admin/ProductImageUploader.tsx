@@ -80,7 +80,7 @@ export default function ProductImageUploader({
         setIsUploading(false);
       }
     },
-    [emitChange, images, max, productId],
+    [emitChange, images, max, onUploadComplete, productId],
   );
 
   const onDrop = async (e: React.DragEvent<HTMLDivElement>) => {

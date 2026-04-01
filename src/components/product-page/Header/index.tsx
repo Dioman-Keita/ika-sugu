@@ -111,6 +111,7 @@ const Header = ({ data }: { data: Product }) => {
   const selectedVariantStock = selectedVariant?.stock ?? 0;
   const selectedVariantPrice = selectedVariant?.price ?? data.finalPrice;
   const selectedVariantCompareAtPrice = selectedVariant?.compareAtPrice ?? null;
+  const selectedVariantSku = selectedVariant?.sku ?? null;
   const selectedVariantDiscountPercentage =
     selectedVariantCompareAtPrice &&
     selectedVariantCompareAtPrice > 0 &&
@@ -199,6 +200,12 @@ const Header = ({ data }: { data: Product }) => {
               </span>
             )}
           </div>
+          {selectedVariantSku && (
+            <p className="text-sm text-muted-foreground mb-5">
+              {t("product.sku")}:{" "}
+              <span className="font-medium text-foreground">{selectedVariantSku}</span>
+            </p>
+          )}
           <p className="text-sm sm:text-base text-muted-foreground mb-5">
             {data.description}
           </p>
