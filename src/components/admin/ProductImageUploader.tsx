@@ -16,6 +16,8 @@ type Props = {
   productId: string;
   initialImages?: ImageItem[];
   onPersist?: (images: ImageItem[]) => Promise<void>;
+  onUploadComplete?: (urls: string[]) => void;
+  onDeleteComplete?: (urls: string[]) => void;
   max?: number;
   labels: {
     drop: string;
@@ -33,6 +35,8 @@ export default function ProductImageUploader({
   productId,
   initialImages = [],
   onPersist,
+  onUploadComplete,
+  onDeleteComplete,
   labels,
   max = MAX_FILES,
 }: Props) {
@@ -67,6 +71,7 @@ export default function ProductImageUploader({
             ? [{ ...uploaded[0], isCover: true }, ...uploaded.slice(1), ...images]
             : [...images, ...uploaded];
         await emitChange(next);
+        onUploadComplete?.(uploaded.map((image) => image.url));
       } catch (err) {
         const message = err instanceof UploadError ? err.message : "Upload failed";
         setError(message);
@@ -74,7 +79,7 @@ export default function ProductImageUploader({
         setIsUploading(false);
       }
     },
-    [emitChange, images, max, productId],
+    [emitChange, images, max, onUploadComplete, productId],
   );
 
   const onDrop = async (e: React.DragEvent<HTMLDivElement>) => {
@@ -134,6 +139,9 @@ export default function ProductImageUploader({
           </div>
           <p className="text-sm font-medium text-foreground">{labels.drop}</p>
           <p className="text-xs text-muted-foreground">{labels.hint}</p>
+          <p className="text-xs text-muted-foreground">
+            {images.length}/{max}
+          </p>
           {isUploading && <p className="text-xs text-primary">{labels.uploading}</p>}
         </label>
       </div>

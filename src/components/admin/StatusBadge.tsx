@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { ProductStatus } from "@/generated/prisma/client";
 
 const orderStatusStyles: Record<string, string> = {
   PENDING:
@@ -16,14 +17,27 @@ const reviewStatusStyles: Record<string, string> = {
   REJECTED: "bg-red-500/10 text-red-500 border border-red-500/20",
 };
 
+const productStatusStyles: Record<string, string> = {
+  [ProductStatus.DRAFT]:
+    "bg-slate-500/10 text-slate-600 border border-slate-500/20 dark:text-slate-300",
+  [ProductStatus.PUBLISHED]: "bg-green-500/10 text-green-600 border border-green-500/20",
+  [ProductStatus.ARCHIVED]:
+    "bg-zinc-500/10 text-zinc-600 border border-zinc-500/20 dark:text-zinc-300",
+};
+
 type Props = {
   status: string;
-  type?: "order" | "review";
+  type?: "order" | "review" | "product";
   className?: string;
 };
 
 export default function StatusBadge({ status, type = "order", className }: Props) {
-  const styles = type === "review" ? reviewStatusStyles : orderStatusStyles;
+  const styles =
+    type === "review"
+      ? reviewStatusStyles
+      : type === "product"
+        ? productStatusStyles
+        : orderStatusStyles;
   return (
     <span
       className={cn(

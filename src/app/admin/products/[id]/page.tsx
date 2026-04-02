@@ -16,11 +16,21 @@ const PRODUCT_SELECT = {
   name: true,
   slug: true,
   description: true,
+  sourceLocale: true,
+  status: true,
   dressStyle: true,
   categoryId: true,
   basePrice: true,
   vatRate: true,
   discountPercentage: true,
+  translations: {
+    select: {
+      locale: true,
+      name: true,
+      description: true,
+      specs: true,
+    },
+  },
   variants: {
     select: {
       id: true,
@@ -32,6 +42,7 @@ const PRODUCT_SELECT = {
       compareAtPrice: true,
       currency: true,
       stock: true,
+      isActive: true,
       sku: true,
     },
     orderBy: { createdAt: "asc" as const },
@@ -42,6 +53,10 @@ type ProductShape = Prisma.ProductGetPayload<{ select: typeof PRODUCT_SELECT }>;
 
 const shapeProduct = (product: ProductShape | null) => {
   if (!product) return null;
+  const translationMap = new Map(
+    product.translations.map((translation) => [translation.locale, translation]),
+  );
+
   const variants =
     product.variants?.map((v) => ({
       id: v.id,
@@ -52,13 +67,37 @@ const shapeProduct = (product: ProductShape | null) => {
       compareAtPrice: v.compareAtPrice ? Number(v.compareAtPrice) : null,
       currency: v.currency ?? "USD",
       stock: v.stock,
+      isActive: v.isActive,
       sku: v.sku ?? undefined,
       images: (v.images ?? []).map((url: string, idx: number) => ({
         url,
         isCover: idx === 0,
       })),
     })) ?? [];
-  return { ...product, variants };
+  return {
+    ...product,
+    translations: {
+      fr: {
+        name:
+          translationMap.get("fr")?.name ??
+          (product.sourceLocale === "fr" ? product.name : ""),
+        description:
+          translationMap.get("fr")?.description ??
+          (product.sourceLocale === "fr" ? product.description : ""),
+        specs: (translationMap.get("fr")?.specs as Record<string, string> | null) ?? {},
+      },
+      en: {
+        name:
+          translationMap.get("en")?.name ??
+          (product.sourceLocale === "en" ? product.name : ""),
+        description:
+          translationMap.get("en")?.description ??
+          (product.sourceLocale === "en" ? product.description : ""),
+        specs: (translationMap.get("en")?.specs as Record<string, string> | null) ?? {},
+      },
+    },
+    variants,
+  };
 };
 
 export default async function AdminProductDetailPage({ params }: Props) {
@@ -100,36 +139,108 @@ export default async function AdminProductDetailPage({ params }: Props) {
           categories={categories}
           initial={{
             id: shaped.id,
-            name: shaped.name,
             slug: shaped.slug,
-            description: shaped.description,
+            sourceLocale: shaped.sourceLocale as "fr" | "en",
+            status: shaped.status,
             dressStyle: shaped.dressStyle,
             categoryId: shaped.categoryId,
             basePrice: Number(shaped.basePrice),
             discountPercentage: shaped.discountPercentage,
             vatRate: Number(shaped.vatRate ?? 20),
+            translations: shaped.translations,
             variants: shaped.variants,
           }}
           labels={{
-            "field.name": m["admin.product.form.name"],
             "field.slug": m["admin.product.form.slug"],
-            "field.description": m["admin.product.form.description"],
+            "field.slug.hint": m["admin.product.form.slug.hint"],
+            "field.sourceLocale": m["admin.product.form.sourceLocale"],
+            "field.sourceLocale.hint": m["admin.product.form.sourceLocale.hint"],
+            "field.status": m["admin.product.form.status"],
             "field.category": m["admin.product.form.category"],
             "field.basePrice": m["admin.product.form.basePrice"],
+            "field.basePrice.hint": m["admin.product.form.basePrice.hint"],
             "field.discount": m["admin.product.form.discount"],
+            "field.discount.hint": m["admin.product.form.discount.hint"],
             "field.vat": m["admin.product.form.vat"],
+            "field.vat.inputHint": m["admin.product.form.vat.inputHint"],
             "field.dressStyle": m["admin.product.form.dressStyle"],
+            "field.dressStyle.hint": m["admin.product.form.dressStyle.hint"],
             "field.finalPrice": m["admin.product.form.finalPrice"],
+            "field.finalPrice.hint": m["admin.product.form.finalPrice.hint"],
             "field.vatHint": m["admin.product.form.vatHint"],
-            "placeholder.name": m["admin.product.form.placeholder.name"],
             "placeholder.slug": m["admin.product.form.placeholder.slug"],
-            "placeholder.description": m["admin.product.form.placeholder.description"],
             "placeholder.dressStyle": m["admin.product.form.placeholder.dressStyle"],
+            "field.name.fr": m["admin.product.form.nameFr"],
+            "field.name.en": m["admin.product.form.nameEn"],
+            "field.description.fr": m["admin.product.form.descriptionFr"],
+            "field.description.en": m["admin.product.form.descriptionEn"],
+            "placeholder.name.fr": m["admin.product.form.placeholder.name.fr"],
+            "placeholder.name.en": m["admin.product.form.placeholder.name.en"],
+            "placeholder.description.fr":
+              m["admin.product.form.placeholder.description.fr"],
+            "placeholder.description.en":
+              m["admin.product.form.placeholder.description.en"],
+            "section.translations": m["admin.product.form.translations"],
+            "section.translations.hint": m["admin.product.form.translations.hint"],
+            "section.pricing": m["admin.product.form.pricing"],
+            "section.pricing.hint": m["admin.product.form.pricing.hint"],
+            "section.variants": m["admin.product.form.variants"],
+            "section.variants.hint": m["admin.product.form.variants.hint"],
+            "section.variantLabel": m["admin.product.form.variantLabel"],
             "error.category": m["admin.product.form.error.category"],
+            "error.translation.fr": m["admin.product.form.error.translation.fr"],
+            "error.translation.en": m["admin.product.form.error.translation.en"],
+            "status.draft": m["admin.product.status.draft"],
+            "status.published": m["admin.product.status.published"],
+            "status.archived": m["admin.product.status.archived"],
+            "locale.fr": m["admin.product.locale.fr"],
+            "locale.en": m["admin.product.locale.en"],
             "action.create": m["admin.product.form.action.create"],
             "action.save": m["admin.product.form.action.save"],
             "action.cancel": m["admin.product.form.action.cancel"],
             "action.saving": m["admin.product.form.action.saving"],
+            "action.regenerateSlug": m["admin.product.form.action.regenerateSlug"],
+            "action.addVariant": m["admin.product.form.action.addVariant"],
+            "action.remove": m["common.remove"],
+            "placeholder.variant.color":
+              m["admin.product.form.placeholder.variant.color"],
+            "placeholder.variant.size": m["admin.product.form.placeholder.variant.size"],
+            "placeholder.variant.price":
+              m["admin.product.form.placeholder.variant.price"],
+            "placeholder.variant.compareAtPrice":
+              m["admin.product.form.placeholder.variant.compareAtPrice"],
+            "placeholder.variant.colorHex":
+              m["admin.product.form.placeholder.variant.colorHex"],
+            "placeholder.variant.colorPalette":
+              m["admin.product.form.placeholder.variant.colorPalette"],
+            "placeholder.variant.stock":
+              m["admin.product.form.placeholder.variant.stock"],
+            "variant.colorLabel": m["admin.product.form.variant.colorLabel"],
+            "variant.colorHint": m["admin.product.form.variant.colorHint"],
+            "variant.sizeLabel": m["admin.product.form.variant.sizeLabel"],
+            "variant.sizeHint": m["admin.product.form.variant.sizeHint"],
+            "variant.help": m["admin.product.form.variant.help"],
+            "variant.stockLabel": m["admin.product.form.variant.stockLabel"],
+            "variant.stockHint": m["admin.product.form.variant.stockHint"],
+            "variant.activeLabel": m["admin.product.form.variant.activeLabel"],
+            "variant.activeHint": m["admin.product.form.variant.activeHint"],
+            "variant.skuLabel": m["admin.product.form.variant.skuLabel"],
+            "variant.skuHint": m["admin.product.form.variant.skuHint"],
+            "variant.skuFallback": m["admin.product.form.variant.skuFallback"],
+            "variant.priceLabel": m["admin.product.form.variant.priceLabel"],
+            "variant.compareAtPriceLabel":
+              m["admin.product.form.variant.compareAtPriceLabel"],
+            "variant.currencyLabel": m["admin.product.form.variant.currencyLabel"],
+            "variant.mediaLabel": m["admin.product.form.variant.mediaLabel"],
+            "currency.usd": m["currency.usd"],
+            "currency.eur": m["currency.eur"],
+            "currency.xof": m["currency.xof"],
+            "uploader.drop": m["admin.product.form.uploader.drop"],
+            "uploader.hint": m["admin.product.form.uploader.hint"],
+            "uploader.uploading": m["admin.product.form.uploader.uploading"],
+            "uploader.cover": m["admin.product.form.uploader.cover"],
+            "uploader.deleteTitle": m["admin.product.form.uploader.deleteTitle"],
+            "uploader.setCoverTitle": m["admin.product.form.uploader.setCoverTitle"],
           }}
         />
       </div>

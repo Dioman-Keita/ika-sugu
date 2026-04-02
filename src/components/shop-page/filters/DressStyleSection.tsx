@@ -10,18 +10,7 @@ import { MdKeyboardArrowRight } from "react-icons/md";
 import { useUiPreferences } from "@/lib/ui-preferences";
 import { translateAttribute } from "@/lib/i18n/messages";
 import { useSearchParams } from "next/navigation";
-
-type DressStyle = {
-  title: string;
-  slug: string;
-};
-
-const dressStylesData: DressStyle[] = [
-  { title: "Casual", slug: "casual" },
-  { title: "Formal", slug: "formal" },
-  { title: "Party", slug: "party" },
-  { title: "Gym", slug: "gym" },
-];
+import { DRESS_STYLE_OPTIONS } from "@/lib/catalog-options";
 
 const DressStyleSection = () => {
   const { t, locale } = useUiPreferences();
@@ -43,13 +32,13 @@ const DressStyleSection = () => {
         </AccordionTrigger>
         <AccordionContent className="pt-4 pb-0">
           <div className="flex flex-col text-muted-foreground space-y-0.5">
-            {dressStylesData.map((dStyle, idx) => (
+            {DRESS_STYLE_OPTIONS.map((style, idx) => (
               <Link
                 key={idx}
-                href={buildStyleHref(dStyle.slug)}
+                href={buildStyleHref(style)}
                 className="flex items-center justify-between py-2"
               >
-                {translateAttribute(dStyle.title, locale)} <MdKeyboardArrowRight />
+                {translateAttribute(style, locale)} <MdKeyboardArrowRight />
               </Link>
             ))}
           </div>

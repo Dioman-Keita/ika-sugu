@@ -13,7 +13,7 @@ import {
   updateOrderStatusAction,
   updateReviewStatusAction,
 } from "@/app/actions/admin";
-import { OrderStatus, ReviewStatus } from "@/generated/prisma/client";
+import { OrderStatus, ProductStatus, ReviewStatus } from "@/generated/prisma/client";
 import { PRODUCT_QUERY_KEYS, ADMIN_QUERY_KEYS } from "./query-keys";
 import { toast } from "sonner";
 import { useUiPreferences } from "@/lib/ui-preferences";
@@ -64,10 +64,10 @@ export function useRecentOrders() {
   });
 }
 
-export function useAdminProducts(page: number = 1) {
+export function useAdminProducts(page: number = 1, status?: ProductStatus) {
   return useQuery({
-    queryKey: ADMIN_QUERY_KEYS.products(page),
-    queryFn: () => getAdminProducts({ page }),
+    queryKey: [...ADMIN_QUERY_KEYS.products(page), status ?? "ALL"],
+    queryFn: () => getAdminProducts({ page, status }),
   });
 }
 
