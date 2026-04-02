@@ -4,7 +4,6 @@ import { useCallback, useId, useState } from "react";
 import { Upload, X, Star } from "lucide-react";
 import Image from "next/image";
 import { uploadImage, UploadError } from "@/lib/storage/uploadImage";
-import { deleteAdminProductImagesAction } from "@/app/actions/admin";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -102,12 +101,6 @@ export default function ProductImageUploader({
       next[0].isCover = true;
     }
     await emitChange([...next]);
-    try {
-      await deleteAdminProductImagesAction([url]);
-      onDeleteComplete?.([url]);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Image delete failed");
-    }
   };
 
   const setCover = async (url: string) => {
