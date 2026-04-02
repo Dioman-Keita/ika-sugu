@@ -17,7 +17,6 @@ type Props = {
   initialImages?: ImageItem[];
   onPersist?: (images: ImageItem[]) => Promise<void>;
   onUploadComplete?: (urls: string[]) => void;
-  onDeleteComplete?: (urls: string[]) => void;
   max?: number;
   labels: {
     drop: string;
@@ -36,7 +35,6 @@ export default function ProductImageUploader({
   initialImages = [],
   onPersist,
   onUploadComplete,
-  onDeleteComplete,
   labels,
   max = MAX_FILES,
 }: Props) {

@@ -81,15 +81,11 @@ export default async function AdminNewProductPage() {
             "action.regenerateSlug": m["admin.product.form.action.regenerateSlug"],
             "action.addVariant": m["admin.product.form.action.addVariant"],
             "action.remove": m["common.remove"],
-            "placeholder.variant.color":
-              m["admin.product.form.placeholder.variant.color"],
             "placeholder.variant.size": m["admin.product.form.placeholder.variant.size"],
             "placeholder.variant.price":
               m["admin.product.form.placeholder.variant.price"],
             "placeholder.variant.compareAtPrice":
               m["admin.product.form.placeholder.variant.compareAtPrice"],
-            "placeholder.variant.colorHex":
-              m["admin.product.form.placeholder.variant.colorHex"],
             "placeholder.variant.colorPalette":
               m["admin.product.form.placeholder.variant.colorPalette"],
             "placeholder.variant.stock":

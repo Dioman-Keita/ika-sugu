@@ -252,16 +252,6 @@ export default function ProductForm({
     });
   };
 
-  const clearPendingUploads = (urls: string[]) => {
-    if (urls.length === 0) return;
-    const urlSet = new Set(urls);
-    setPendingCleanupUrls((prev) => {
-      const next = prev.filter((url) => !urlSet.has(url));
-      pendingCleanupRef.current = next;
-      return next;
-    });
-  };
-
   const replacePendingUploads = (urls: string[]) => {
     pendingCleanupRef.current = urls;
     setPendingCleanupUrls(urls);
@@ -916,7 +906,6 @@ export default function ProductForm({
                 initialImages={variant.images}
                 onPersist={async (images) => updateVariant(variant.id, { images })}
                 onUploadComplete={registerPendingUploads}
-                onDeleteComplete={clearPendingUploads}
                 labels={{
                   drop: labels["uploader.drop"],
                   hint: labels["uploader.hint"],

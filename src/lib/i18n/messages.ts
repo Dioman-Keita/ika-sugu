@@ -463,13 +463,10 @@ export const messages: Record<Locale, Messages> = {
       "Short product description in French...",
     "admin.product.form.placeholder.description.en":
       "Short product description in English...",
-    "admin.product.form.placeholder.dressStyle":
-      "décontracté, urbain, professionnel...",
-    "admin.product.form.placeholder.variant.color": "Color (e.g. Navy)",
+    "admin.product.form.placeholder.dressStyle": "Choose a dress style",
     "admin.product.form.placeholder.variant.size": "Choose a size",
     "admin.product.form.placeholder.variant.price": "Price incl. VAT",
     "admin.product.form.placeholder.variant.compareAtPrice": "Compare-at price",
-    "admin.product.form.placeholder.variant.colorHex": "Color code (hex)",
     "admin.product.form.placeholder.variant.colorPalette": "Choose a preset color",
     "admin.product.form.placeholder.variant.stock": "Stock",
     "admin.product.form.error.category": "Choose a category",
@@ -1019,13 +1016,11 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.form.placeholder.description.en":
       "Short product description in English...",
     "admin.product.form.placeholder.dressStyle":
-      "décontracté, urbain, professionnel...",
+      "Choisir un style vestimentaire",
     "admin.product.form.error.category": "Choisissez une catégorie",
-    "admin.product.form.placeholder.variant.color": "Couleur (ex: Navy)",
     "admin.product.form.placeholder.variant.size": "Choisir une taille",
     "admin.product.form.placeholder.variant.price": "Prix TTC",
     "admin.product.form.placeholder.variant.compareAtPrice": "Prix barré",
-    "admin.product.form.placeholder.variant.colorHex": "Code couleur (hex)",
     "admin.product.form.placeholder.variant.colorPalette":
       "Choisir une couleur prédéfinie",
     "admin.product.form.placeholder.variant.stock": "Stock",
