@@ -9,7 +9,7 @@ import {
 } from "@/generated/prisma/client";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { auth, isAdminEmail } from "@/lib/auth";
 import { deleteStorageFiles } from "@/lib/storage/deleteImages";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import {
@@ -39,13 +39,7 @@ const assertAdmin = async () => {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) throw new Error("Unauthorized");
 
-  const adminEmails = (process.env.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  const userEmail = session.user?.email?.toLowerCase();
-  const isAdmin = Boolean(userEmail && adminEmails.includes(userEmail));
-  if (!isAdmin) throw new Error("Forbidden");
+  if (!isAdminEmail(session.user?.email)) throw new Error("Forbidden");
 };
 
 // ─── Stat helpers ─────────────────────────────────────────────────────────────
@@ -439,6 +433,14 @@ export async function uploadAdminProductImageAction(formData: FormData) {
     throw new Error("Missing required upload parameters");
   }
 
+  if (file.size > 5 * 1024 * 1024) {
+    throw new Error("File size must be less than 5MB");
+  }
+
+  if (!file.type.startsWith("image/")) {
+    throw new Error("File must be an image");
+  }
+
   const supabase = getSupabaseServiceClient();
   const buffer = Buffer.from(await file.arrayBuffer());
 
@@ -630,15 +632,21 @@ export async function updateAdminProduct(data: UpsertProductInput & { id: string
     if (toUpdate.length) {
       for (const { id, data: variantData } of toUpdate) {
         const existingVariant = existingById.get(id);
+        const currentColorName = String(variantData.colorName ?? existingVariant?.colorName ?? "default");
+        const currentSize = String(variantData.size ?? existingVariant?.size ?? "unique");
+
+        const identityChanged = existingVariant && (existingVariant.colorName !== currentColorName || existingVariant.size !== currentSize);
+
         const sku =
-          existingVariant?.sku ??
-          (await generateUniqueSku(
-            tx,
-            normalized.slug,
-            String(variantData.colorName ?? existingVariant?.colorName ?? "default"),
-            String(variantData.size ?? existingVariant?.size ?? "unique"),
-            id,
-          ));
+          (existingVariant?.sku && !identityChanged)
+            ? existingVariant.sku
+            : await generateUniqueSku(
+                tx,
+                normalized.slug,
+                currentColorName,
+                currentSize,
+                id,
+              );
 
         await tx.productVariant.update({
           where: { id },

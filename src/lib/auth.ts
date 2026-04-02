@@ -77,3 +77,12 @@ function escapeHtml(input: string): string {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
 }
+
+export function isAdminEmail(email?: string | null) {
+  const adminEmails = (process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean);
+
+  return Boolean(email && adminEmails.includes(email.toLowerCase()));
+}

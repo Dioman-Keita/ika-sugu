@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { auth, isAdminEmail } from "@/lib/auth";
 import { deleteStorageFiles } from "@/lib/storage/deleteImages";
 
 export const runtime = "nodejs";
@@ -18,14 +18,6 @@ function parseCleanupPayload(rawBody: string): CleanupPayload {
   }
 }
 
-function isAdminEmail(email?: string | null) {
-  const adminEmails = (process.env.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((entry) => entry.trim().toLowerCase())
-    .filter(Boolean);
-
-  return Boolean(email && adminEmails.includes(email.toLowerCase()));
-}
 
 export async function POST(request: Request) {
   const session = await auth.api.getSession({ headers: request.headers });
