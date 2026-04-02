@@ -318,6 +318,7 @@ export const getShopProductsAction = async ({
         ? await withDbRetry(async () => {
             const conditions: Prisma.Sql[] = [
               Prisma.sql`pv."isActive" = true`,
+              Prisma.sql`p."status" = 'PUBLISHED'`,
               ...(color ? [Prisma.sql`pv."colorName" = ${color}`] : []),
               ...(size ? [Prisma.sql`pv."size" = ${size}`] : []),
               ...(typeof minPrice === "number"
