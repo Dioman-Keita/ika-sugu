@@ -14,7 +14,7 @@ Based on industry standards, Ika Sugu bridges the gap between premium design and
 - **Variant-First Philosophy**: Deep integration of product variants (color/size) natively tied to unique SKUs.
 - **Optimistic UI**: Instantaneous user feedback backed by resilient TanStack Query mutations.
 - **Authentication**: Modern and secure auth flows powered by BetterAuth.
-- **Payment Processing**: Full Stripe integration for seamless checkout.
+- **Payment Processing**: Stripe integration designed and architected (implementation upcoming).
 
 ## Technology Stack
 
@@ -44,7 +44,7 @@ To run Ika Sugu locally, follow these steps:
    ```
 
 3. **Set up Environment Variables:**
-   Configure your Database, Stripe, and BetterAuth keys in `.env`.
+   Configure your Database and BetterAuth keys in `.env`.
 
 4. **Initialize Prisma & Seed Database:**
    ```bash
@@ -66,3 +66,21 @@ Navigate to [http://localhost:3000](http://localhost:3000) to view the app!
 - `src/components/` - ShadCN reusable UI and domain components
 - `src/lib/` - Auth configurations, database setup, and core utilities
 - `src/hooks/` - TanStack Query custom hooks
+
+## Contributing
+
+Contributions are welcome! If you'd like to contribute, please follow these steps:
+
+1. Fork the repository.
+2. Create a new branch (`git checkout -b feature/your-feature-name`).
+3. Make your changes.
+4. Push to the branch (`git push origin feature/your-feature-name`).
+5. Open a pull request.
+
+## Issues
+
+Feel free to submit issues for any bugs, feature requests, or general questions related to the project.
+
+## License
+
+This project is licensed under the MIT License.
