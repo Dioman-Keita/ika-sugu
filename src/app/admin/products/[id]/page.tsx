@@ -113,7 +113,7 @@ export default async function AdminProductDetailPage({ params }: Props) {
   const shaped = shapeProduct(product);
   if (!shaped) return notFound();
 
-  const categories = await getAdminCategories();
+  const categories = await getAdminCategories(locale);
 
   return (
     <div className="p-6 space-y-8">

@@ -734,13 +734,30 @@ export async function updateAdminProduct(data: UpsertProductInput & { id: string
   return product;
 }
 
-export async function getAdminCategories() {
+export async function getAdminCategories(locale?: ProductAuthoringLocale) {
   await assertAdmin();
   const cats = await db.category.findMany({
     orderBy: { name: "asc" },
-    select: { id: true, name: true, slug: true },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      translations: locale
+        ? {
+            where: { locale },
+            select: { name: true },
+            take: 1,
+          }
+        : false,
+    },
   });
-  return cats;
+  return cats
+    .map((category) => ({
+      id: category.id,
+      slug: category.slug,
+      name: category.translations?.[0]?.name ?? category.name,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 // ─── Orders ───────────────────────────────────────────────────────────────────

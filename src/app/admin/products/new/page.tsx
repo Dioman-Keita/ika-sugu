@@ -11,7 +11,7 @@ export default async function AdminNewProductPage() {
   const locale: Locale = parseLocale(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
   const m = messages[locale];
 
-  const categories = await getAdminCategories();
+  const categories = await getAdminCategories(locale);
   if (!categories.length) return notFound();
 
   return (
