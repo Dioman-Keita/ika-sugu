@@ -1,129 +1,75 @@
-> This is a personal fork of [mohammadoftadeh/next-ecommerce-shopco](https://github.com/mohammadoftadeh/next-ecommerce-shopco) by Dioman Keita. It adds custom features while keeping compatibility with upstream.
+> This is a personal project by Dioman Keita, originally inspired by next-ecommerce-shopco but completely rebuilt for modern, high-performance standards.
 
-[![Ika sugu Screenshot](https://github.com/mohammadoftadeh/repo-assets/blob/main/shopco-cover.png?raw=true)](https://next-ecommerce-shopco.vercel.app/)
+# Ika Sugu - Modern E-Commerce Platform
 
-# Ika sugu
-
-Ika sugu is an open-source project that converts a Figma design of an e-commerce website into a fully responsive front-end application. It utilizes **Next.js 14 App Router**, **TypeScript**, **Tailwind CSS**, **Redux**, **Framer Motion**, and **ShadCN UI** to deliver a modern, scalable, and optimized solution based on industry standards.
-
-## Table of Contents
-
-- [Ika sugu](#ika-sugu)
-  - [Table of Contents](#table-of-contents)
-  - [Overview](#overview)
-  - [Demo](#demo)
-  - [Features](#features)
-  - [Technologies](#technologies)
-  - [Installation](#installation)
-  - [Usage](#usage)
-  - [Project Structure](#project-structure)
-  - [Contributing](#contributing)
-  - [Issues](#issues)
-  - [License](#license)
-  - [Contact](#contact)
+**Ika Sugu** is a high-performance, full-stack Next.js 16 e-commerce platform built on Bun. It emphasizes a **Variant-first philosophy**, blistering fast **Optimistic UI**, and a complete, highly-functional **Admin Dashboard**.
 
 ## Overview
 
-Ika sugu bridges the gap between design and development by converting Figma designs into production-ready code. The project follows best practices for **SEO**, **performance optimization**, and **accessibility**, making it a perfect foundation for developers looking to create scalable and maintainable e-commerce front-ends.
+Based on industry standards, Ika Sugu bridges the gap between premium design and cutting-edge web development. It leverages a highly optimized data-fetching layer with TanStack Query and implements rock-solid authentication with BetterAuth. 
 
-## Demo
+## Core Features
 
-Check out the live demo: [Ika sugu Demo](https://next-ecommerce-shopco.vercel.app/)
+- **Storefront & Admin Dashboard**: Complete end-to-end management of products, variants, orders, and users.
+- **Variant-First Philosophy**: Deep integration of product variants (color/size) natively tied to unique SKUs.
+- **Optimistic UI**: Instantaneous user feedback backed by resilient TanStack Query mutations.
+- **Authentication**: Modern and secure auth flows powered by BetterAuth.
+- **Payment Processing**: Stripe integration designed and architected (implementation upcoming).
 
-<!-- [![Ika sugu Screenshot](https://github.com/mohammadoftadeh/repo-assets/blob/main/shopco-cover.png?raw=true)](https://next-ecommerce-shopco.vercel.app/) -->
+## Technology Stack
 
-## Features
+- **Framework**: Next.js 16 (Full App Router)
+- **Runtime**: [Bun](https://bun.sh/)
+- **State Management & Data Fetching**: TanStack Query
+- **Styling**: Tailwind CSS v4 + Framer Motion
+- **UI Components**: ShadCN UI
+- **Database & ORM**: PostgreSQL with Prisma
+- **Auth**: BetterAuth
+- **Code Quality**: Prettier, TypeScript
+- **Hosting**: Vercel
 
-- **Next.js 14**: Server-side rendering (SSR), Static Site Generation (SSG), optimized routing, and API integrations.
-- **TypeScript**: Strongly typed code for better error detection and maintainability.
-- **Tailwind CSS**: Utility-first CSS framework for rapid UI development.
-- **Redux**: State management for managing the shopping cart and other global states.
-- **Framer Motion**: Smooth animations and transitions for an enhanced user experience.
-- **ShadCN UI**: Beautifully styled, accessible, and customizable UI components.
-- **Fully Responsive**: Mobile-first design ensuring the layout adapts across devices.
-- **Performance Optimized**: Best practices followed for fast loading and interaction.
-- **Accessible**: Built with accessibility standards to provide an inclusive experience.
+## Getting Started
 
-## Technologies
-
-- **Next.js 14** - A popular React framework with built-in SSR and optimization.
-- **TypeScript** - A superset of JavaScript for strong typing and code consistency.
-- **Tailwind CSS** - A utility-first CSS framework for fast, responsive design.
-- **Redux** - A state management library used for the shopping cart and global app state.
-- **Framer Motion** - A library for animations and interactions in React.
-- **ShadCN UI** - A collection of beautiful, accessible, and customizable UI components.
-- **Figma** - The design tool used as the source of the project’s layout. The [Figma file](https://www.figma.com/community/file/1273571982885059508/e-commerce-website-template-freebie) designed by [Hamza Naeem](https://www.figma.com/@hamzauix)
-
-## Installation
-
-To get started with Ika sugu locally, follow these steps:
+To run Ika Sugu locally, follow these steps:
 
 1. **Clone the repository:**
-
    ```bash
-   git clone https://github.com/mohammadoftadeh/next-ecommerce-shopco
-   cd next-ecommerce-shopco
+   git clone https://github.com/Dioman-Keita/ika-sugu.git
+   cd ika-sugu
    ```
 
-2. **Install dependencies:**
-
+2. **Install dependencies (using Bun):**
    ```bash
-   npm install
+   bun install
    ```
 
+3. **Set up Environment Variables:**
+   Configure your Database and BetterAuth keys in `.env`.
+
+4. **Initialize Prisma & Seed Database:**
    ```bash
-   yarn install
+   bun run generate-prisma-client
+   bun run seed
    ```
 
-3. **Run the development server:**
-
+5. **Run the development server:**
    ```bash
-   npm run dev
+   bun run dev
    ```
 
-   ```bash
-   yarn dev
-   ```
+Navigate to [http://localhost:3000](http://localhost:3000) to view the app!
 
-4. **Open in your browser:**
-   Navigate to [http://localhost:3000](http://localhost:3000) to view the app.
+## Project Structure Highlights
 
-## Usage
-
-- To explore or modify the code, navigate through the `components`, `features`, and `app` directories.
-- The shopping cart logic is managed using **Redux**. You can find the store configuration and cart actions in the `src/lib/features` directory.
-- **ShadCN UI** components are used across the app. They can be customized in the `src/components/ui` directory.
-- You can easily modify and extend the project to suit your needs, whether for personal use or professional projects.
-
-## Project Structure
-
-```bash
-Ika-sugu/
-│
-├── public/                # Static assets
-├── src/
-│   ├── app/               # Next.js App Router
-│   ├── components/        # Reusable components (including ShadCN UI components)
-│   └── lib/
-│       ├── features/      # The Redux logics for features (e.g., shopping cart)
-│       ├── hooks/         # Custom React hooks
-│       ├── store.ts       # Redux store
-│       ├── utils.ts       # Utility functions
-│   ├── styles/            # Tailwind CSS styles (global, utilities and fonts)
-│   ├── types/             # TypeScript types
-│
-├── components.json         # ShadCN UI configuration
-├── next.config.mjs         # Next.js configuration
-├── package.json            # Node.js dependencies and scripts
-├── postcss.config.mjs      # Post CSS configuration
-└── README.md               # Project documentation
-├── tailwind.config.js      # Tailwind CSS configuration
-├── tsconfig.json           # TypeScript configuration
-```
+- `src/app/` - Next.js 16 App Router (Storefront & `/admin` dashboard)
+- `src/app/actions/` - Server Actions handling secure mutations
+- `src/components/` - ShadCN reusable UI and domain components
+- `src/lib/` - Auth configurations, database setup, and core utilities
+- `src/hooks/` - TanStack Query custom hooks
 
 ## Contributing
 
-Contributions are welcome! If you'd like to contribute, Please follow these steps to contribute to Ika sugu:
+Contributions are welcome! If you'd like to contribute, please follow these steps:
 
 1. Fork the repository.
 2. Create a new branch (`git checkout -b feature/your-feature-name`).
@@ -133,16 +79,8 @@ Contributions are welcome! If you'd like to contribute, Please follow these step
 
 ## Issues
 
-Feel free to submit issues for any bugs, feature requests, or general questions related to the project. You can also reach out via [email](mailto:mr.mohammadoftadeh@gmail.com) for support.
+Feel free to submit issues for any bugs, feature requests, or general questions related to the project.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](https://opensource.org/licenses/MIT) file for details.
-
-## Contact
-
-Feel free to reach out to:
-
-- **Name**: Mohammad Oftadeh
-- **Email**: [mr.mohammadoftadeh@gmail.com](mailto:mr.mohammadoftadeh@gmail.com)
-- **GitHub**: [https://github.com/mohammadoftadeh](https://github.com/mohammadoftadeh)
+This project is licensed under the MIT License.
