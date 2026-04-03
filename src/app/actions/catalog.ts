@@ -257,6 +257,7 @@ export const getShopProductsAction = async ({
   page = 1,
   pageSize = 9,
   locale = "en",
+  section,
   category,
   style,
   color,
@@ -268,6 +269,7 @@ export const getShopProductsAction = async ({
   page?: number;
   pageSize?: number;
   locale?: Locale;
+  section?: string | null;
   category?: string | null;
   style?: string | null;
   color?: string | null;
@@ -282,6 +284,7 @@ export const getShopProductsAction = async ({
 
   const variantWhere: Prisma.ProductVariantWhereInput = {
     isActive: true,
+    ...(section ? { shopSection: section } : {}),
     ...(color ? { colorName: color } : {}),
     ...(size ? { size } : {}),
     ...((typeof minPrice === "number" || typeof maxPrice === "number") && {
@@ -318,6 +321,7 @@ export const getShopProductsAction = async ({
         ? await withDbRetry(async () => {
             const conditions: Prisma.Sql[] = [
               Prisma.sql`pv."isActive" = true`,
+              ...(section ? [Prisma.sql`pv."shopSection" = ${section}`] : []),
               Prisma.sql`p."status" = 'PUBLISHED'`,
               ...(color ? [Prisma.sql`pv."colorName" = ${color}`] : []),
               ...(size ? [Prisma.sql`pv."size" = ${size}`] : []),

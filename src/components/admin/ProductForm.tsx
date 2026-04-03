@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useCreateProductMutation, useUpdateProductMutation } from "@/hooks/use-admin";
 import ProductImageUploader from "./ProductImageUploader";
@@ -10,6 +11,7 @@ import { deleteAdminProductImagesAction } from "@/app/actions/admin";
 import {
   CURRENCY_OPTIONS,
   DRESS_STYLE_OPTIONS,
+  SHOP_SECTION_OPTIONS,
   SIZE_OPTIONS,
 } from "@/lib/catalog-options";
 import { translateAttribute } from "@/lib/i18n/messages";
@@ -30,6 +32,7 @@ type TranslationFields = {
 type VariantInput = {
   id: string;
   sku?: string | null;
+  shopSection?: string;
   colorName: string;
   colorHex?: string;
   size: string;
@@ -175,6 +178,7 @@ export default function ProductForm({
     })) ?? [
       {
         id: crypto.randomUUID(),
+        shopSection: "",
         colorName: "Standard",
         size: "Unique",
         price: String(initial?.basePrice ?? 0),
@@ -229,6 +233,7 @@ export default function ProductForm({
       ...prev,
       {
         id: crypto.randomUUID(),
+        shopSection: "",
         colorName: "",
         size: "",
         price: 0,
@@ -255,11 +260,6 @@ export default function ProductForm({
   const replacePendingUploads = (urls: string[]) => {
     pendingCleanupRef.current = urls;
     setPendingCleanupUrls(urls);
-  };
-
-  const regenerateSlug = () => {
-    setSlugEdited(false);
-    setSlug(toSlug(translations[sourceLocale].name));
   };
 
   useEffect(() => {
@@ -318,17 +318,52 @@ export default function ProductForm({
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
+    const failValidation = (message: string) => {
+      setError(message);
+      toast.error(message);
+    };
+
     if (!categoryId) {
-      setError(labels["error.category"]);
+      failValidation(labels["error.category"]);
       return;
     }
 
     if (!translations.fr.name || !translations.fr.description) {
-      setError(labels["error.translation.fr"]);
+      failValidation(labels["error.translation.fr"]);
       return;
     }
     if (!translations.en.name || !translations.en.description) {
-      setError(labels["error.translation.en"]);
+      failValidation(labels["error.translation.en"]);
+      return;
+    }
+    if (variants.length === 0) {
+      failValidation(labels["error.variants.required"]);
+      return;
+    }
+
+    const missingShopSectionIndex = variants.findIndex(
+      (variant) => !String(variant.shopSection ?? "").trim(),
+    );
+    if (missingShopSectionIndex >= 0) {
+      failValidation(
+        labels["error.variant.shopSection"].replace(
+          "{index}",
+          String(missingShopSectionIndex + 1),
+        ),
+      );
+      return;
+    }
+
+    const missingImagesIndex = variants.findIndex(
+      (variant) => (variant.images?.length ?? 0) === 0,
+    );
+    if (missingImagesIndex >= 0) {
+      failValidation(
+        labels["error.variant.images"].replace(
+          "{index}",
+          String(missingImagesIndex + 1),
+        ),
+      );
       return;
     }
 
@@ -351,6 +386,7 @@ export default function ProductForm({
         specs: translations[targetLocale].specs,
       })),
       variants: variants.map((variant) => ({
+        shopSection: variant.shopSection || null,
         colorName: variant.colorName || "Standard",
         colorHex: variant.colorHex ?? null,
         size: variant.size || "Unique",
@@ -652,19 +688,9 @@ export default function ProductForm({
 
       <div className="grid md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <div className="flex items-center justify-between gap-3">
-            <label className="text-sm font-medium text-foreground">
-              {labels["field.slug"]}
-            </label>
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-full h-8 px-3 text-xs"
-              onClick={regenerateSlug}
-            >
-              {labels["action.regenerateSlug"]}
-            </Button>
-          </div>
+          <label className="text-sm font-medium text-foreground">
+            {labels["field.slug"]}
+          </label>
           <input
             value={slug}
             onChange={(e) => {
@@ -693,6 +719,9 @@ export default function ProductForm({
               </option>
             ))}
           </select>
+          <p className="text-xs text-muted-foreground">
+            {labels["field.category.hint"]}
+          </p>
         </div>
       </div>
 
@@ -741,6 +770,29 @@ export default function ProductForm({
               </div>
 
               <div className="grid lg:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">
+                    {labels["variant.shopSectionLabel"] ?? "Shop section"}
+                  </label>
+                  <select
+                    value={variant.shopSection ?? ""}
+                    onChange={(e) =>
+                      updateVariant(variant.id, { shopSection: e.target.value })
+                    }
+                    className="w-full rounded-xl border border-border bg-surface-card px-4 py-3 text-sm text-foreground"
+                  >
+                    <option value="">{labels["placeholder.variant.shopSection"]}</option>
+                    {SHOP_SECTION_OPTIONS.map((section) => (
+                      <option key={section} value={section}>
+                        {labels[`sectionOption.${section}`] ?? section}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-muted-foreground">
+                    {labels["variant.shopSectionHint"] ?? ""}
+                  </p>
+                </div>
+
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">
                     {labels["variant.colorLabel"] ?? "Color"}

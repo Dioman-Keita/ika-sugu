@@ -36,6 +36,7 @@ export default async function AdminNewProductPage() {
             "field.sourceLocale.hint": m["admin.product.form.sourceLocale.hint"],
             "field.status": m["admin.product.form.status"],
             "field.category": m["admin.product.form.category"],
+            "field.category.hint": m["admin.product.form.category.hint"],
             "field.basePrice": m["admin.product.form.basePrice"],
             "field.basePrice.hint": m["admin.product.form.basePrice.hint"],
             "field.discount": m["admin.product.form.discount"],
@@ -69,6 +70,11 @@ export default async function AdminNewProductPage() {
             "error.category": m["admin.product.form.error.category"],
             "error.translation.fr": m["admin.product.form.error.translation.fr"],
             "error.translation.en": m["admin.product.form.error.translation.en"],
+            "error.variants.required": m["admin.product.form.error.variants.required"],
+            "error.variant.shopSection":
+              m["admin.product.form.error.variant.shopSection"],
+            "error.variant.images":
+              m["admin.product.form.error.variant.images"],
             "status.draft": m["admin.product.status.draft"],
             "status.published": m["admin.product.status.published"],
             "status.archived": m["admin.product.status.archived"],
@@ -78,7 +84,6 @@ export default async function AdminNewProductPage() {
             "action.save": m["admin.product.form.action.save"],
             "action.cancel": m["admin.product.form.action.cancel"],
             "action.saving": m["admin.product.form.action.saving"],
-            "action.regenerateSlug": m["admin.product.form.action.regenerateSlug"],
             "action.addVariant": m["admin.product.form.action.addVariant"],
             "action.remove": m["common.remove"],
             "placeholder.variant.size": m["admin.product.form.placeholder.variant.size"],
@@ -88,9 +93,15 @@ export default async function AdminNewProductPage() {
               m["admin.product.form.placeholder.variant.compareAtPrice"],
             "placeholder.variant.colorPalette":
               m["admin.product.form.placeholder.variant.colorPalette"],
+            "placeholder.variant.shopSection":
+              m["admin.product.form.placeholder.variant.shopSection"],
             "placeholder.variant.stock":
               m["admin.product.form.placeholder.variant.stock"],
             "variant.help": m["admin.product.form.variant.help"],
+            "variant.shopSectionLabel":
+              m["admin.product.form.variant.shopSectionLabel"],
+            "variant.shopSectionHint":
+              m["admin.product.form.variant.shopSectionHint"],
             "variant.colorLabel": m["admin.product.form.variant.colorLabel"],
             "variant.colorHint": m["admin.product.form.variant.colorHint"],
             "variant.sizeLabel": m["admin.product.form.variant.sizeLabel"],
@@ -110,6 +121,10 @@ export default async function AdminNewProductPage() {
             "currency.usd": m["currency.usd"],
             "currency.eur": m["currency.eur"],
             "currency.xof": m["currency.xof"],
+            "sectionOption.men-clothes": m["nav.men"],
+            "sectionOption.women-clothes": m["nav.women"],
+            "sectionOption.kids-clothes": m["nav.kids"],
+            "sectionOption.bag-shoes": m["nav.bagsShoes"],
             "uploader.drop": m["admin.product.form.uploader.drop"],
             "uploader.hint": m["admin.product.form.uploader.hint"],
             "uploader.uploading": m["admin.product.form.uploader.uploading"],

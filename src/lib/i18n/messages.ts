@@ -412,6 +412,9 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.form.variants.hint":
       "Colors, sizes, pricing, stock, and variant-specific images.",
     "admin.product.form.variantLabel": "Variant",
+    "admin.product.form.variant.shopSectionLabel": "Shop section",
+    "admin.product.form.variant.shopSectionHint":
+      "Controls which storefront section this variant belongs to, such as men's clothes or bags and shoes.",
     "admin.product.form.variant.colorLabel": "Color",
     "admin.product.form.variant.colorHint": "Pick from the preset palette.",
     "admin.product.form.variant.sizeLabel": "Size",
@@ -440,6 +443,8 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.form.pricing.hint":
       "Define the commercial settings shared by the whole product page before variant-level pricing.",
     "admin.product.form.category": "Category",
+    "admin.product.form.category.hint":
+      "Controls where the product appears in shop sections such as men's clothes, women's clothes, kids clothes, or bags and shoes.",
     "admin.product.form.basePrice": "Base price",
     "admin.product.form.basePrice.hint":
       "Reference catalog price before discount. Decimal values are accepted.",
@@ -468,12 +473,19 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.form.placeholder.variant.price": "Price incl. VAT",
     "admin.product.form.placeholder.variant.compareAtPrice": "Compare-at price",
     "admin.product.form.placeholder.variant.colorPalette": "Choose a preset color",
+    "admin.product.form.placeholder.variant.shopSection": "Choose a shop section",
     "admin.product.form.placeholder.variant.stock": "Stock",
     "admin.product.form.error.category": "Choose a category",
     "admin.product.form.error.translation.fr":
       "French translation requires both name and description.",
     "admin.product.form.error.translation.en":
       "English translation requires both name and description.",
+    "admin.product.form.error.variants.required":
+      "Add at least one valid variant before saving.",
+    "admin.product.form.error.variant.shopSection":
+      "Variant {index}: choose a shop section.",
+    "admin.product.form.error.variant.images":
+      "Variant {index}: add at least one image.",
     "admin.product.status.draft": "Draft",
     "admin.product.status.published": "Published",
     "admin.product.status.archived": "Archived",
@@ -965,6 +977,9 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.form.variants.hint":
       "Couleurs, tailles, prix, stock et images spécifiques.",
     "admin.product.form.variantLabel": "Variante",
+    "admin.product.form.variant.shopSectionLabel": "Section boutique",
+    "admin.product.form.variant.shopSectionHint":
+      "Détermine dans quelle section storefront cette variante apparaît, comme vêtements homme ou sacs et chaussures.",
     "admin.product.form.variant.colorLabel": "Couleur",
     "admin.product.form.variant.colorHint": "Choisissez une teinte prédéfinie.",
     "admin.product.form.variant.sizeLabel": "Taille",
@@ -1000,6 +1015,8 @@ export const messages: Record<Locale, Messages> = {
       "Définissez les règles commerciales communes à toute la fiche produit avant le détail des variantes.",
     "admin.product.form.basePrice.hint":
       "Prix catalogue de référence avant remise. Les valeurs décimales sont acceptées.",
+    "admin.product.form.category.hint":
+      "Détermine dans quelle section boutique le produit apparaît, comme vêtements homme, vêtements femme, vêtements enfant ou sacs et chaussures.",
     "admin.product.form.discount.hint":
       "Pourcentage optionnel appliqué au prix de base avant TVA.",
     "admin.product.form.vat.inputHint":
@@ -1023,6 +1040,8 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.form.placeholder.variant.compareAtPrice": "Prix barré",
     "admin.product.form.placeholder.variant.colorPalette":
       "Choisir une couleur prédéfinie",
+    "admin.product.form.placeholder.variant.shopSection":
+      "Choisir une section boutique",
     "admin.product.form.placeholder.variant.stock": "Stock",
     "admin.product.form.error.translation.fr":
       "La traduction française requiert un nom et une description.",

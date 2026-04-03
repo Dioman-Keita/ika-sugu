@@ -15,9 +15,11 @@ import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import {
   CURRENCY_OPTIONS,
   DRESS_STYLE_OPTIONS,
+  SHOP_SECTION_OPTIONS,
   SIZE_OPTIONS,
   isCurrencyOption,
   isDressStyleOption,
+  isShopSectionOption,
   isSizeOption,
 } from "@/lib/catalog-options";
 
@@ -201,6 +203,7 @@ type UpsertProductInput = {
   }>;
   variants?: Array<{
     id?: string;
+    shopSection?: string | null;
     colorName: string;
     colorHex?: string | null;
     size: string;
@@ -304,9 +307,14 @@ const normalizeProductInput = (data: UpsertProductInput) => {
     throw new Error("Missing source locale translation");
   }
 
+  if (!data.variants?.length) {
+    throw new Error("Product must include at least one variant");
+  }
+
   const variants = (data.variants ?? []).map((variant, index) => {
     const colorName = String(variant.colorName ?? "").trim();
     const size = String(variant.size ?? "").trim();
+    const shopSection = String(variant.shopSection ?? "").trim();
     const currency = String(variant.currency ?? "USD")
       .trim()
       .toUpperCase();
@@ -320,9 +328,15 @@ const normalizeProductInput = (data: UpsertProductInput) => {
 
     if (!colorName) throw new Error(`Variant ${index + 1}: color is required`);
     if (!size) throw new Error(`Variant ${index + 1}: size is required`);
+    if (!shopSection) throw new Error(`Variant ${index + 1}: shop section is required`);
     if (!isSizeOption(size)) {
       throw new Error(
         `Variant ${index + 1}: unsupported size. Allowed values: ${SIZE_OPTIONS.join(", ")}`,
+      );
+    }
+    if (!isShopSectionOption(shopSection)) {
+      throw new Error(
+        `Variant ${index + 1}: unsupported shop section. Allowed values: ${SHOP_SECTION_OPTIONS.join(", ")}`,
       );
     }
     if (!isCurrencyOption(currency)) {
@@ -336,6 +350,9 @@ const normalizeProductInput = (data: UpsertProductInput) => {
     if (!Number.isFinite(stock) || stock < 0) {
       throw new Error(`Variant ${index + 1}: stock must be zero or greater`);
     }
+    if (!variant.images?.length) {
+      throw new Error(`Variant ${index + 1}: at least one image is required`);
+    }
     if (
       compareAtPrice !== null &&
       (!Number.isFinite(compareAtPrice) || compareAtPrice < price)
@@ -347,6 +364,7 @@ const normalizeProductInput = (data: UpsertProductInput) => {
 
     return {
       id: variant.id,
+      shopSection,
       colorName,
       colorHex: variant.colorHex?.trim() || null,
       size,
@@ -478,22 +496,7 @@ export async function createAdminProduct(data: UpsertProductInput) {
   const net = computeFinalPrice(normalized.basePrice, normalized.discountPercentage);
   const vatRate = Math.max(0, normalized.vatRate ?? 20);
   const finalPriceComputed = Number((net * (1 + vatRate / 100)).toFixed(2));
-
-  const variantsPayload = normalized.variants.length
-    ? normalized.variants
-    : [
-        {
-          colorName: "Default",
-          colorHex: null,
-          size: "Unique",
-          price: finalPriceComputed,
-          compareAtPrice: normalized.basePrice,
-          currency: "USD",
-          stock: 0,
-          isActive: true,
-          images: [],
-        },
-      ];
+  const variantsPayload = normalized.variants;
 
   const minVariantPrice = variantsPayload.reduce(
     (min, v) => Math.min(min, Number(v.price)),
@@ -540,6 +543,7 @@ export async function createAdminProduct(data: UpsertProductInput) {
         data: {
           productId: createdProduct.id,
           sku,
+          shopSection: variant.shopSection,
           colorName: variant.colorName,
           colorHex: variant.colorHex ?? null,
           size: variant.size,
@@ -587,6 +591,7 @@ export async function updateAdminProduct(data: UpsertProductInput & { id: string
           id: v.id,
           data: {
             colorName: v.colorName,
+            shopSection: v.shopSection,
             colorHex: v.colorHex ?? null,
             size: v.size,
             price: v.price,
@@ -600,8 +605,9 @@ export async function updateAdminProduct(data: UpsertProductInput & { id: string
       } else {
         toCreate.push({
           productId: data.id,
-          colorName: v.colorName,
-          colorHex: v.colorHex ?? null,
+            colorName: v.colorName,
+            shopSection: v.shopSection,
+            colorHex: v.colorHex ?? null,
           size: v.size,
           price: v.price,
           compareAtPrice: v.compareAtPrice ?? null,
@@ -675,11 +681,11 @@ export async function updateAdminProduct(data: UpsertProductInput & { id: string
       }
     }
 
-    const minVariantPrice = incoming.length
-      ? incoming.reduce((min, v) => Math.min(min, Number(v.price)), Infinity)
-      : Infinity;
-    const finalPrice =
-      minVariantPrice === Infinity ? computedFinalPrice : minVariantPrice;
+    const minVariantPrice = incoming.reduce(
+      (min, v) => Math.min(min, Number(v.price)),
+      Infinity,
+    );
+    const finalPrice = minVariantPrice === Infinity ? computedFinalPrice : minVariantPrice;
 
     const updated = await tx.product.update({
       where: { id: normalized.id },
