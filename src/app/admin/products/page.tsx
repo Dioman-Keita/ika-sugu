@@ -133,7 +133,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                     >
                       <td className="px-5 py-3">
                         <Link
-                          href={`/shop/product/${product.slug}`}
+                          href={`/shop/product/${product.id}/${product.slug}`}
                           className="font-medium text-foreground hover:underline truncate block max-w-[200px]"
                           target="_blank"
                         >

@@ -1047,6 +1047,12 @@ export const messages: Record<Locale, Messages> = {
       "La traduction française requiert un nom et une description.",
     "admin.product.form.error.translation.en":
       "La traduction anglaise requiert un nom et une description.",
+    "admin.product.form.error.variants.required":
+      "Ajoutez au moins une variante valide avant d'enregistrer.",
+    "admin.product.form.error.variant.shopSection":
+      "Variante {index} : choisissez une section boutique.",
+    "admin.product.form.error.variant.images":
+      "Variante {index} : ajoutez au moins une image.",
     "admin.product.status.draft": "Brouillon",
     "admin.product.status.published": "Publié",
     "admin.product.status.archived": "Archivé",

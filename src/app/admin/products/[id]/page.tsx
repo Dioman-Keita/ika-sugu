@@ -126,7 +126,7 @@ export default async function AdminProductDetailPage({ params }: Props) {
           </p>
           <h1 className="text-2xl font-semibold text-foreground">{shaped.name}</h1>
           <Link
-            href={`/shop/product/${shaped.slug}`}
+            href={`/shop/product/${shaped.id}/${shaped.slug}`}
             className="text-primary text-sm hover:underline"
             target="_blank"
           >

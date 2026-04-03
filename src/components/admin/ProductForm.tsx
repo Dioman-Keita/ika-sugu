@@ -39,7 +39,7 @@ type VariantInput = {
   price: number | string;
   compareAtPrice?: number | string | null;
   currency?: string;
-  stock?: number;
+  stock?: number | string;
   isActive?: boolean;
   images: { url: string; isCover: boolean }[];
 };
@@ -103,8 +103,24 @@ const parseDecimalInput = (value: string | number | null | undefined) => {
 };
 
 const formatDecimalInput = (value: string | number | null | undefined) => {
-  if (value == null) return "";
+  if (value === null || value === undefined) return "";
   return typeof value === "number" ? String(value) : value;
+};
+
+const parseIntegerInput = (value: string | number | null | undefined) => {
+  if (typeof value === "number") return Number.isFinite(value) ? Math.max(0, Math.trunc(value)) : 0;
+
+  const digitsOnly = String(value ?? "").replace(/\D+/g, "");
+  if (!digitsOnly) return 0;
+
+  const parsed = Number(digitsOnly);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const formatIntegerInput = (value: string | number | null | undefined) => {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "number") return String(Math.max(0, Math.trunc(value)));
+  return String(value).replace(/\D+/g, "");
 };
 
 export default function ProductForm({
@@ -165,15 +181,22 @@ export default function ProductForm({
     labels["variant.help"] ??
     "Color and size identify each variant; use Standard/Taille unique when there is only one option.";
   const skuFallbackText = labels["variant.skuFallback"] ?? "SKU generated automatically";
+  const missingShopSectionMessage =
+    labels["error.variant.shopSection"] ?? "Variant {index}: shop section is required";
+  const missingImagesMessage =
+    labels["error.variant.images"] ?? "Variant {index}: at least one image is required";
+  const vatHintTemplate =
+    labels["field.vatHint"] ?? "VAT {rate}% applied on the discounted base price.";
 
   const [variants, setVariants] = useState<VariantInput[]>(
     initial?.variants?.map((variant) => ({
       ...variant,
       price: formatDecimalInput(variant.price),
       compareAtPrice:
-        variant.compareAtPrice == null
+        variant.compareAtPrice === null || variant.compareAtPrice === undefined
           ? null
           : formatDecimalInput(variant.compareAtPrice),
+      stock: formatIntegerInput(variant.stock),
       images: variant.images ?? [],
     })) ?? [
       {
@@ -182,7 +205,7 @@ export default function ProductForm({
         colorName: "Standard",
         size: "Unique",
         price: String(initial?.basePrice ?? 0),
-        stock: 0,
+        stock: "0",
         isActive: true,
         images: [],
       },
@@ -237,7 +260,7 @@ export default function ProductForm({
         colorName: "",
         size: "",
         price: 0,
-        stock: 0,
+        stock: "0",
         isActive: true,
         images: [],
       },
@@ -346,7 +369,7 @@ export default function ProductForm({
     );
     if (missingShopSectionIndex >= 0) {
       failValidation(
-        labels["error.variant.shopSection"].replace(
+        missingShopSectionMessage.replace(
           "{index}",
           String(missingShopSectionIndex + 1),
         ),
@@ -359,7 +382,7 @@ export default function ProductForm({
     );
     if (missingImagesIndex >= 0) {
       failValidation(
-        labels["error.variant.images"].replace(
+        missingImagesMessage.replace(
           "{index}",
           String(missingImagesIndex + 1),
         ),
@@ -398,7 +421,7 @@ export default function ProductForm({
             ? null
             : parseDecimalInput(variant.compareAtPrice),
         currency: variant.currency || "USD",
-        stock: Number(variant.stock) || 0,
+        stock: parseIntegerInput(variant.stock),
         isActive: variant.isActive ?? true,
         images:
           variant.images
@@ -580,7 +603,7 @@ export default function ProductForm({
             </p>
             {labels["field.vatHint"] && (
               <p className="text-xs text-muted-foreground">
-                {labels["field.vatHint"].replace(
+                {vatHintTemplate.replace(
                   "{rate}",
                   parseDecimalInput(vatRate).toFixed(1),
                 )}
@@ -912,12 +935,13 @@ export default function ProductForm({
                   {labels["variant.stockLabel"] ?? "Stock"}
                 </label>
                 <input
-                  type="number"
-                  step="1"
-                  min="0"
-                  value={variant.stock ?? 0}
+                  type="text"
+                  inputMode="numeric"
+                  value={formatIntegerInput(variant.stock)}
                   onChange={(e) =>
-                    updateVariant(variant.id, { stock: Number(e.target.value) })
+                    updateVariant(variant.id, {
+                      stock: e.target.value.replace(/\D+/g, ""),
+                    })
                   }
                   className="w-full rounded-xl border border-border bg-surface-card px-4 py-3 text-sm text-foreground"
                   placeholder={labels["placeholder.variant.stock"]}
