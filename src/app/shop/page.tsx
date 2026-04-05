@@ -103,6 +103,7 @@ export default async function ShopPage({
     page: requestedPage,
     pageSize: PAGE_SIZE,
     locale,
+    section: sectionParam ?? null,
     category: categoryParam ?? null,
     style: styleParam ?? null,
     color: colorParam ?? null,

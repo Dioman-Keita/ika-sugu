@@ -9,6 +9,7 @@ import { useUiPreferences } from "@/lib/ui-preferences";
 import { translateAttribute } from "@/lib/i18n/messages";
 import { useRemoveItemMutation, useUpdateQuantityMutation } from "@/hooks/use-cart";
 import { cn } from "@/lib/utils";
+import { formatMoney } from "@/lib/currency/shared";
 
 export type CartVariantMoney = number | { toNumber: () => number };
 
@@ -37,6 +38,7 @@ export type ProductCardProps = {
       images: string[];
       price: CartVariantMoney;
       compareAtPrice: CartVariantMoney | null;
+      currency?: string | null;
       product: {
         id: string;
         slug: string;
@@ -144,11 +146,11 @@ const ProductCard = ({ data }: ProductCardProps) => {
         <div className="flex items-center flex-wrap justify-between">
           <div className="flex items-center space-x-[5px] xl:space-x-2.5">
             <span className="font-bold text-foreground text-xl xl:text-2xl">
-              ${finalPrice}
+              {formatMoney(finalPrice, data.variant.currency, locale)}
             </span>
             {discountPercentage > 0 && (
               <span className="font-bold text-foreground/40 line-through text-xl xl:text-2xl">
-                ${basePrice}
+                {formatMoney(basePrice, data.variant.currency, locale)}
               </span>
             )}
             {discountPercentage > 0 && (

@@ -1,13 +1,19 @@
+"use client";
+
 import Rating from "../ui/Rating";
 import Image from "next/image";
 import Link from "next/link";
 import { Product } from "@/types/product.types";
+import { useUiPreferences } from "@/lib/ui-preferences";
+import { formatMoney } from "@/lib/currency/shared";
 
 type ProductCardProps = {
   data: Product;
 };
 
 const ProductCard = ({ data }: ProductCardProps) => {
+  const { locale } = useUiPreferences();
+
   return (
     <Link
       href={`/shop/product/${data.id}/${data.slug}`}
@@ -40,11 +46,11 @@ const ProductCard = ({ data }: ProductCardProps) => {
       </div>
       <div className="flex items-center space-x-1.25 xl:space-x-2.5">
         <span className="font-bold text-foreground text-xl xl:text-2xl">
-          ${data.finalPrice}
+          {formatMoney(data.finalPrice, data.currency, locale)}
         </span>
         {data.discountPercentage > 0 && (
           <span className="font-bold text-foreground/40 line-through text-xl xl:text-2xl">
-            ${data.basePrice}
+            {formatMoney(data.basePrice, data.currency, locale)}
           </span>
         )}
         {data.discountPercentage > 0 && (

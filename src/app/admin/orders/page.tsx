@@ -111,7 +111,14 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
                       colSpan={6}
                       className="px-5 py-10 text-center text-muted-foreground"
                     >
-                      {m["admin.orders.noOrders"]}
+                      <div className="mx-auto max-w-md space-y-3">
+                        <p className="text-base font-semibold text-foreground">
+                          {m["admin.orders.empty.title"]}
+                        </p>
+                        <p className="text-sm leading-6 text-muted-foreground">
+                          {m["admin.orders.empty.description"]}
+                        </p>
+                      </div>
                     </td>
                   </tr>
                 ) : (
@@ -135,7 +142,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
                       <td className="px-5 py-3 text-right font-semibold text-foreground">
                         {new Intl.NumberFormat(locale, {
                           style: "currency",
-                          currency: "USD",
+                          currency: order.currency,
                         }).format(order.total)}
                       </td>
                       <td className="px-5 py-3">

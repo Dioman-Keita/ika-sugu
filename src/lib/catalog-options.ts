@@ -9,6 +9,15 @@ export const DRESS_STYLE_OPTIONS = [
 
 export type DressStyleOption = (typeof DRESS_STYLE_OPTIONS)[number];
 
+export const SHOP_SECTION_OPTIONS = [
+  "men-clothes",
+  "women-clothes",
+  "kids-clothes",
+  "bag-shoes",
+] as const;
+
+export type ShopSectionOption = (typeof SHOP_SECTION_OPTIONS)[number];
+
 export const SIZE_LABELS = {
   "XX-Small": "XX-Petit",
   "X-Small": "Très petit",
@@ -33,6 +42,12 @@ export function isDressStyleOption(
   value: string | null | undefined,
 ): value is DressStyleOption {
   return Boolean(value && DRESS_STYLE_OPTIONS.includes(value as DressStyleOption));
+}
+
+export function isShopSectionOption(
+  value: string | null | undefined,
+): value is ShopSectionOption {
+  return Boolean(value && SHOP_SECTION_OPTIONS.includes(value as ShopSectionOption));
 }
 
 export function isCurrencyOption(

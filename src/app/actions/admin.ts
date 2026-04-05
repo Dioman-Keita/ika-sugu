@@ -14,12 +14,24 @@ import { deleteStorageFiles } from "@/lib/storage/deleteImages";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import {
   CURRENCY_OPTIONS,
+  type CurrencyOption,
   DRESS_STYLE_OPTIONS,
+  SHOP_SECTION_OPTIONS,
   SIZE_OPTIONS,
   isCurrencyOption,
   isDressStyleOption,
+  isShopSectionOption,
   isSizeOption,
 } from "@/lib/catalog-options";
+import {
+  convertMoney,
+  getSiteCurrencySettings,
+  getCurrentTargetCurrency,
+  syncExchangeRates,
+  updateSiteCurrencySettings,
+} from "@/lib/currency/server";
+import { ensureCoreApplicationData } from "@/lib/bootstrap/application";
+import { DEFAULT_TARGET_CURRENCY } from "@/lib/currency/shared";
 
 const PAGE_SIZE = 15;
 const REVENUE_GENERATING_STATUSES: OrderStatus[] = [
@@ -42,96 +54,206 @@ const assertAdmin = async () => {
   if (!isAdminEmail(session.user?.email)) throw new Error("Forbidden");
 };
 
+export async function getAdminCurrencySettings() {
+  await assertAdmin();
+  await ensureCoreApplicationData();
+
+  const settings = await getSiteCurrencySettings();
+  const latestRates = await db.exchangeRate.findMany({
+    orderBy: [{ fetchedAt: "desc" }, { createdAt: "desc" }],
+    take: 6,
+    select: {
+      id: true,
+      baseCurrency: true,
+      quoteCurrency: true,
+      rate: true,
+      fetchedAt: true,
+      provider: true,
+    },
+  });
+
+  return {
+    targetCurrency: settings.targetCurrency,
+    ratesProvider: settings.ratesProvider,
+    exchangeRatesUpdatedAt: settings.exchangeRatesUpdatedAt,
+    latestRates: latestRates.map((rate) => ({
+      ...rate,
+      rate: Number(rate.rate),
+    })),
+  };
+}
+
+export async function updateAdminCurrencySettingsAction(targetCurrency: CurrencyOption) {
+  await assertAdmin();
+
+  if (!isCurrencyOption(targetCurrency)) {
+    throw new Error(
+      `Unsupported target currency. Allowed values: ${CURRENCY_OPTIONS.join(", ")}`,
+    );
+  }
+
+  const updated = await updateSiteCurrencySettings(targetCurrency);
+  revalidatePath("/admin/settings");
+  revalidatePath("/");
+  revalidatePath("/shop");
+  revalidatePath("/cart");
+  revalidatePath("/checkout");
+
+  return {
+    targetCurrency: updated.targetCurrency,
+    exchangeRatesUpdatedAt: updated.exchangeRatesUpdatedAt,
+  };
+}
+
+export async function syncAdminExchangeRatesAction() {
+  await assertAdmin();
+
+  const result = await syncExchangeRates();
+  revalidatePath("/admin/settings");
+  revalidatePath("/");
+  revalidatePath("/shop");
+  revalidatePath("/cart");
+  revalidatePath("/checkout");
+
+  return result;
+}
+
 // ─── Stat helpers ─────────────────────────────────────────────────────────────
 
 export async function getAdminStats() {
   await assertAdmin();
-  const [
-    totalOrders,
-    totalUsers,
-    totalProducts,
-    pendingReviews,
-    revenueAgg,
-    ordersByStatusRaw,
-    monthlyRevenueRaw,
-  ] = await Promise.all([
-    db.order.count(),
-    db.user.count(),
-    db.product.count(),
-    db.review.count({ where: { status: ReviewStatus.PENDING } }),
-    db.order.aggregate({
-      _sum: { total: true },
-      where: {
-        status: { in: REVENUE_GENERATING_STATUSES },
-      },
-    }),
-    db.order.groupBy({
-      by: ["status"],
-      _count: { id: true },
-    }),
-    db.$queryRaw<Array<{ month: Date; revenue: number }>>(Prisma.sql`
-      SELECT
-        DATE_TRUNC('month', "createdAt") AS month,
-        COALESCE(SUM(CASE WHEN status IN (${Prisma.join(REVENUE_GENERATING_STATUSES)}) THEN total ELSE 0 END), 0) AS revenue
-      FROM "Order"
-      WHERE "createdAt" >= NOW() - INTERVAL '6 months'
-      GROUP BY DATE_TRUNC('month', "createdAt")
-      ORDER BY month ASC
-    `),
-  ]);
+  await ensureCoreApplicationData();
+  const targetCurrency = await getCurrentTargetCurrency().catch(
+    () => DEFAULT_TARGET_CURRENCY,
+  );
 
-  const totalRevenue = revenueAgg._sum.total?.toNumber() ?? 0;
+  try {
+    const [
+      totalOrders,
+      totalUsers,
+      totalProducts,
+      pendingReviews,
+      ordersByStatusRaw,
+      revenueOrders,
+    ] = await Promise.all([
+      db.order.count(),
+      db.user.count(),
+      db.product.count(),
+      db.review.count({ where: { status: ReviewStatus.PENDING } }),
+      db.order.groupBy({
+        by: ["status"],
+        _count: { id: true },
+      }),
+      db.order.findMany({
+        where: {
+          status: { in: REVENUE_GENERATING_STATUSES },
+        },
+        select: {
+          total: true,
+          currency: true,
+          createdAt: true,
+        },
+      }),
+    ]);
 
-  const ordersByStatus: Record<string, number> = {};
-  for (const row of ordersByStatusRaw) {
-    ordersByStatus[row.status] = row._count.id;
+    const convertedRevenueOrders = await Promise.all(
+      revenueOrders.map(async (order) => {
+        const converted = await convertMoney({
+          amount: order.total.toNumber(),
+          sourceCurrency: order.currency,
+          targetCurrency,
+        });
+
+        return {
+          createdAt: order.createdAt,
+          total: converted.amount,
+        };
+      }),
+    );
+
+    const totalRevenue = convertedRevenueOrders.reduce(
+      (sum, order) => sum + order.total,
+      0,
+    );
+
+    const ordersByStatus: Record<string, number> = {};
+    for (const row of ordersByStatusRaw) {
+      ordersByStatus[row.status] = row._count.id;
+    }
+
+    const now = new Date();
+    const months: { month: string; revenue: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = d.toISOString().slice(0, 7);
+      const revenue = convertedRevenueOrders
+        .filter((order) => order.createdAt.toISOString().slice(0, 7) === key)
+        .reduce((sum, order) => sum + order.total, 0);
+      months.push({ month: key, revenue });
+    }
+
+    return {
+      totalRevenue,
+      currency: targetCurrency,
+      totalOrders,
+      totalUsers,
+      totalProducts,
+      pendingReviews,
+      ordersByStatus,
+      monthlyRevenue: months,
+    };
+  } catch (error) {
+    console.error("[admin] Failed to build overview stats", error);
+    const now = new Date();
+    const months: { month: string; revenue: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({ month: d.toISOString().slice(0, 7), revenue: 0 });
+    }
+
+    return {
+      totalRevenue: 0,
+      currency: targetCurrency,
+      totalOrders: 0,
+      totalUsers: 0,
+      totalProducts: 0,
+      pendingReviews: 0,
+      ordersByStatus: {},
+      monthlyRevenue: months,
+    };
   }
-
-  const now = new Date();
-  const months: { month: string; revenue: number }[] = [];
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const key = d.toISOString().slice(0, 7); // "2025-01"
-    const found = monthlyRevenueRaw.find((r) => {
-      const rKey = new Date(r.month).toISOString().slice(0, 7);
-      return rKey === key;
-    });
-    months.push({ month: key, revenue: found ? Number(found.revenue) : 0 });
-  }
-
-  return {
-    totalRevenue,
-    totalOrders,
-    totalUsers,
-    totalProducts,
-    pendingReviews,
-    ordersByStatus,
-    monthlyRevenue: months,
-  };
 }
 
 // ─── Recent Orders (for overview) ─────────────────────────────────────────────
 
 export async function getRecentOrders() {
   await assertAdmin();
-  const orders = await db.order.findMany({
-    take: 6,
-    orderBy: { createdAt: "desc" },
-    include: {
-      user: { select: { name: true, email: true } },
-      items: { select: { quantity: true } },
-    },
-  });
+  await ensureCoreApplicationData();
 
-  return orders.map((o) => ({
-    id: o.id,
-    userName: o.user.name,
-    userEmail: o.user.email,
-    total: o.total.toNumber(),
-    status: o.status,
-    createdAt: o.createdAt,
-    itemCount: o.items.reduce((s, i) => s + i.quantity, 0),
-  }));
+  try {
+    const orders = await db.order.findMany({
+      take: 6,
+      orderBy: { createdAt: "desc" },
+      include: {
+        user: { select: { name: true, email: true } },
+        items: { select: { quantity: true } },
+      },
+    });
+
+    return orders.map((o) => ({
+      id: o.id,
+      userName: o.user.name,
+      userEmail: o.user.email,
+      total: o.total.toNumber(),
+      currency: o.currency,
+      status: o.status,
+      createdAt: o.createdAt,
+      itemCount: o.items.reduce((s, i) => s + i.quantity, 0),
+    }));
+  } catch (error) {
+    console.error("[admin] Failed to load recent orders", error);
+    return [];
+  }
 }
 
 // ─── Products ─────────────────────────────────────────────────────────────────
@@ -144,6 +266,7 @@ export async function getAdminProducts({
   status?: ProductStatus;
 } = {}) {
   await assertAdmin();
+  const targetCurrency = await getCurrentTargetCurrency();
   const skip = (page - 1) * PAGE_SIZE;
   const where: Prisma.ProductWhereInput = status ? { status } : {};
   const [total, products] = await Promise.all([
@@ -157,29 +280,59 @@ export async function getAdminProducts({
         category: { select: { name: true } },
         variants: {
           where: { isActive: true },
-          select: { id: true, stock: true },
+          select: { id: true, stock: true, price: true, currency: true },
         },
       },
     }),
   ]);
 
+  const mappedProducts = await Promise.all(
+    products.map(async (product) => {
+      const convertedVariantPrices = await Promise.all(
+        product.variants.map(async (variant) => {
+          const converted = await convertMoney({
+            amount: variant.price.toNumber(),
+            sourceCurrency: variant.currency,
+            targetCurrency,
+          });
+
+          return converted.amount;
+        }),
+      );
+
+      const displayPrice =
+        convertedVariantPrices.length > 0
+          ? Math.min(...convertedVariantPrices)
+          : (
+              await convertMoney({
+                amount: product.finalPrice.toNumber(),
+                sourceCurrency: product.variants[0]?.currency ?? DEFAULT_TARGET_CURRENCY,
+                targetCurrency,
+              })
+            ).amount;
+
+      return {
+        id: product.id,
+        name: product.name,
+        slug: product.slug,
+        category: product.category.name,
+        status: product.status,
+        basePrice: product.basePrice.toNumber(),
+        discountPercentage: product.discountPercentage,
+        finalPrice: displayPrice,
+        currency: targetCurrency,
+        activeVariants: product.variants.length,
+        totalStock: product.variants.reduce((sum, variant) => sum + variant.stock, 0),
+        createdAt: product.createdAt,
+      };
+    }),
+  );
+
   return {
     total,
     totalPages: Math.max(1, Math.ceil(total / PAGE_SIZE)),
     currentPage: page,
-    products: products.map((p) => ({
-      id: p.id,
-      name: p.name,
-      slug: p.slug,
-      category: p.category.name,
-      status: p.status,
-      basePrice: p.basePrice.toNumber(),
-      discountPercentage: p.discountPercentage,
-      finalPrice: p.finalPrice.toNumber(),
-      activeVariants: p.variants.length,
-      totalStock: p.variants.reduce((s, v) => s + v.stock, 0),
-      createdAt: p.createdAt,
-    })),
+    products: mappedProducts,
   };
 }
 
@@ -201,6 +354,7 @@ type UpsertProductInput = {
   }>;
   variants?: Array<{
     id?: string;
+    shopSection?: string | null;
     colorName: string;
     colorHex?: string | null;
     size: string;
@@ -216,6 +370,32 @@ type UpsertProductInput = {
 const computeFinalPrice = (base: number, discount?: number) => {
   const pct = Math.max(0, Math.min(100, discount ?? 0));
   return Math.max(0, Number((base * (1 - pct / 100)).toFixed(2)));
+};
+
+const deriveStoredFinalPrice = (
+  variants: Array<{ price: number; currency: string }>,
+  fallbackPrice: number,
+) => {
+  if (variants.length === 0) return fallbackPrice;
+
+  const normalizedCurrencies = new Set(
+    variants.map((variant) =>
+      String(variant.currency ?? "")
+        .trim()
+        .toUpperCase(),
+    ),
+  );
+
+  if (normalizedCurrencies.size > 1) {
+    return fallbackPrice;
+  }
+
+  const minVariantPrice = variants.reduce(
+    (min, variant) => Math.min(min, Number(variant.price)),
+    Infinity,
+  );
+
+  return minVariantPrice === Infinity ? fallbackPrice : minVariantPrice;
 };
 
 const slugify = (value: string) =>
@@ -304,9 +484,14 @@ const normalizeProductInput = (data: UpsertProductInput) => {
     throw new Error("Missing source locale translation");
   }
 
+  if (!data.variants?.length) {
+    throw new Error("Product must include at least one variant");
+  }
+
   const variants = (data.variants ?? []).map((variant, index) => {
     const colorName = String(variant.colorName ?? "").trim();
     const size = String(variant.size ?? "").trim();
+    const shopSection = String(variant.shopSection ?? "").trim();
     const currency = String(variant.currency ?? "USD")
       .trim()
       .toUpperCase();
@@ -320,9 +505,15 @@ const normalizeProductInput = (data: UpsertProductInput) => {
 
     if (!colorName) throw new Error(`Variant ${index + 1}: color is required`);
     if (!size) throw new Error(`Variant ${index + 1}: size is required`);
+    if (!shopSection) throw new Error(`Variant ${index + 1}: shop section is required`);
     if (!isSizeOption(size)) {
       throw new Error(
         `Variant ${index + 1}: unsupported size. Allowed values: ${SIZE_OPTIONS.join(", ")}`,
+      );
+    }
+    if (!isShopSectionOption(shopSection)) {
+      throw new Error(
+        `Variant ${index + 1}: unsupported shop section. Allowed values: ${SHOP_SECTION_OPTIONS.join(", ")}`,
       );
     }
     if (!isCurrencyOption(currency)) {
@@ -336,6 +527,9 @@ const normalizeProductInput = (data: UpsertProductInput) => {
     if (!Number.isFinite(stock) || stock < 0) {
       throw new Error(`Variant ${index + 1}: stock must be zero or greater`);
     }
+    if (!variant.images?.length) {
+      throw new Error(`Variant ${index + 1}: at least one image is required`);
+    }
     if (
       compareAtPrice !== null &&
       (!Number.isFinite(compareAtPrice) || compareAtPrice < price)
@@ -347,6 +541,7 @@ const normalizeProductInput = (data: UpsertProductInput) => {
 
     return {
       id: variant.id,
+      shopSection,
       colorName,
       colorHex: variant.colorHex?.trim() || null,
       size,
@@ -478,28 +673,8 @@ export async function createAdminProduct(data: UpsertProductInput) {
   const net = computeFinalPrice(normalized.basePrice, normalized.discountPercentage);
   const vatRate = Math.max(0, normalized.vatRate ?? 20);
   const finalPriceComputed = Number((net * (1 + vatRate / 100)).toFixed(2));
-
-  const variantsPayload = normalized.variants.length
-    ? normalized.variants
-    : [
-        {
-          colorName: "Default",
-          colorHex: null,
-          size: "Unique",
-          price: finalPriceComputed,
-          compareAtPrice: normalized.basePrice,
-          currency: "USD",
-          stock: 0,
-          isActive: true,
-          images: [],
-        },
-      ];
-
-  const minVariantPrice = variantsPayload.reduce(
-    (min, v) => Math.min(min, Number(v.price)),
-    Infinity,
-  );
-  const finalPrice = minVariantPrice === Infinity ? finalPriceComputed : minVariantPrice;
+  const variantsPayload = normalized.variants;
+  const finalPrice = deriveStoredFinalPrice(variantsPayload, finalPriceComputed);
 
   const product = await db.$transaction(async (tx) => {
     const createdProduct = await tx.product.create({
@@ -540,6 +715,7 @@ export async function createAdminProduct(data: UpsertProductInput) {
         data: {
           productId: createdProduct.id,
           sku,
+          shopSection: variant.shopSection,
           colorName: variant.colorName,
           colorHex: variant.colorHex ?? null,
           size: variant.size,
@@ -587,6 +763,7 @@ export async function updateAdminProduct(data: UpsertProductInput & { id: string
           id: v.id,
           data: {
             colorName: v.colorName,
+            shopSection: v.shopSection,
             colorHex: v.colorHex ?? null,
             size: v.size,
             price: v.price,
@@ -601,6 +778,7 @@ export async function updateAdminProduct(data: UpsertProductInput & { id: string
         toCreate.push({
           productId: data.id,
           colorName: v.colorName,
+          shopSection: v.shopSection,
           colorHex: v.colorHex ?? null,
           size: v.size,
           price: v.price,
@@ -632,13 +810,18 @@ export async function updateAdminProduct(data: UpsertProductInput & { id: string
     if (toUpdate.length) {
       for (const { id, data: variantData } of toUpdate) {
         const existingVariant = existingById.get(id);
-        const currentColorName = String(variantData.colorName ?? existingVariant?.colorName ?? "default");
+        const currentColorName = String(
+          variantData.colorName ?? existingVariant?.colorName ?? "default",
+        );
         const currentSize = String(variantData.size ?? existingVariant?.size ?? "unique");
 
-        const identityChanged = existingVariant && (existingVariant.colorName !== currentColorName || existingVariant.size !== currentSize);
+        const identityChanged =
+          existingVariant &&
+          (existingVariant.colorName !== currentColorName ||
+            existingVariant.size !== currentSize);
 
         const sku =
-          (existingVariant?.sku && !identityChanged)
+          existingVariant?.sku && !identityChanged
             ? existingVariant.sku
             : await generateUniqueSku(
                 tx,
@@ -675,11 +858,7 @@ export async function updateAdminProduct(data: UpsertProductInput & { id: string
       }
     }
 
-    const minVariantPrice = incoming.length
-      ? incoming.reduce((min, v) => Math.min(min, Number(v.price)), Infinity)
-      : Infinity;
-    const finalPrice =
-      minVariantPrice === Infinity ? computedFinalPrice : minVariantPrice;
+    const finalPrice = deriveStoredFinalPrice(incoming, computedFinalPrice);
 
     const updated = await tx.product.update({
       where: { id: normalized.id },
@@ -734,13 +913,31 @@ export async function updateAdminProduct(data: UpsertProductInput & { id: string
   return product;
 }
 
-export async function getAdminCategories() {
+export async function getAdminCategories(locale?: ProductAuthoringLocale) {
   await assertAdmin();
+  await ensureCoreApplicationData();
   const cats = await db.category.findMany({
     orderBy: { name: "asc" },
-    select: { id: true, name: true, slug: true },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      translations: locale
+        ? {
+            where: { locale },
+            select: { name: true },
+            take: 1,
+          }
+        : false,
+    },
   });
-  return cats;
+  return cats
+    .map((category) => ({
+      id: category.id,
+      slug: category.slug,
+      name: category.translations?.[0]?.name ?? category.name,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 // ─── Orders ───────────────────────────────────────────────────────────────────
@@ -779,6 +976,7 @@ export async function getAdminOrders({
       userName: o.user.name,
       userEmail: o.user.email,
       total: o.total.toNumber(),
+      currency: o.currency,
       status: o.status,
       createdAt: o.createdAt,
       itemCount: o.items.reduce((s, i) => s + i.quantity, 0),

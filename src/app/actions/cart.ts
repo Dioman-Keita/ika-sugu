@@ -6,6 +6,7 @@ import { cookies, headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import crypto from "node:crypto";
 import type { Prisma } from "@/generated/prisma/client";
+import { convertMoney, getCurrentTargetCurrency } from "@/lib/currency/server";
 
 const GUEST_CART_COOKIE_NAME =
   process.env.NEXT_PUBLIC_GUEST_CART_COOKIE_NAME || "guest_cart_id";
@@ -71,6 +72,66 @@ function emptyCartShell(): CartDTO {
     items: [],
     createdAt: new Date(0).toISOString(),
     updatedAt: new Date(0).toISOString(),
+  };
+}
+
+async function applyDisplayCurrencyToCart<
+  T extends { items: Array<Record<string, unknown>> },
+>(cart: T): Promise<T> {
+  const targetCurrency = await getCurrentTargetCurrency();
+
+  const items = await Promise.all(
+    cart.items.map(async (item) => {
+      const variant = item.variant as
+        | {
+            price: { toNumber: () => number } | number;
+            compareAtPrice: { toNumber: () => number } | number | null;
+            currency?: string | null;
+          }
+        | undefined;
+
+      if (!variant) return item;
+
+      const rawPrice =
+        typeof variant.price === "number" ? variant.price : variant.price.toNumber();
+      const convertedPrice = await convertMoney({
+        amount: rawPrice,
+        sourceCurrency: variant.currency,
+        targetCurrency,
+      });
+
+      const rawCompareAtPrice =
+        variant.compareAtPrice == null
+          ? null
+          : typeof variant.compareAtPrice === "number"
+            ? variant.compareAtPrice
+            : variant.compareAtPrice.toNumber();
+
+      const convertedCompareAtPrice =
+        rawCompareAtPrice == null
+          ? null
+          : await convertMoney({
+              amount: rawCompareAtPrice,
+              sourceCurrency: variant.currency,
+              targetCurrency,
+            });
+
+      return {
+        ...item,
+        variant: {
+          ...variant,
+          price: convertedPrice.amount,
+          compareAtPrice: convertedCompareAtPrice?.amount ?? null,
+          currency: convertedPrice.currency,
+          sourceCurrency: convertedPrice.sourceCurrency,
+        },
+      };
+    }),
+  );
+
+  return {
+    ...cart,
+    items,
   };
 }
 
@@ -147,7 +208,9 @@ export async function getCartAction(options: GetCartOptions = {}): Promise<CartD
     });
   }
 
-  return serializeDecimals(cart) as CartDTO;
+  const cartWithDisplayCurrency = await applyDisplayCurrencyToCart(cart);
+
+  return serializeDecimals(cartWithDisplayCurrency) as CartDTO;
 }
 
 /**

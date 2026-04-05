@@ -1,9 +1,8 @@
-import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
 import { Locale, parseLocale } from "@/lib/i18n/locale";
 import { messages } from "@/lib/i18n/messages";
-import { getAdminCategories } from "@/app/actions/admin";
+import { getAdminCategories, getAdminCurrencySettings } from "@/app/actions/admin";
 import ProductForm from "@/components/admin/ProductForm";
 
 export default async function AdminNewProductPage() {
@@ -11,8 +10,34 @@ export default async function AdminNewProductPage() {
   const locale: Locale = parseLocale(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
   const m = messages[locale];
 
-  const categories = await getAdminCategories();
-  if (!categories.length) return notFound();
+  const categories = await getAdminCategories(locale);
+  const currencySettings = await getAdminCurrencySettings();
+  if (!categories.length) {
+    return (
+      <div className="p-6 space-y-6">
+        <div>
+          <p className="text-sm text-muted-foreground">
+            {m["admin.product.form.subtitle"]}
+          </p>
+          <h1 className="text-2xl font-semibold text-foreground">
+            {m["admin.product.form.title.new"]}
+          </h1>
+        </div>
+
+        <div className="space-y-3 rounded-2xl border border-border bg-surface-card p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-foreground">
+            {m["admin.product.form.emptyCategories.title"]}
+          </h2>
+          <p className="text-sm leading-6 text-muted-foreground">
+            {m["admin.product.form.emptyCategories.description"]}
+          </p>
+          <code className="block rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground">
+            bun run seed
+          </code>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -29,6 +54,7 @@ export default async function AdminNewProductPage() {
         <ProductForm
           mode="create"
           categories={categories}
+          targetCurrency={currencySettings.targetCurrency}
           labels={{
             "field.slug": m["admin.product.form.slug"],
             "field.slug.hint": m["admin.product.form.slug.hint"],
@@ -36,6 +62,7 @@ export default async function AdminNewProductPage() {
             "field.sourceLocale.hint": m["admin.product.form.sourceLocale.hint"],
             "field.status": m["admin.product.form.status"],
             "field.category": m["admin.product.form.category"],
+            "field.category.hint": m["admin.product.form.category.hint"],
             "field.basePrice": m["admin.product.form.basePrice"],
             "field.basePrice.hint": m["admin.product.form.basePrice.hint"],
             "field.discount": m["admin.product.form.discount"],
@@ -46,6 +73,8 @@ export default async function AdminNewProductPage() {
             "field.dressStyle.hint": m["admin.product.form.dressStyle.hint"],
             "field.finalPrice": m["admin.product.form.finalPrice"],
             "field.finalPrice.hint": m["admin.product.form.finalPrice.hint"],
+            "field.finalPrice.currencyHint":
+              m["admin.product.form.finalPrice.currencyHint"],
             "field.vatHint": m["admin.product.form.vatHint"],
             "placeholder.slug": m["admin.product.form.placeholder.slug"],
             "placeholder.dressStyle": m["admin.product.form.placeholder.dressStyle"],
@@ -69,6 +98,10 @@ export default async function AdminNewProductPage() {
             "error.category": m["admin.product.form.error.category"],
             "error.translation.fr": m["admin.product.form.error.translation.fr"],
             "error.translation.en": m["admin.product.form.error.translation.en"],
+            "error.variants.required": m["admin.product.form.error.variants.required"],
+            "error.variant.shopSection":
+              m["admin.product.form.error.variant.shopSection"],
+            "error.variant.images": m["admin.product.form.error.variant.images"],
             "status.draft": m["admin.product.status.draft"],
             "status.published": m["admin.product.status.published"],
             "status.archived": m["admin.product.status.archived"],
@@ -78,23 +111,22 @@ export default async function AdminNewProductPage() {
             "action.save": m["admin.product.form.action.save"],
             "action.cancel": m["admin.product.form.action.cancel"],
             "action.saving": m["admin.product.form.action.saving"],
-            "action.regenerateSlug": m["admin.product.form.action.regenerateSlug"],
             "action.addVariant": m["admin.product.form.action.addVariant"],
             "action.remove": m["common.remove"],
-            "placeholder.variant.color":
-              m["admin.product.form.placeholder.variant.color"],
             "placeholder.variant.size": m["admin.product.form.placeholder.variant.size"],
             "placeholder.variant.price":
               m["admin.product.form.placeholder.variant.price"],
             "placeholder.variant.compareAtPrice":
               m["admin.product.form.placeholder.variant.compareAtPrice"],
-            "placeholder.variant.colorHex":
-              m["admin.product.form.placeholder.variant.colorHex"],
             "placeholder.variant.colorPalette":
               m["admin.product.form.placeholder.variant.colorPalette"],
+            "placeholder.variant.shopSection":
+              m["admin.product.form.placeholder.variant.shopSection"],
             "placeholder.variant.stock":
               m["admin.product.form.placeholder.variant.stock"],
             "variant.help": m["admin.product.form.variant.help"],
+            "variant.shopSectionLabel": m["admin.product.form.variant.shopSectionLabel"],
+            "variant.shopSectionHint": m["admin.product.form.variant.shopSectionHint"],
             "variant.colorLabel": m["admin.product.form.variant.colorLabel"],
             "variant.colorHint": m["admin.product.form.variant.colorHint"],
             "variant.sizeLabel": m["admin.product.form.variant.sizeLabel"],
@@ -114,6 +146,10 @@ export default async function AdminNewProductPage() {
             "currency.usd": m["currency.usd"],
             "currency.eur": m["currency.eur"],
             "currency.xof": m["currency.xof"],
+            "sectionOption.men-clothes": m["nav.men"],
+            "sectionOption.women-clothes": m["nav.women"],
+            "sectionOption.kids-clothes": m["nav.kids"],
+            "sectionOption.bag-shoes": m["nav.bagsShoes"],
             "uploader.drop": m["admin.product.form.uploader.drop"],
             "uploader.hint": m["admin.product.form.uploader.hint"],
             "uploader.uploading": m["admin.product.form.uploader.uploading"],

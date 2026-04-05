@@ -89,6 +89,29 @@ model Category {
   @@index([name])
 }
 
+model SiteSettings {
+  id                     String   @id @default("global")
+  targetCurrency         String   @default("USD")
+  ratesProvider          String   @default("currencyapi")
+  exchangeRatesUpdatedAt DateTime?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}
+
+model ExchangeRate {
+  id           String   @id @default(cuid())
+  baseCurrency String
+  quoteCurrency String
+  rate         Decimal  @db.Decimal(18, 8)
+  provider     String
+  fetchedAt    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([baseCurrency, quoteCurrency])
+  @@index([fetchedAt])
+}
+
 model CategoryTranslation {
   id          String   @id @default(cuid())
   categoryId  String
@@ -151,6 +174,7 @@ model ProductVariant {
   productId      String
   product        Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
   sku            String?    @unique
+  shopSection    String?
   colorName      String
   colorHex       String?
   size           String
@@ -168,6 +192,7 @@ model ProductVariant {
   @@index([productId, colorName])
   @@index([productId, size])
   @@index([productId, price])
+  @@index([shopSection])
 }
 
 model Order {
@@ -176,6 +201,10 @@ model Order {
   user   User        @relation(fields: [userId], references: [id], onDelete: Restrict)
   items  OrderItem[]
   status OrderStatus @default(PENDING)
+  currency String    @default("USD")
+  customerEmail String?
+  customerPhone String?
+  shippingAddress Json?
 
   // Snapshot totals at purchase time
   subtotal Decimal @db.Decimal(12, 2) // sum of item totals before VAT
@@ -201,6 +230,11 @@ model OrderItem {
   // Snapshot pricing at purchase time
   unitPrice  Decimal @db.Decimal(10, 2)
   totalPrice Decimal @db.Decimal(12, 2) // unitPrice * quantity (before VAT)
+  sourceCurrency String
+  targetCurrency String
+  exchangeRate Decimal? @db.Decimal(18, 8)
+  sourceUnitGrossPrice Decimal @db.Decimal(10, 2)
+  sourceTotalGrossPrice Decimal @db.Decimal(12, 2)
 
   // VAT snapshot at purchase time (item-level tax)
   vatRate   Decimal @db.Decimal(5, 2) // e.g. 20.00 for 20%

@@ -111,7 +111,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                     {m["admin.products.table.added"]}
                   </th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-muted-foreground">
-                    Actions
+                    {m["common.actions"]}
                   </th>
                 </tr>
               </thead>
@@ -122,7 +122,19 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                       colSpan={9}
                       className="px-5 py-10 text-center text-muted-foreground"
                     >
-                      {m["admin.products.noProducts"]}
+                      <div className="mx-auto max-w-md space-y-3">
+                        <p className="text-base font-semibold text-foreground">
+                          {m["admin.products.empty.title"]}
+                        </p>
+                        <p className="text-sm leading-6 text-muted-foreground">
+                          {m["admin.products.empty.description"]}
+                        </p>
+                        <Button asChild className="rounded-full h-10 px-4 text-sm">
+                          <Link href="/admin/products/new">
+                            {m["admin.products.empty.cta"]}
+                          </Link>
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ) : (
@@ -133,7 +145,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                     >
                       <td className="px-5 py-3">
                         <Link
-                          href={`/shop/product/${product.slug}`}
+                          href={`/shop/product/${product.id}/${product.slug}`}
                           className="font-medium text-foreground hover:underline truncate block max-w-[200px]"
                           target="_blank"
                         >
@@ -152,7 +164,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                       <td className="px-5 py-3 text-right font-semibold text-foreground">
                         {new Intl.NumberFormat(locale, {
                           style: "currency",
-                          currency: "USD",
+                          currency: product.currency,
                         }).format(product.finalPrice)}
                       </td>
                       <td className="px-5 py-3 text-right">
@@ -192,7 +204,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                           href={`/admin/products/${product.id}`}
                           className="text-primary hover:underline text-xs font-medium"
                         >
-                          Edit
+                          {m["common.edit"]}
                         </Link>
                       </td>
                     </tr>

@@ -6,7 +6,7 @@
 
 ## Overview
 
-Based on industry standards, Ika Sugu bridges the gap between premium design and cutting-edge web development. It leverages a highly optimized data-fetching layer with TanStack Query and implements rock-solid authentication with BetterAuth. 
+Based on industry standards, Ika Sugu bridges the gap between premium design and cutting-edge web development. It leverages a highly optimized data-fetching layer with TanStack Query and implements rock-solid authentication with BetterAuth.
 
 ## Core Features
 
@@ -33,12 +33,14 @@ Based on industry standards, Ika Sugu bridges the gap between premium design and
 To run Ika Sugu locally, follow these steps:
 
 1. **Clone the repository:**
+
    ```bash
    git clone https://github.com/Dioman-Keita/ika-sugu.git
    cd ika-sugu
    ```
 
 2. **Install dependencies (using Bun):**
+
    ```bash
    bun install
    ```
@@ -47,6 +49,7 @@ To run Ika Sugu locally, follow these steps:
    Configure your Database and BetterAuth keys in `.env`.
 
 4. **Initialize Prisma & Seed Database:**
+
    ```bash
    bun run generate-prisma-client
    bun run seed

@@ -1,19 +1,11 @@
 "use client";
 
+import type { CheckoutInput } from "@/app/actions/checkout";
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useUiPreferences } from "@/lib/ui-preferences";
 
-type FormData = {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  address: string;
-  city: string;
-  country: string;
-  zip: string;
-};
+type FormData = CheckoutInput;
 
 type ShippingFormProps = {
   onSubmit: (data: FormData) => void;

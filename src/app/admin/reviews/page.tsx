@@ -132,7 +132,14 @@ export default async function AdminReviewsPage({ searchParams }: Props) {
                       colSpan={7}
                       className="px-5 py-10 text-center text-muted-foreground"
                     >
-                      {m["admin.reviews.noReviews"]}
+                      <div className="mx-auto max-w-md space-y-3">
+                        <p className="text-base font-semibold text-foreground">
+                          {m["admin.reviews.empty.title"]}
+                        </p>
+                        <p className="text-sm leading-6 text-muted-foreground">
+                          {m["admin.reviews.empty.description"]}
+                        </p>
+                      </div>
                     </td>
                   </tr>
                 ) : (
@@ -168,7 +175,7 @@ export default async function AdminReviewsPage({ searchParams }: Props) {
                           labels={{
                             view: m["admin.reviews.view"],
                             verified: m["admin.reviews.verifiedPurchase"],
-                            close: m["common.close"] ?? "Close",
+                            close: m["common.close"],
                           }}
                         />
                       </td>

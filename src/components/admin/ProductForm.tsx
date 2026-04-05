@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useCreateProductMutation, useUpdateProductMutation } from "@/hooks/use-admin";
 import ProductImageUploader from "./ProductImageUploader";
@@ -10,6 +11,7 @@ import { deleteAdminProductImagesAction } from "@/app/actions/admin";
 import {
   CURRENCY_OPTIONS,
   DRESS_STYLE_OPTIONS,
+  SHOP_SECTION_OPTIONS,
   SIZE_OPTIONS,
 } from "@/lib/catalog-options";
 import { translateAttribute } from "@/lib/i18n/messages";
@@ -30,13 +32,14 @@ type TranslationFields = {
 type VariantInput = {
   id: string;
   sku?: string | null;
+  shopSection?: string;
   colorName: string;
   colorHex?: string;
   size: string;
   price: number | string;
   compareAtPrice?: number | string | null;
   currency?: string;
-  stock?: number;
+  stock?: number | string;
   isActive?: boolean;
   images: { url: string; isCover: boolean }[];
 };
@@ -44,6 +47,7 @@ type VariantInput = {
 type ProductFormProps = {
   mode: "create" | "edit";
   categories: Category[];
+  targetCurrency: string;
   initial?: {
     id: string;
     slug: string;
@@ -100,13 +104,31 @@ const parseDecimalInput = (value: string | number | null | undefined) => {
 };
 
 const formatDecimalInput = (value: string | number | null | undefined) => {
-  if (value == null) return "";
+  if (value === null || value === undefined) return "";
   return typeof value === "number" ? String(value) : value;
+};
+
+const parseIntegerInput = (value: string | number | null | undefined) => {
+  if (typeof value === "number")
+    return Number.isFinite(value) ? Math.max(0, Math.trunc(value)) : 0;
+
+  const digitsOnly = String(value ?? "").replace(/\D+/g, "");
+  if (!digitsOnly) return 0;
+
+  const parsed = Number(digitsOnly);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const formatIntegerInput = (value: string | number | null | undefined) => {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "number") return String(Math.max(0, Math.trunc(value)));
+  return String(value).replace(/\D+/g, "");
 };
 
 export default function ProductForm({
   mode,
   categories,
+  targetCurrency,
   initial,
   labels,
 }: ProductFormProps) {
@@ -158,32 +180,42 @@ export default function ProductForm({
     return Math.max(0, Number((net * (1 + vat / 100)).toFixed(2)));
   }, [basePrice, discountPercentage, vatRate]);
 
-  const variantHelpText =
-    labels["variant.help"] ??
-    "Color and size identify each variant; use Standard/Taille unique when there is only one option.";
-  const skuFallbackText = labels["variant.skuFallback"] ?? "SKU generated automatically";
+  const variantHelpText = labels["variant.help"];
+  const skuFallbackText = labels["variant.skuFallback"];
+  const missingShopSectionMessage = labels["error.variant.shopSection"];
+  const missingImagesMessage = labels["error.variant.images"];
+  const vatHintTemplate = labels["field.vatHint"];
 
   const [variants, setVariants] = useState<VariantInput[]>(
     initial?.variants?.map((variant) => ({
       ...variant,
       price: formatDecimalInput(variant.price),
       compareAtPrice:
-        variant.compareAtPrice == null
+        variant.compareAtPrice === null || variant.compareAtPrice === undefined
           ? null
           : formatDecimalInput(variant.compareAtPrice),
+      stock: formatIntegerInput(variant.stock),
       images: variant.images ?? [],
     })) ?? [
       {
         id: crypto.randomUUID(),
+        shopSection: "",
         colorName: "Standard",
         size: "Unique",
         price: String(initial?.basePrice ?? 0),
-        stock: 0,
+        stock: "0",
         isActive: true,
         images: [],
       },
     ],
   );
+
+  const displayCurrency = useMemo(
+    () => String(targetCurrency ?? "USD").toUpperCase(),
+    [targetCurrency],
+  );
+  const displayCurrencyLabel =
+    labels[`currency.${displayCurrency.toLowerCase()}`] ?? displayCurrency;
 
   const updateVariant = (id: string, patch: Partial<VariantInput>) => {
     setVariants((prev) =>
@@ -229,10 +261,11 @@ export default function ProductForm({
       ...prev,
       {
         id: crypto.randomUUID(),
+        shopSection: "",
         colorName: "",
         size: "",
         price: 0,
-        stock: 0,
+        stock: "0",
         isActive: true,
         images: [],
       },
@@ -252,24 +285,9 @@ export default function ProductForm({
     });
   };
 
-  const clearPendingUploads = (urls: string[]) => {
-    if (urls.length === 0) return;
-    const urlSet = new Set(urls);
-    setPendingCleanupUrls((prev) => {
-      const next = prev.filter((url) => !urlSet.has(url));
-      pendingCleanupRef.current = next;
-      return next;
-    });
-  };
-
   const replacePendingUploads = (urls: string[]) => {
     pendingCleanupRef.current = urls;
     setPendingCleanupUrls(urls);
-  };
-
-  const regenerateSlug = () => {
-    setSlugEdited(false);
-    setSlug(toSlug(translations[sourceLocale].name));
   };
 
   useEffect(() => {
@@ -328,17 +346,46 @@ export default function ProductForm({
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
+    const failValidation = (message: string) => {
+      setError(message);
+      toast.error(message);
+    };
+
     if (!categoryId) {
-      setError(labels["error.category"]);
+      failValidation(labels["error.category"]);
       return;
     }
 
     if (!translations.fr.name || !translations.fr.description) {
-      setError(labels["error.translation.fr"]);
+      failValidation(labels["error.translation.fr"]);
       return;
     }
     if (!translations.en.name || !translations.en.description) {
-      setError(labels["error.translation.en"]);
+      failValidation(labels["error.translation.en"]);
+      return;
+    }
+    if (variants.length === 0) {
+      failValidation(labels["error.variants.required"]);
+      return;
+    }
+
+    const missingShopSectionIndex = variants.findIndex(
+      (variant) => !String(variant.shopSection ?? "").trim(),
+    );
+    if (missingShopSectionIndex >= 0) {
+      failValidation(
+        missingShopSectionMessage.replace("{index}", String(missingShopSectionIndex + 1)),
+      );
+      return;
+    }
+
+    const missingImagesIndex = variants.findIndex(
+      (variant) => (variant.images?.length ?? 0) === 0,
+    );
+    if (missingImagesIndex >= 0) {
+      failValidation(
+        missingImagesMessage.replace("{index}", String(missingImagesIndex + 1)),
+      );
       return;
     }
 
@@ -361,6 +408,7 @@ export default function ProductForm({
         specs: translations[targetLocale].specs,
       })),
       variants: variants.map((variant) => ({
+        shopSection: variant.shopSection || null,
         colorName: variant.colorName || "Standard",
         colorHex: variant.colorHex ?? null,
         size: variant.size || "Unique",
@@ -372,7 +420,7 @@ export default function ProductForm({
             ? null
             : parseDecimalInput(variant.compareAtPrice),
         currency: variant.currency || "USD",
-        stock: Number(variant.stock) || 0,
+        stock: parseIntegerInput(variant.stock),
         isActive: variant.isActive ?? true,
         images:
           variant.images
@@ -547,17 +595,17 @@ export default function ProductForm({
               {labels["field.finalPrice"]}
             </label>
             <div className="h-[46px] flex items-center px-4 rounded-xl border border-border bg-background text-sm text-foreground">
-              {finalPrice.toFixed(2)} USD
+              {finalPrice.toFixed(2)} {displayCurrencyLabel}
             </div>
             <p className="text-xs text-muted-foreground">
               {labels["field.finalPrice.hint"]}
             </p>
+            <p className="text-xs text-muted-foreground">
+              {labels["field.finalPrice.currencyHint"]}
+            </p>
             {labels["field.vatHint"] && (
               <p className="text-xs text-muted-foreground">
-                {labels["field.vatHint"].replace(
-                  "{rate}",
-                  parseDecimalInput(vatRate).toFixed(1),
-                )}
+                {vatHintTemplate.replace("{rate}", parseDecimalInput(vatRate).toFixed(1))}
               </p>
             )}
           </div>
@@ -662,19 +710,9 @@ export default function ProductForm({
 
       <div className="grid md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <div className="flex items-center justify-between gap-3">
-            <label className="text-sm font-medium text-foreground">
-              {labels["field.slug"]}
-            </label>
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-full h-8 px-3 text-xs"
-              onClick={regenerateSlug}
-            >
-              {labels["action.regenerateSlug"]}
-            </Button>
-          </div>
+          <label className="text-sm font-medium text-foreground">
+            {labels["field.slug"]}
+          </label>
           <input
             value={slug}
             onChange={(e) => {
@@ -703,6 +741,7 @@ export default function ProductForm({
               </option>
             ))}
           </select>
+          <p className="text-xs text-muted-foreground">{labels["field.category.hint"]}</p>
         </div>
       </div>
 
@@ -753,7 +792,30 @@ export default function ProductForm({
               <div className="grid lg:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">
-                    {labels["variant.colorLabel"] ?? "Color"}
+                    {labels["variant.shopSectionLabel"]}
+                  </label>
+                  <select
+                    value={variant.shopSection ?? ""}
+                    onChange={(e) =>
+                      updateVariant(variant.id, { shopSection: e.target.value })
+                    }
+                    className="w-full rounded-xl border border-border bg-surface-card px-4 py-3 text-sm text-foreground"
+                  >
+                    <option value="">{labels["placeholder.variant.shopSection"]}</option>
+                    {SHOP_SECTION_OPTIONS.map((section) => (
+                      <option key={section} value={section}>
+                        {labels[`sectionOption.${section}`] ?? section}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-muted-foreground">
+                    {labels["variant.shopSectionHint"]}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">
+                    {labels["variant.colorLabel"]}
                   </label>
                   <select
                     value={variant.colorHex ?? ""}
@@ -776,13 +838,13 @@ export default function ProductForm({
                     ))}
                   </select>
                   <p className="text-xs text-muted-foreground">
-                    {labels["variant.colorHint"] ?? ""}
+                    {labels["variant.colorHint"]}
                   </p>
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">
-                    {labels["variant.sizeLabel"] ?? "Size"}
+                    {labels["variant.sizeLabel"]}
                   </label>
                   <select
                     value={variant.size}
@@ -797,25 +859,25 @@ export default function ProductForm({
                     ))}{" "}
                   </select>
                   <p className="text-xs text-muted-foreground">
-                    {labels["variant.sizeHint"] ?? ""}
+                    {labels["variant.sizeHint"]}
                   </p>
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">
-                    {labels["variant.skuLabel"] ?? "SKU"}
+                    {labels["variant.skuLabel"]}
                   </label>
                   <div className="w-full rounded-xl border border-border bg-surface-card px-4 py-3 text-sm text-muted-foreground flex items-center">
                     {variant.sku ?? skuFallbackText}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {labels["variant.skuHint"] ?? ""}
+                    {labels["variant.skuHint"]}
                   </p>
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">
-                    {labels["variant.priceLabel"] ?? "Price"}
+                    {labels["variant.priceLabel"]}
                   </label>
                   <input
                     type="text"
@@ -829,7 +891,7 @@ export default function ProductForm({
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">
-                    {labels["variant.compareAtPriceLabel"] ?? "Compare-at price"}
+                    {labels["variant.compareAtPriceLabel"]}
                   </label>
                   <input
                     type="text"
@@ -847,7 +909,7 @@ export default function ProductForm({
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">
-                    {labels["variant.currencyLabel"] ?? "Currency"}
+                    {labels["variant.currencyLabel"]}
                   </label>
                   <select
                     value={variant.currency ?? "USD"}
@@ -867,27 +929,28 @@ export default function ProductForm({
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">
-                  {labels["variant.stockLabel"] ?? "Stock"}
+                  {labels["variant.stockLabel"]}
                 </label>
                 <input
-                  type="number"
-                  step="1"
-                  min="0"
-                  value={variant.stock ?? 0}
+                  type="text"
+                  inputMode="numeric"
+                  value={formatIntegerInput(variant.stock)}
                   onChange={(e) =>
-                    updateVariant(variant.id, { stock: Number(e.target.value) })
+                    updateVariant(variant.id, {
+                      stock: e.target.value.replace(/\D+/g, ""),
+                    })
                   }
                   className="w-full rounded-xl border border-border bg-surface-card px-4 py-3 text-sm text-foreground"
                   placeholder={labels["placeholder.variant.stock"]}
                 />
                 <p className="text-xs text-muted-foreground">
-                  {labels["variant.stockHint"] ?? ""}
+                  {labels["variant.stockHint"]}
                 </p>
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">
-                  {labels["variant.activeLabel"] ?? t("admin.product.variant.active")}
+                  {labels["variant.activeLabel"]}
                 </label>
                 <select
                   value={variant.isActive === false ? "inactive" : "active"}
@@ -900,13 +963,13 @@ export default function ProductForm({
                   <option value="inactive">{t("admin.product.variant.inactive")}</option>
                 </select>
                 <p className="text-xs text-muted-foreground">
-                  {labels["variant.activeHint"] ?? ""}
+                  {labels["variant.activeHint"]}
                 </p>
               </div>
 
               <div className="space-y-2">
                 <p className="text-sm font-medium text-foreground">
-                  {labels["variant.mediaLabel"] ?? "Images"}
+                  {labels["variant.mediaLabel"]}
                 </p>
                 <p className="text-xs text-muted-foreground">{variantHelpText}</p>
               </div>
@@ -916,7 +979,6 @@ export default function ProductForm({
                 initialImages={variant.images}
                 onPersist={async (images) => updateVariant(variant.id, { images })}
                 onUploadComplete={registerPendingUploads}
-                onDeleteComplete={clearPendingUploads}
                 labels={{
                   drop: labels["uploader.drop"],
                   hint: labels["uploader.hint"],

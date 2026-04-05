@@ -5,6 +5,7 @@ import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ReviewStatus } from "@/generated/prisma/client";
 import { useUpdateReviewStatusMutation } from "@/hooks/use-admin";
+import { useUiPreferences } from "@/lib/ui-preferences";
 
 type Props = {
   reviewId: string;
@@ -13,10 +14,15 @@ type Props = {
 
 export default function ReviewActions({ reviewId, currentStatus }: Props) {
   const { mutate: updateStatus, isPending } = useUpdateReviewStatusMutation();
+  const { t } = useUiPreferences();
 
   const isApproved = currentStatus === "APPROVED";
   const nextStatus = isApproved ? ReviewStatus.REJECTED : ReviewStatus.APPROVED;
-  const label = useMemo(() => (isApproved ? "Reject" : "Approve"), [isApproved]);
+  const label = useMemo(
+    () =>
+      isApproved ? t("admin.reviews.action.reject") : t("admin.reviews.action.approve"),
+    [isApproved, t],
+  );
   const Icon = isApproved ? XCircle : CheckCircle;
   const color = isApproved
     ? "text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950"

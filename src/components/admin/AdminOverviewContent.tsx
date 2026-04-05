@@ -49,7 +49,11 @@ export default function AdminOverviewContent({ locale }: { locale: Locale }) {
   const m = messages[locale];
 
   if (statsLoading || ordersLoading || !stats || !recentOrders) {
-    return <div className="p-6">Loading dashboard...</div>;
+    return (
+      <div className="p-6 text-sm text-muted-foreground">
+        {m["admin.overview.loading"]}
+      </div>
+    );
   }
 
   const revenueChartData = stats.monthlyRevenue.map(({ month, revenue }) => {
@@ -64,7 +68,7 @@ export default function AdminOverviewContent({ locale }: { locale: Locale }) {
 
   const formattedRevenue = new Intl.NumberFormat(locale, {
     style: "currency",
-    currency: "USD",
+    currency: stats.currency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(stats.totalRevenue);
@@ -126,7 +130,12 @@ export default function AdminOverviewContent({ locale }: { locale: Locale }) {
               {m["admin.overview.revenueChart"]}
             </h2>
           </div>
-          <RevenueChart data={revenueChartData} />
+          <RevenueChart
+            data={revenueChartData}
+            currency={stats.currency}
+            locale={locale}
+            revenueLabel={m["admin.overview.revenue"]}
+          />
         </div>
 
         {/* Orders by status */}
@@ -208,7 +217,7 @@ export default function AdminOverviewContent({ locale }: { locale: Locale }) {
                     <td className="px-5 py-3 font-semibold text-foreground">
                       {new Intl.NumberFormat(locale, {
                         style: "currency",
-                        currency: "USD",
+                        currency: order.currency,
                       }).format(order.total)}
                     </td>
                     <td className="px-5 py-3">

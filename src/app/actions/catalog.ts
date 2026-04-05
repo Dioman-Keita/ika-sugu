@@ -1,10 +1,12 @@
 "use server";
 
 import db from "@/lib/db";
+import { ensureCoreApplicationData } from "@/lib/bootstrap/application";
 import { Product } from "@/types/product.types";
 import { Review } from "@/types/review.types";
 import { Prisma, ProductStatus, ReviewStatus } from "@/generated/prisma/client";
 import { Locale } from "@/lib/i18n/messages";
+import { convertMoney, getCurrentTargetCurrency } from "@/lib/currency/server";
 
 type ProductSpecsJson = Partial<Record<"material" | "care" | "fit" | "pattern", string>>;
 
@@ -80,7 +82,7 @@ const withDbFallback = async <T>(fn: () => Promise<T>, fallback: T): Promise<T> 
   }
 };
 
-const toUiProduct = (
+const toUiProduct = async (
   product: {
     id: string;
     slug: string;
@@ -111,18 +113,45 @@ const toUiProduct = (
     }>;
   },
   locale: Locale = "en",
-): Product => {
+  targetCurrency?: string,
+): Promise<Product> => {
   // Try to find the specific translation for the requested locale
   const translation = product.translations?.find((t) => t.locale === locale);
 
-  const activeVariants = product.variants.filter((variant) => variant.isActive);
-  const prices = activeVariants.map((variant) => variant.price.toNumber());
+  const resolvedTargetCurrency = targetCurrency ?? (await getCurrentTargetCurrency());
+  const convertedVariants = await Promise.all(
+    product.variants.map(async (variant) => {
+      const convertedPrice = await convertMoney({
+        amount: variant.price.toNumber(),
+        sourceCurrency: variant.currency,
+        targetCurrency: resolvedTargetCurrency,
+      });
+      const convertedCompareAtPrice = variant.compareAtPrice
+        ? await convertMoney({
+            amount: variant.compareAtPrice.toNumber(),
+            sourceCurrency: variant.currency,
+            targetCurrency: resolvedTargetCurrency,
+          })
+        : null;
+
+      return {
+        ...variant,
+        price: convertedPrice.amount,
+        compareAtPrice: convertedCompareAtPrice?.amount ?? null,
+        currency: convertedPrice.currency,
+        sourceCurrency: convertedPrice.sourceCurrency,
+      };
+    }),
+  );
+
+  const activeVariants = convertedVariants.filter((variant) => variant.isActive);
+  const prices = activeVariants.map((variant) => variant.price);
   const minVariantPrice = prices.length
     ? Math.min(...prices)
     : product.finalPrice.toNumber();
 
   const compareAtPrices = activeVariants
-    .map((variant) => variant.compareAtPrice?.toNumber() ?? null)
+    .map((variant) => variant.compareAtPrice ?? null)
     .filter((value): value is number => typeof value === "number");
   const minVariantCompareAtPrice = compareAtPrices.length
     ? Math.min(...compareAtPrices)
@@ -134,11 +163,7 @@ const toUiProduct = (
     basePrice > finalPrice ? Math.round(((basePrice - finalPrice) / basePrice) * 100) : 0;
 
   return {
-    variants: product.variants.map((variant) => ({
-      ...variant,
-      price: variant.price.toNumber(),
-      compareAtPrice: variant.compareAtPrice?.toNumber() ?? null,
-    })),
+    variants: convertedVariants,
     id: product.id,
     slug: product.slug,
     title: translation?.name ?? product.name,
@@ -151,6 +176,7 @@ const toUiProduct = (
     basePrice,
     discountPercentage,
     finalPrice,
+    currency: activeVariants[0]?.currency ?? resolvedTargetCurrency,
     rating: getAverageRating(product.reviews ?? []),
   };
 };
@@ -173,6 +199,7 @@ const toUiReview = (
 });
 
 export const getHomeCatalogAction = async (locale: Locale = "en") => {
+  const targetCurrency = await getCurrentTargetCurrency();
   const newArrivalsRaw = await withDbFallback(
     () =>
       db.product.findMany({
@@ -241,13 +268,17 @@ export const getHomeCatalogAction = async (locale: Locale = "en") => {
     : [];
 
   const topSellingMap = new Map(topSellingRaw.map((product) => [product.id, product]));
-  const topSellingData = topSellingIds
+  const topSellingCandidates = topSellingIds
     .map((item) => topSellingMap.get(item.productId))
-    .filter((product): product is NonNullable<typeof product> => Boolean(product))
-    .map((product) => toUiProduct(product, locale));
+    .filter((product): product is NonNullable<typeof product> => Boolean(product));
+  const topSellingData = await Promise.all(
+    topSellingCandidates.map((product) => toUiProduct(product, locale, targetCurrency)),
+  );
 
   return {
-    newArrivalsData: newArrivalsRaw.map((product) => toUiProduct(product, locale)),
+    newArrivalsData: await Promise.all(
+      newArrivalsRaw.map((product) => toUiProduct(product, locale, targetCurrency)),
+    ),
     topSellingData,
     reviewsData: homeReviewsRaw.map((review) => toUiReview(review, locale)),
   };
@@ -257,6 +288,7 @@ export const getShopProductsAction = async ({
   page = 1,
   pageSize = 9,
   locale = "en",
+  section,
   category,
   style,
   color,
@@ -268,6 +300,7 @@ export const getShopProductsAction = async ({
   page?: number;
   pageSize?: number;
   locale?: Locale;
+  section?: string | null;
   category?: string | null;
   style?: string | null;
   color?: string | null;
@@ -276,12 +309,14 @@ export const getShopProductsAction = async ({
   maxPrice?: number | null;
   sort?: "most-popular" | "low-price" | "high-price" | "newest";
 }) => {
+  const targetCurrency = await getCurrentTargetCurrency();
   const safePageSize = Math.min(Math.max(Math.floor(pageSize), 1), 60);
   const safePage = Math.max(Math.floor(page), 1);
   const skip = (safePage - 1) * safePageSize;
 
   const variantWhere: Prisma.ProductVariantWhereInput = {
     isActive: true,
+    ...(section ? { shopSection: section } : {}),
     ...(color ? { colorName: color } : {}),
     ...(size ? { size } : {}),
     ...((typeof minPrice === "number" || typeof maxPrice === "number") && {
@@ -318,6 +353,7 @@ export const getShopProductsAction = async ({
         ? await withDbRetry(async () => {
             const conditions: Prisma.Sql[] = [
               Prisma.sql`pv."isActive" = true`,
+              ...(section ? [Prisma.sql`pv."shopSection" = ${section}`] : []),
               Prisma.sql`p."status" = 'PUBLISHED'`,
               ...(color ? [Prisma.sql`pv."colorName" = ${color}`] : []),
               ...(size ? [Prisma.sql`pv."size" = ${size}`] : []),
@@ -399,15 +435,18 @@ export const getShopProductsAction = async ({
       : new Map<string, number>();
 
     return {
-      products: products.map((product) =>
-        toUiProduct(
-          {
-            ...(product as unknown as Parameters<typeof toUiProduct>[0]),
-            reviews: ratingByProductId.has(product.id)
-              ? [{ rating: ratingByProductId.get(product.id) ?? 0 }]
-              : [],
-          },
-          locale,
+      products: await Promise.all(
+        products.map((product) =>
+          toUiProduct(
+            {
+              ...(product as unknown as Parameters<typeof toUiProduct>[0]),
+              reviews: ratingByProductId.has(product.id)
+                ? [{ rating: ratingByProductId.get(product.id) ?? 0 }]
+                : [],
+            },
+            locale,
+            targetCurrency,
+          ),
         ),
       ),
       totalProducts,
@@ -429,6 +468,7 @@ export const getShopProductsAction = async ({
 };
 
 export const getProductPageAction = async (productId: string, locale: Locale = "en") => {
+  const targetCurrency = await getCurrentTargetCurrency();
   const product = await db.product.findFirst({
     where: { id: productId, status: ProductStatus.PUBLISHED },
     include: {
@@ -469,20 +509,24 @@ export const getProductPageAction = async (productId: string, locale: Locale = "
   });
 
   return {
-    product: toUiProduct(
+    product: await toUiProduct(
       {
         ...product,
         reviews: product.reviews.map((review) => ({ rating: review.rating })),
       },
       locale,
+      targetCurrency,
     ),
-    relatedProducts: relatedRaw.map((product) => toUiProduct(product, locale)),
+    relatedProducts: await Promise.all(
+      relatedRaw.map((product) => toUiProduct(product, locale, targetCurrency)),
+    ),
     reviews: product.reviews.map((review) => toUiReview(review, locale)),
   };
 };
 
 export const getCategoriesAction = async (locale: Locale = "en") => {
   try {
+    await ensureCoreApplicationData();
     const categories = await withDbRetry(() =>
       db.category.findMany({
         include: {

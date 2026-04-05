@@ -7,7 +7,8 @@ export type ProductVariant = {
   images: string[];
   price: number;
   compareAtPrice?: number | null;
-  currency?: string;
+  currency: string;
+  sourceCurrency?: string;
   stock: number;
   isActive: boolean;
 };
@@ -24,5 +25,6 @@ export type Product = {
   basePrice: number;
   discountPercentage: number;
   finalPrice: number;
+  currency: string;
   rating: number;
 };

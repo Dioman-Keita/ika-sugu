@@ -6,6 +6,8 @@ export type Messages = Record<string, string>;
 export const messages: Record<Locale, Messages> = {
   en: {
     "common.close": "Close",
+    "common.edit": "Edit",
+    "common.actions": "Actions",
     "common.remove": "Remove",
     "topBanner.text": "Sign up and get 20% off to your first order.",
     "topBanner.cta": "Sign Up Now",
@@ -342,6 +344,7 @@ export const messages: Record<Locale, Messages> = {
     "admin.sidebar.orders": "Orders",
     "admin.sidebar.users": "Users",
     "admin.sidebar.reviews": "Reviews",
+    "admin.sidebar.settings": "Settings",
     "admin.sidebar.adminPanel": "Admin Panel",
     "admin.sidebar.backToStore": "Back to Store",
     "admin.sidebar.accountSettings": "Account Settings",
@@ -363,6 +366,7 @@ export const messages: Record<Locale, Messages> = {
     "admin.overview.status.CANCELED": "Canceled",
     "admin.overview.recentOrders": "Recent Orders",
     "admin.overview.noOrders": "No orders yet.",
+    "admin.overview.loading": "Loading dashboard...",
     "admin.overview.table.customer": "Customer",
     "admin.overview.table.items": "Items",
     "admin.overview.table.total": "Total",
@@ -371,6 +375,10 @@ export const messages: Record<Locale, Messages> = {
 
     "admin.products.title": "Products",
     "admin.products.noProducts": "No products found.",
+    "admin.products.empty.title": "No product has been created yet",
+    "admin.products.empty.description":
+      "Start by creating your first product page, then add the sellable variants that belong to it.",
+    "admin.products.empty.cta": "Create the first product",
     "admin.products.table.product": "Product",
     "admin.products.table.category": "Category",
     "admin.products.table.status": "Status",
@@ -408,10 +416,16 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.form.translations": "Translations",
     "admin.product.form.translations.hint":
       "Both French and English are required. The source locale defines the base product content.",
+    "admin.product.form.emptyCategories.title": "No category available yet",
+    "admin.product.form.emptyCategories.description":
+      "This page needs at least one category before a product can be created. After a database reset, run the seed to recreate the catalog structure.",
     "admin.product.form.variants": "Variants",
     "admin.product.form.variants.hint":
       "Colors, sizes, pricing, stock, and variant-specific images.",
     "admin.product.form.variantLabel": "Variant",
+    "admin.product.form.variant.shopSectionLabel": "Shop section",
+    "admin.product.form.variant.shopSectionHint":
+      "Controls which storefront section this variant belongs to, such as men's clothes or bags and shoes.",
     "admin.product.form.variant.colorLabel": "Color",
     "admin.product.form.variant.colorHint": "Pick from the preset palette.",
     "admin.product.form.variant.sizeLabel": "Size",
@@ -440,6 +454,8 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.form.pricing.hint":
       "Define the commercial settings shared by the whole product page before variant-level pricing.",
     "admin.product.form.category": "Category",
+    "admin.product.form.category.hint":
+      "Controls where the product appears in shop sections such as men's clothes, women's clothes, kids clothes, or bags and shoes.",
     "admin.product.form.basePrice": "Base price",
     "admin.product.form.basePrice.hint":
       "Reference catalog price before discount. Decimal values are accepted.",
@@ -455,6 +471,8 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.form.finalPrice": "Final price (incl. VAT)",
     "admin.product.form.finalPrice.hint":
       "Calculated automatically from the base price, discount, and VAT.",
+    "admin.product.form.finalPrice.currencyHint":
+      "Displayed in the current global storefront target currency.",
     "admin.product.form.vatHint": "Includes VAT at {rate}%",
     "admin.product.form.placeholder.slug": "summer-linen-shirt",
     "admin.product.form.placeholder.name.fr": "Chemise en lin d'été",
@@ -463,19 +481,23 @@ export const messages: Record<Locale, Messages> = {
       "Short product description in French...",
     "admin.product.form.placeholder.description.en":
       "Short product description in English...",
-    "admin.product.form.placeholder.dressStyle": "casual, street, business...",
-    "admin.product.form.placeholder.variant.color": "Color (e.g. Navy)",
+    "admin.product.form.placeholder.dressStyle": "Choose a dress style",
     "admin.product.form.placeholder.variant.size": "Choose a size",
     "admin.product.form.placeholder.variant.price": "Price incl. VAT",
     "admin.product.form.placeholder.variant.compareAtPrice": "Compare-at price",
-    "admin.product.form.placeholder.variant.colorHex": "Color code (hex)",
     "admin.product.form.placeholder.variant.colorPalette": "Choose a preset color",
+    "admin.product.form.placeholder.variant.shopSection": "Choose a shop section",
     "admin.product.form.placeholder.variant.stock": "Stock",
     "admin.product.form.error.category": "Choose a category",
     "admin.product.form.error.translation.fr":
       "French translation requires both name and description.",
     "admin.product.form.error.translation.en":
       "English translation requires both name and description.",
+    "admin.product.form.error.variants.required":
+      "Add at least one valid variant before saving.",
+    "admin.product.form.error.variant.shopSection":
+      "Variant {index}: choose a shop section.",
+    "admin.product.form.error.variant.images": "Variant {index}: add at least one image.",
     "admin.product.status.draft": "Draft",
     "admin.product.status.published": "Published",
     "admin.product.status.archived": "Archived",
@@ -496,6 +518,31 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.form.uploader.cover": "Cover",
     "admin.product.form.uploader.deleteTitle": "Remove",
     "admin.product.form.uploader.setCoverTitle": "Set as cover",
+    "admin.settings.currency.title": "Currency settings",
+    "admin.settings.currency.subtitle":
+      "Choose the global storefront currency and manage the latest exchange rates.",
+    "admin.settings.currency.targetCurrency": "Target currency",
+    "admin.settings.currency.targetCurrencyHint":
+      "All storefront prices and checkout amounts will be displayed in this currency when a valid rate is available.",
+    "admin.settings.currency.provider": "Rates provider",
+    "admin.settings.currency.lastSync": "Last sync",
+    "admin.settings.currency.neverSynced": "No sync yet",
+    "admin.settings.currency.save": "Save settings",
+    "admin.settings.currency.saving": "Saving...",
+    "admin.settings.currency.sync": "Sync rates now",
+    "admin.settings.currency.syncing": "Syncing...",
+    "admin.settings.currency.recentRates": "Recent exchange rates",
+    "admin.settings.currency.recentRatesHint":
+      "Latest stored rates used as the source of truth for conversions.",
+    "admin.settings.currency.emptyRates": "No exchange rate has been synchronized yet.",
+    "admin.settings.currency.table.pair": "Pair",
+    "admin.settings.currency.table.rate": "Rate",
+    "admin.settings.currency.table.fetchedAt": "Fetched at",
+    "admin.settings.currency.toast.settingsSaved":
+      "Currency settings saved successfully.",
+    "admin.settings.currency.toast.settingsError": "Failed to save currency settings.",
+    "admin.settings.currency.toast.ratesSynced": "{count} exchange rates synchronized.",
+    "admin.settings.currency.toast.ratesError": "Failed to synchronize exchange rates.",
 
     "notFound.title": "Page not found",
     "notFound.subtitle": "Oops! The page you're looking for doesn't exist or has moved.",
@@ -510,6 +557,9 @@ export const messages: Record<Locale, Messages> = {
     "admin.orders.tabs.delivered": "Delivered",
     "admin.orders.tabs.canceled": "Canceled",
     "admin.orders.noOrders": "No orders found.",
+    "admin.orders.empty.title": "No order has been placed yet",
+    "admin.orders.empty.description":
+      "Orders will appear here as soon as customers complete checkout on the storefront.",
     "admin.orders.table.orderId": "Order ID",
     "admin.orders.table.customer": "Customer",
     "admin.orders.table.items": "Items",
@@ -519,6 +569,9 @@ export const messages: Record<Locale, Messages> = {
 
     "admin.users.title": "Users",
     "admin.users.noUsers": "No users found.",
+    "admin.users.empty.title": "No customer account yet",
+    "admin.users.empty.description":
+      "User accounts will appear here after customers sign up or place orders with an account.",
     "admin.users.table.user": "User",
     "admin.users.table.emailVerified": "Email verified",
     "admin.users.table.orders": "Orders",
@@ -532,6 +585,9 @@ export const messages: Record<Locale, Messages> = {
     "admin.reviews.tabs.approved": "Approved",
     "admin.reviews.tabs.rejected": "Rejected",
     "admin.reviews.noReviews": "No reviews found.",
+    "admin.reviews.empty.title": "No review available yet",
+    "admin.reviews.empty.description":
+      "Customer reviews will show up here once shoppers start sharing feedback on published products.",
     "admin.reviews.table.user": "User",
     "admin.reviews.table.product": "Product",
     "admin.reviews.table.rating": "Rating",
@@ -539,6 +595,8 @@ export const messages: Record<Locale, Messages> = {
     "admin.reviews.table.status": "Status",
     "admin.reviews.table.date": "Date",
     "admin.reviews.table.actions": "Actions",
+    "admin.reviews.action.approve": "Approve",
+    "admin.reviews.action.reject": "Reject",
     "admin.reviews.verifiedPurchase": "Verified purchase",
     "admin.reviews.view": "View review",
 
@@ -549,12 +607,16 @@ export const messages: Record<Locale, Messages> = {
     "toast.error.createProduct": "Failed to create product.",
     "toast.success.updateProduct": "Product updated successfully.",
     "toast.error.updateProduct": "Failed to update product.",
+    "toast.success.placeOrder": "Order placed successfully.",
+    "toast.error.placeOrder": "Failed to place order.",
     "toast.error.updateOrderStatus": "Failed to update order status.",
     "toast.error.updateReviewStatus": "Failed to update review status.",
     "toast.error.createReview": "Failed to submit review. Please try again.",
   },
   fr: {
     "common.close": "Fermer",
+    "common.edit": "Modifier",
+    "common.actions": "Actions",
     "common.remove": "Supprimer",
     "topBanner.text":
       "Inscrivez-vous et obtenez 20% de réduction sur votre première commande.",
@@ -791,8 +853,8 @@ export const messages: Record<Locale, Messages> = {
     "attr.formal": "Formel",
     "attr.party": "Fête",
     "attr.gym": "Sport",
-    "attr.street": "Streetwear",
-    "attr.business": "Business",
+    "attr.street": "Urbain",
+    "attr.business": "Professionnel",
     "attr.xx-small": "XX-Petit",
     "attr.x-small": "Très petit",
     "attr.xx-large": "Très très grand",
@@ -896,6 +958,7 @@ export const messages: Record<Locale, Messages> = {
     "admin.sidebar.orders": "Commandes",
     "admin.sidebar.users": "Utilisateurs",
     "admin.sidebar.reviews": "Avis",
+    "admin.sidebar.settings": "Paramètres",
     "admin.sidebar.adminPanel": "Panneau d'administration",
     "admin.sidebar.backToStore": "Retour à la boutique",
     "admin.sidebar.accountSettings": "Paramètres du compte",
@@ -917,6 +980,7 @@ export const messages: Record<Locale, Messages> = {
     "admin.overview.status.CANCELED": "Annulé",
     "admin.overview.recentOrders": "Commandes récentes",
     "admin.overview.noOrders": "Aucune commande pour l'instant.",
+    "admin.overview.loading": "Chargement du dashboard...",
     "admin.overview.table.customer": "Client",
     "admin.overview.table.items": "Articles",
     "admin.overview.table.total": "Total",
@@ -925,6 +989,10 @@ export const messages: Record<Locale, Messages> = {
 
     "admin.products.title": "Produits",
     "admin.products.noProducts": "Aucun produit trouvé.",
+    "admin.products.empty.title": "Aucun produit n'a encore été créé",
+    "admin.products.empty.description":
+      "Commence par créer ta première fiche produit, puis ajoute les variantes vendables qui lui appartiennent.",
+    "admin.products.empty.cta": "Créer le premier produit",
     "admin.products.table.product": "Produit",
     "admin.products.table.category": "Catégorie",
     "admin.products.table.status": "Statut",
@@ -962,11 +1030,18 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.form.translations": "Traductions",
     "admin.product.form.translations.hint":
       "Le français et l'anglais sont obligatoires. La langue source définit le contenu principal du produit.",
+    "admin.product.form.emptyCategories.title":
+      "Aucune catégorie n'est encore disponible",
+    "admin.product.form.emptyCategories.description":
+      "Cette page a besoin d'au moins une catégorie avant de pouvoir créer un produit. Après un reset de la base, relance le seed pour recréer la structure du catalogue.",
     "admin.product.form.category": "Catégorie",
     "admin.product.form.variants": "Variantes",
     "admin.product.form.variants.hint":
       "Couleurs, tailles, prix, stock et images spécifiques.",
     "admin.product.form.variantLabel": "Variante",
+    "admin.product.form.variant.shopSectionLabel": "Section boutique",
+    "admin.product.form.variant.shopSectionHint":
+      "Détermine dans quelle section storefront cette variante apparaît, comme vêtements homme ou sacs et chaussures.",
     "admin.product.form.variant.colorLabel": "Couleur",
     "admin.product.form.variant.colorHint": "Choisissez une teinte prédéfinie.",
     "admin.product.form.variant.sizeLabel": "Taille",
@@ -996,12 +1071,16 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.form.vat": "TVA (%)",
     "admin.product.form.dressStyle": "Style vestimentaire",
     "admin.product.form.finalPrice": "Prix final (TTC)",
+    "admin.product.form.finalPrice.currencyHint":
+      "Affiché dans la devise cible globale actuelle du storefront.",
     "admin.product.form.vatHint": "TVA incluse à {rate}%",
     "admin.product.form.pricing": "Tarification",
     "admin.product.form.pricing.hint":
       "Définissez les règles commerciales communes à toute la fiche produit avant le détail des variantes.",
     "admin.product.form.basePrice.hint":
       "Prix catalogue de référence avant remise. Les valeurs décimales sont acceptées.",
+    "admin.product.form.category.hint":
+      "Détermine dans quelle section boutique le produit apparaît, comme vêtements homme, vêtements femme, vêtements enfant ou sacs et chaussures.",
     "admin.product.form.discount.hint":
       "Pourcentage optionnel appliqué au prix de base avant TVA.",
     "admin.product.form.vat.inputHint":
@@ -1017,37 +1096,70 @@ export const messages: Record<Locale, Messages> = {
       "Description courte du produit en français...",
     "admin.product.form.placeholder.description.en":
       "Short product description in English...",
-    "admin.product.form.placeholder.dressStyle": "casual, street, business...",
+    "admin.product.form.placeholder.dressStyle": "Choisir un style vestimentaire",
     "admin.product.form.error.category": "Choisissez une catégorie",
-    "admin.product.form.placeholder.variant.color": "Couleur (ex: Navy)",
     "admin.product.form.placeholder.variant.size": "Choisir une taille",
     "admin.product.form.placeholder.variant.price": "Prix TTC",
     "admin.product.form.placeholder.variant.compareAtPrice": "Prix barré",
-    "admin.product.form.placeholder.variant.colorHex": "Code couleur (hex)",
     "admin.product.form.placeholder.variant.colorPalette":
       "Choisir une couleur prédéfinie",
+    "admin.product.form.placeholder.variant.shopSection": "Choisir une section boutique",
     "admin.product.form.placeholder.variant.stock": "Stock",
     "admin.product.form.error.translation.fr":
       "La traduction française requiert un nom et une description.",
     "admin.product.form.error.translation.en":
       "La traduction anglaise requiert un nom et une description.",
+    "admin.product.form.error.variants.required":
+      "Ajoutez au moins une variante valide avant d'enregistrer.",
+    "admin.product.form.error.variant.shopSection":
+      "Variante {index} : choisissez une section boutique.",
+    "admin.product.form.error.variant.images":
+      "Variante {index} : ajoutez au moins une image.",
     "admin.product.status.draft": "Brouillon",
     "admin.product.status.published": "Publié",
     "admin.product.status.archived": "Archivé",
     "admin.products.tabs.all": "Tout",
     "admin.product.locale.fr": "Français",
     "admin.product.locale.en": "Anglais",
-    "admin.product.variant.active": "Active",
-    "admin.product.variant.inactive": "Inactive",
+    "admin.product.variant.active": "Actif",
+    "admin.product.variant.inactive": "Inactif",
     "admin.product.form.action.create": "Ajouter un produit",
     "admin.product.form.action.save": "Enregistrer",
     "admin.product.form.action.addVariant": "Ajouter une variante",
     "admin.product.form.uploader.drop": "Glissez-déposez ou cliquez",
     "admin.product.form.uploader.hint": "JPG, PNG, WEBP · max 5MB · compression auto",
-    "admin.product.form.uploader.uploading": "Upload...",
+    "admin.product.form.uploader.uploading": "Téléversement...",
     "admin.product.form.uploader.cover": "Principale",
     "admin.product.form.uploader.deleteTitle": "Supprimer",
     "admin.product.form.uploader.setCoverTitle": "Définir comme principale",
+    "admin.settings.currency.title": "Paramètres de devise",
+    "admin.settings.currency.subtitle":
+      "Choisissez la devise globale du storefront et pilotez les derniers taux de change.",
+    "admin.settings.currency.targetCurrency": "Devise cible",
+    "admin.settings.currency.targetCurrencyHint":
+      "Tous les prix du storefront et du checkout seront affichés dans cette devise lorsqu'un taux valide est disponible.",
+    "admin.settings.currency.provider": "Provider de taux",
+    "admin.settings.currency.lastSync": "Dernière synchronisation",
+    "admin.settings.currency.neverSynced": "Aucune synchronisation pour l'instant",
+    "admin.settings.currency.save": "Enregistrer les paramètres",
+    "admin.settings.currency.saving": "Enregistrement...",
+    "admin.settings.currency.sync": "Synchroniser les taux",
+    "admin.settings.currency.syncing": "Synchronisation...",
+    "admin.settings.currency.recentRates": "Derniers taux de change",
+    "admin.settings.currency.recentRatesHint":
+      "Derniers taux stockés et utilisés comme source de vérité pour les conversions.",
+    "admin.settings.currency.emptyRates":
+      "Aucun taux de change n'a encore été synchronisé.",
+    "admin.settings.currency.table.pair": "Paire",
+    "admin.settings.currency.table.rate": "Taux",
+    "admin.settings.currency.table.fetchedAt": "Récupéré le",
+    "admin.settings.currency.toast.settingsSaved":
+      "Les paramètres de devise ont été enregistrés.",
+    "admin.settings.currency.toast.settingsError":
+      "Impossible d'enregistrer les paramètres de devise.",
+    "admin.settings.currency.toast.ratesSynced": "{count} taux de change synchronisés.",
+    "admin.settings.currency.toast.ratesError":
+      "Impossible de synchroniser les taux de change.",
     "admin.product.form.action.cancel": "Annuler",
     "admin.product.form.action.saving": "Enregistrement...",
     "admin.product.form.action.regenerateSlug": "R\u00e9g\u00e9n\u00e9rer",
@@ -1066,6 +1178,9 @@ export const messages: Record<Locale, Messages> = {
     "admin.orders.tabs.delivered": "Livré",
     "admin.orders.tabs.canceled": "Annulé",
     "admin.orders.noOrders": "Aucune commande trouvée.",
+    "admin.orders.empty.title": "Aucune commande n'a encore été passée",
+    "admin.orders.empty.description":
+      "Les commandes apparaîtront ici dès que des clients finaliseront leur checkout sur le storefront.",
     "admin.orders.table.orderId": "Numéro de commande",
     "admin.orders.table.customer": "Client",
     "admin.orders.table.items": "Articles",
@@ -1075,6 +1190,9 @@ export const messages: Record<Locale, Messages> = {
 
     "admin.users.title": "Utilisateurs",
     "admin.users.noUsers": "Aucun utilisateur trouvé.",
+    "admin.users.empty.title": "Aucun compte client pour l'instant",
+    "admin.users.empty.description":
+      "Les comptes utilisateurs apparaîtront ici après une inscription ou une commande passée avec un compte.",
     "admin.users.table.user": "Utilisateur",
     "admin.users.table.emailVerified": "Email vérifié",
     "admin.users.table.orders": "Commandes",
@@ -1088,6 +1206,9 @@ export const messages: Record<Locale, Messages> = {
     "admin.reviews.tabs.approved": "Approuvé",
     "admin.reviews.tabs.rejected": "Rejeté",
     "admin.reviews.noReviews": "Aucun avis trouvé.",
+    "admin.reviews.empty.title": "Aucun avis disponible pour l'instant",
+    "admin.reviews.empty.description":
+      "Les avis clients apparaîtront ici dès que des acheteurs commenceront à commenter les produits publiés.",
     "admin.reviews.table.user": "Utilisateur",
     "admin.reviews.table.product": "Produit",
     "admin.reviews.table.rating": "Note",
@@ -1095,6 +1216,8 @@ export const messages: Record<Locale, Messages> = {
     "admin.reviews.table.status": "Statut",
     "admin.reviews.table.date": "Date",
     "admin.reviews.table.actions": "Actions",
+    "admin.reviews.action.approve": "Approuver",
+    "admin.reviews.action.reject": "Rejeter",
     "admin.reviews.verifiedPurchase": "Achat vérifié",
     "admin.reviews.view": "Voir l'avis",
 
@@ -1105,6 +1228,8 @@ export const messages: Record<Locale, Messages> = {
     "toast.error.createProduct": "Erreur lors de la création du produit.",
     "toast.success.updateProduct": "Produit mis à jour.",
     "toast.error.updateProduct": "Erreur lors de la mise à jour du produit.",
+    "toast.success.placeOrder": "Commande enregistrée avec succès.",
+    "toast.error.placeOrder": "Impossible d'enregistrer la commande.",
     "toast.error.updateOrderStatus": "Impossible de mettre à jour le statut.",
     "toast.error.updateReviewStatus": "Impossible de mettre à jour le statut de l'avis.",
     "toast.error.createReview": "Impossible de publier l'avis. Réessayez.",
