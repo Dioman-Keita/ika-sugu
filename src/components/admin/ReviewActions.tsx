@@ -20,9 +20,7 @@ export default function ReviewActions({ reviewId, currentStatus }: Props) {
   const nextStatus = isApproved ? ReviewStatus.REJECTED : ReviewStatus.APPROVED;
   const label = useMemo(
     () =>
-      isApproved
-        ? t("admin.reviews.action.reject")
-        : t("admin.reviews.action.approve"),
+      isApproved ? t("admin.reviews.action.reject") : t("admin.reviews.action.approve"),
     [isApproved, t],
   );
   const Icon = isApproved ? XCircle : CheckCircle;

@@ -18,7 +18,6 @@ function parseCleanupPayload(rawBody: string): CleanupPayload {
   }
 }
 
-
 export async function POST(request: Request) {
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session || !isAdminEmail(session.user?.email)) {

@@ -200,8 +200,7 @@ export default async function AdminProductDetailPage({ params }: Props) {
             "error.variants.required": m["admin.product.form.error.variants.required"],
             "error.variant.shopSection":
               m["admin.product.form.error.variant.shopSection"],
-            "error.variant.images":
-              m["admin.product.form.error.variant.images"],
+            "error.variant.images": m["admin.product.form.error.variant.images"],
             "status.draft": m["admin.product.status.draft"],
             "status.published": m["admin.product.status.published"],
             "status.archived": m["admin.product.status.archived"],
@@ -224,10 +223,8 @@ export default async function AdminProductDetailPage({ params }: Props) {
               m["admin.product.form.placeholder.variant.shopSection"],
             "placeholder.variant.stock":
               m["admin.product.form.placeholder.variant.stock"],
-            "variant.shopSectionLabel":
-              m["admin.product.form.variant.shopSectionLabel"],
-            "variant.shopSectionHint":
-              m["admin.product.form.variant.shopSectionHint"],
+            "variant.shopSectionLabel": m["admin.product.form.variant.shopSectionLabel"],
+            "variant.shopSectionHint": m["admin.product.form.variant.shopSectionHint"],
             "variant.colorLabel": m["admin.product.form.variant.colorLabel"],
             "variant.colorHint": m["admin.product.form.variant.colorHint"],
             "variant.sizeLabel": m["admin.product.form.variant.sizeLabel"],

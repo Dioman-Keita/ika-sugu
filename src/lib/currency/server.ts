@@ -1,8 +1,5 @@
 import db from "@/lib/db";
-import {
-  CURRENCY_OPTIONS,
-  type CurrencyOption,
-} from "@/lib/catalog-options";
+import { CURRENCY_OPTIONS, type CurrencyOption } from "@/lib/catalog-options";
 import {
   DEFAULT_RATES_PROVIDER,
   DEFAULT_TARGET_CURRENCY,
@@ -170,7 +167,9 @@ export async function syncExchangeRates(options?: {
   let syncedCount = 0;
 
   for (const baseCurrency of baseCurrencies) {
-    const requestedQuotes = quoteCurrencies.filter((currency) => currency !== baseCurrency);
+    const requestedQuotes = quoteCurrencies.filter(
+      (currency) => currency !== baseCurrency,
+    );
     if (requestedQuotes.length === 0) continue;
 
     const url = new URL("https://api.currencyapi.com/v3/latest");
@@ -202,7 +201,11 @@ export async function syncExchangeRates(options?: {
     for (const quoteCurrency of requestedQuotes) {
       const row = payload.data[quoteCurrency];
       const rateValue = row?.value;
-      if (typeof rateValue !== "number" || !Number.isFinite(rateValue) || rateValue <= 0) {
+      if (
+        typeof rateValue !== "number" ||
+        !Number.isFinite(rateValue) ||
+        rateValue <= 0
+      ) {
         continue;
       }
 

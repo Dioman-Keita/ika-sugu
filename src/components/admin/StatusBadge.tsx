@@ -58,7 +58,7 @@ export default function StatusBadge({ status, type = "order", className }: Props
         className,
       )}
     >
-      {t(labelKey) ?? (status.charAt(0) + status.slice(1).toLowerCase())}
+      {t(labelKey) ?? status.charAt(0) + status.slice(1).toLowerCase()}
     </span>
   );
 }

@@ -497,8 +497,7 @@ export const messages: Record<Locale, Messages> = {
       "Add at least one valid variant before saving.",
     "admin.product.form.error.variant.shopSection":
       "Variant {index}: choose a shop section.",
-    "admin.product.form.error.variant.images":
-      "Variant {index}: add at least one image.",
+    "admin.product.form.error.variant.images": "Variant {index}: add at least one image.",
     "admin.product.status.draft": "Draft",
     "admin.product.status.published": "Published",
     "admin.product.status.archived": "Archived",
@@ -535,19 +534,15 @@ export const messages: Record<Locale, Messages> = {
     "admin.settings.currency.recentRates": "Recent exchange rates",
     "admin.settings.currency.recentRatesHint":
       "Latest stored rates used as the source of truth for conversions.",
-    "admin.settings.currency.emptyRates":
-      "No exchange rate has been synchronized yet.",
+    "admin.settings.currency.emptyRates": "No exchange rate has been synchronized yet.",
     "admin.settings.currency.table.pair": "Pair",
     "admin.settings.currency.table.rate": "Rate",
     "admin.settings.currency.table.fetchedAt": "Fetched at",
     "admin.settings.currency.toast.settingsSaved":
       "Currency settings saved successfully.",
-    "admin.settings.currency.toast.settingsError":
-      "Failed to save currency settings.",
-    "admin.settings.currency.toast.ratesSynced":
-      "{count} exchange rates synchronized.",
-    "admin.settings.currency.toast.ratesError":
-      "Failed to synchronize exchange rates.",
+    "admin.settings.currency.toast.settingsError": "Failed to save currency settings.",
+    "admin.settings.currency.toast.ratesSynced": "{count} exchange rates synchronized.",
+    "admin.settings.currency.toast.ratesError": "Failed to synchronize exchange rates.",
 
     "notFound.title": "Page not found",
     "notFound.subtitle": "Oops! The page you're looking for doesn't exist or has moved.",
@@ -1101,16 +1096,14 @@ export const messages: Record<Locale, Messages> = {
       "Description courte du produit en français...",
     "admin.product.form.placeholder.description.en":
       "Short product description in English...",
-    "admin.product.form.placeholder.dressStyle":
-      "Choisir un style vestimentaire",
+    "admin.product.form.placeholder.dressStyle": "Choisir un style vestimentaire",
     "admin.product.form.error.category": "Choisissez une catégorie",
     "admin.product.form.placeholder.variant.size": "Choisir une taille",
     "admin.product.form.placeholder.variant.price": "Prix TTC",
     "admin.product.form.placeholder.variant.compareAtPrice": "Prix barré",
     "admin.product.form.placeholder.variant.colorPalette":
       "Choisir une couleur prédéfinie",
-    "admin.product.form.placeholder.variant.shopSection":
-      "Choisir une section boutique",
+    "admin.product.form.placeholder.variant.shopSection": "Choisir une section boutique",
     "admin.product.form.placeholder.variant.stock": "Stock",
     "admin.product.form.error.translation.fr":
       "La traduction française requiert un nom et une description.",
@@ -1164,8 +1157,7 @@ export const messages: Record<Locale, Messages> = {
       "Les paramètres de devise ont été enregistrés.",
     "admin.settings.currency.toast.settingsError":
       "Impossible d'enregistrer les paramètres de devise.",
-    "admin.settings.currency.toast.ratesSynced":
-      "{count} taux de change synchronisés.",
+    "admin.settings.currency.toast.ratesSynced": "{count} taux de change synchronisés.",
     "admin.settings.currency.toast.ratesError":
       "Impossible de synchroniser les taux de change.",
     "admin.product.form.action.cancel": "Annuler",

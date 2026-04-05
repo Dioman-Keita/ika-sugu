@@ -109,7 +109,8 @@ const formatDecimalInput = (value: string | number | null | undefined) => {
 };
 
 const parseIntegerInput = (value: string | number | null | undefined) => {
-  if (typeof value === "number") return Number.isFinite(value) ? Math.max(0, Math.trunc(value)) : 0;
+  if (typeof value === "number")
+    return Number.isFinite(value) ? Math.max(0, Math.trunc(value)) : 0;
 
   const digitsOnly = String(value ?? "").replace(/\D+/g, "");
   if (!digitsOnly) return 0;
@@ -373,10 +374,7 @@ export default function ProductForm({
     );
     if (missingShopSectionIndex >= 0) {
       failValidation(
-        missingShopSectionMessage.replace(
-          "{index}",
-          String(missingShopSectionIndex + 1),
-        ),
+        missingShopSectionMessage.replace("{index}", String(missingShopSectionIndex + 1)),
       );
       return;
     }
@@ -386,10 +384,7 @@ export default function ProductForm({
     );
     if (missingImagesIndex >= 0) {
       failValidation(
-        missingImagesMessage.replace(
-          "{index}",
-          String(missingImagesIndex + 1),
-        ),
+        missingImagesMessage.replace("{index}", String(missingImagesIndex + 1)),
       );
       return;
     }
@@ -610,10 +605,7 @@ export default function ProductForm({
             </p>
             {labels["field.vatHint"] && (
               <p className="text-xs text-muted-foreground">
-                {vatHintTemplate.replace(
-                  "{rate}",
-                  parseDecimalInput(vatRate).toFixed(1),
-                )}
+                {vatHintTemplate.replace("{rate}", parseDecimalInput(vatRate).toFixed(1))}
               </p>
             )}
           </div>
@@ -749,9 +741,7 @@ export default function ProductForm({
               </option>
             ))}
           </select>
-          <p className="text-xs text-muted-foreground">
-            {labels["field.category.hint"]}
-          </p>
+          <p className="text-xs text-muted-foreground">{labels["field.category.hint"]}</p>
         </div>
       </div>
 

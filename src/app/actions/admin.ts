@@ -379,7 +379,11 @@ const deriveStoredFinalPrice = (
   if (variants.length === 0) return fallbackPrice;
 
   const normalizedCurrencies = new Set(
-    variants.map((variant) => String(variant.currency ?? "").trim().toUpperCase()),
+    variants.map((variant) =>
+      String(variant.currency ?? "")
+        .trim()
+        .toUpperCase(),
+    ),
   );
 
   if (normalizedCurrencies.size > 1) {
@@ -773,9 +777,9 @@ export async function updateAdminProduct(data: UpsertProductInput & { id: string
       } else {
         toCreate.push({
           productId: data.id,
-            colorName: v.colorName,
-            shopSection: v.shopSection,
-            colorHex: v.colorHex ?? null,
+          colorName: v.colorName,
+          shopSection: v.shopSection,
+          colorHex: v.colorHex ?? null,
           size: v.size,
           price: v.price,
           compareAtPrice: v.compareAtPrice ?? null,
@@ -806,13 +810,18 @@ export async function updateAdminProduct(data: UpsertProductInput & { id: string
     if (toUpdate.length) {
       for (const { id, data: variantData } of toUpdate) {
         const existingVariant = existingById.get(id);
-        const currentColorName = String(variantData.colorName ?? existingVariant?.colorName ?? "default");
+        const currentColorName = String(
+          variantData.colorName ?? existingVariant?.colorName ?? "default",
+        );
         const currentSize = String(variantData.size ?? existingVariant?.size ?? "unique");
 
-        const identityChanged = existingVariant && (existingVariant.colorName !== currentColorName || existingVariant.size !== currentSize);
+        const identityChanged =
+          existingVariant &&
+          (existingVariant.colorName !== currentColorName ||
+            existingVariant.size !== currentSize);
 
         const sku =
-          (existingVariant?.sku && !identityChanged)
+          existingVariant?.sku && !identityChanged
             ? existingVariant.sku
             : await generateUniqueSku(
                 tx,

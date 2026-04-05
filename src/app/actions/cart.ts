@@ -75,9 +75,9 @@ function emptyCartShell(): CartDTO {
   };
 }
 
-async function applyDisplayCurrencyToCart<T extends { items: Array<Record<string, unknown>> }>(
-  cart: T,
-): Promise<T> {
+async function applyDisplayCurrencyToCart<
+  T extends { items: Array<Record<string, unknown>> },
+>(cart: T): Promise<T> {
   const targetCurrency = await getCurrentTargetCurrency();
 
   const items = await Promise.all(

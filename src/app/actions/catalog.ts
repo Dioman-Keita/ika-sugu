@@ -438,15 +438,16 @@ export const getShopProductsAction = async ({
       products: await Promise.all(
         products.map((product) =>
           toUiProduct(
-          {
-            ...(product as unknown as Parameters<typeof toUiProduct>[0]),
-            reviews: ratingByProductId.has(product.id)
-              ? [{ rating: ratingByProductId.get(product.id) ?? 0 }]
-              : [],
-          },
-          locale,
-          targetCurrency,
-        )),
+            {
+              ...(product as unknown as Parameters<typeof toUiProduct>[0]),
+              reviews: ratingByProductId.has(product.id)
+                ? [{ rating: ratingByProductId.get(product.id) ?? 0 }]
+                : [],
+            },
+            locale,
+            targetCurrency,
+          ),
+        ),
       ),
       totalProducts,
       currentPage: safePage,

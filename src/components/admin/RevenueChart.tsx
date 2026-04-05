@@ -19,12 +19,7 @@ type Props = {
   revenueLabel: string;
 };
 
-export default function RevenueChart({
-  data,
-  currency,
-  locale,
-  revenueLabel,
-}: Props) {
+export default function RevenueChart({ data, currency, locale, revenueLabel }: Props) {
   const tickFormatter = (value: number) => {
     const compact = new Intl.NumberFormat(locale, {
       notation: "compact",

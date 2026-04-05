@@ -243,7 +243,7 @@ Responsable de :
 Exemple :
 
 ```ts
-formatMoney(amount, currency, locale)
+formatMoney(amount, currency, locale);
 ```
 
 ## Règles UI/UX

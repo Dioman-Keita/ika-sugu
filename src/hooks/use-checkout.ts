@@ -17,9 +17,7 @@ export function usePlaceOrderMutation() {
       toast.success(t("toast.success.placeOrder"));
     },
     onError: (error) => {
-      toast.error(
-        error instanceof Error ? error.message : t("toast.error.placeOrder"),
-      );
+      toast.error(error instanceof Error ? error.message : t("toast.error.placeOrder"));
     },
   });
 }

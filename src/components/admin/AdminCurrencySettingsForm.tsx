@@ -66,7 +66,9 @@ export default function AdminCurrencySettingsForm({
     startSyncing(async () => {
       try {
         const result = await syncAdminExchangeRatesAction();
-        setLastSyncedAt(result.fetchedAt ? new Date(result.fetchedAt).toISOString() : null);
+        setLastSyncedAt(
+          result.fetchedAt ? new Date(result.fetchedAt).toISOString() : null,
+        );
         toast.success(
           labels["toast.ratesSynced"].replace("{count}", String(result.syncedCount)),
         );
@@ -119,11 +121,7 @@ export default function AdminCurrencySettingsForm({
           <Button onClick={handleSave} disabled={isSaving || isSyncing}>
             {isSaving ? labels["saving"] : labels["save"]}
           </Button>
-          <Button
-            variant="outline"
-            onClick={handleSync}
-            disabled={isSaving || isSyncing}
-          >
+          <Button variant="outline" onClick={handleSync} disabled={isSaving || isSyncing}>
             {isSyncing ? labels["syncing"] : labels["sync"]}
           </Button>
         </div>
@@ -131,8 +129,12 @@ export default function AdminCurrencySettingsForm({
 
       <div className="border border-border rounded-2xl bg-surface-card overflow-hidden">
         <div className="px-5 py-4 border-b border-border">
-          <h2 className="text-sm font-semibold text-foreground">{labels["recentRates"]}</h2>
-          <p className="text-xs text-muted-foreground mt-1">{labels["recentRatesHint"]}</p>
+          <h2 className="text-sm font-semibold text-foreground">
+            {labels["recentRates"]}
+          </h2>
+          <p className="text-xs text-muted-foreground mt-1">
+            {labels["recentRatesHint"]}
+          </p>
         </div>
         {latestRates.length === 0 ? (
           <p className="px-5 py-8 text-sm text-muted-foreground text-center">
