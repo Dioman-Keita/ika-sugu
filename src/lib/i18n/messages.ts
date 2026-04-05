@@ -471,6 +471,8 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.form.finalPrice": "Final price (incl. VAT)",
     "admin.product.form.finalPrice.hint":
       "Calculated automatically from the base price, discount, and VAT.",
+    "admin.product.form.finalPrice.currencyHint":
+      "Displayed in the current global storefront target currency.",
     "admin.product.form.vatHint": "Includes VAT at {rate}%",
     "admin.product.form.placeholder.slug": "summer-linen-shirt",
     "admin.product.form.placeholder.name.fr": "Chemise en lin d'été",
@@ -1074,6 +1076,8 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.form.vat": "TVA (%)",
     "admin.product.form.dressStyle": "Style vestimentaire",
     "admin.product.form.finalPrice": "Prix final (TTC)",
+    "admin.product.form.finalPrice.currencyHint":
+      "Affiché dans la devise cible globale actuelle du storefront.",
     "admin.product.form.vatHint": "TVA incluse à {rate}%",
     "admin.product.form.pricing": "Tarification",
     "admin.product.form.pricing.hint":

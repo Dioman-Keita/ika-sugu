@@ -47,6 +47,7 @@ type VariantInput = {
 type ProductFormProps = {
   mode: "create" | "edit";
   categories: Category[];
+  targetCurrency: string;
   initial?: {
     id: string;
     slug: string;
@@ -126,6 +127,7 @@ const formatIntegerInput = (value: string | number | null | undefined) => {
 export default function ProductForm({
   mode,
   categories,
+  targetCurrency,
   initial,
   labels,
 }: ProductFormProps) {
@@ -208,8 +210,8 @@ export default function ProductForm({
   );
 
   const displayCurrency = useMemo(
-    () => (variants[0]?.currency ?? "USD").toUpperCase(),
-    [variants],
+    () => String(targetCurrency ?? "USD").toUpperCase(),
+    [targetCurrency],
   );
   const displayCurrencyLabel =
     labels[`currency.${displayCurrency.toLowerCase()}`] ?? displayCurrency;
@@ -602,6 +604,9 @@ export default function ProductForm({
             </div>
             <p className="text-xs text-muted-foreground">
               {labels["field.finalPrice.hint"]}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {labels["field.finalPrice.currencyHint"]}
             </p>
             {labels["field.vatHint"] && (
               <p className="text-xs text-muted-foreground">

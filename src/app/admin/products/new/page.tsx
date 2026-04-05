@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
 import { Locale, parseLocale } from "@/lib/i18n/locale";
 import { messages } from "@/lib/i18n/messages";
-import { getAdminCategories } from "@/app/actions/admin";
+import { getAdminCategories, getAdminCurrencySettings } from "@/app/actions/admin";
 import ProductForm from "@/components/admin/ProductForm";
 
 export default async function AdminNewProductPage() {
@@ -11,6 +11,7 @@ export default async function AdminNewProductPage() {
   const m = messages[locale];
 
   const categories = await getAdminCategories(locale);
+  const currencySettings = await getAdminCurrencySettings();
   if (!categories.length) {
     return (
       <div className="p-6 space-y-6">
@@ -53,6 +54,7 @@ export default async function AdminNewProductPage() {
         <ProductForm
           mode="create"
           categories={categories}
+          targetCurrency={currencySettings.targetCurrency}
           labels={{
             "field.slug": m["admin.product.form.slug"],
             "field.slug.hint": m["admin.product.form.slug.hint"],
@@ -71,6 +73,8 @@ export default async function AdminNewProductPage() {
             "field.dressStyle.hint": m["admin.product.form.dressStyle.hint"],
             "field.finalPrice": m["admin.product.form.finalPrice"],
             "field.finalPrice.hint": m["admin.product.form.finalPrice.hint"],
+            "field.finalPrice.currencyHint":
+              m["admin.product.form.finalPrice.currencyHint"],
             "field.vatHint": m["admin.product.form.vatHint"],
             "placeholder.slug": m["admin.product.form.placeholder.slug"],
             "placeholder.dressStyle": m["admin.product.form.placeholder.dressStyle"],

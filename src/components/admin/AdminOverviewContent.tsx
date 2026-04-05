@@ -130,7 +130,12 @@ export default function AdminOverviewContent({ locale }: { locale: Locale }) {
               {m["admin.overview.revenueChart"]}
             </h2>
           </div>
-          <RevenueChart data={revenueChartData} />
+          <RevenueChart
+            data={revenueChartData}
+            currency={stats.currency}
+            locale={locale}
+            revenueLabel={m["admin.overview.revenue"]}
+          />
         </div>
 
         {/* Orders by status */}

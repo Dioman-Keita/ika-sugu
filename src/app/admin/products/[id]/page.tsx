@@ -6,7 +6,7 @@ import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
 import { Locale, parseLocale } from "@/lib/i18n/locale";
 import { messages } from "@/lib/i18n/messages";
 import db from "@/lib/db";
-import { getAdminCategories } from "@/app/actions/admin";
+import { getAdminCategories, getAdminCurrencySettings } from "@/app/actions/admin";
 import ProductForm from "@/components/admin/ProductForm";
 
 type Props = { params: Promise<{ id: string }> };
@@ -116,6 +116,7 @@ export default async function AdminProductDetailPage({ params }: Props) {
   if (!shaped) return notFound();
 
   const categories = await getAdminCategories(locale);
+  const currencySettings = await getAdminCurrencySettings();
 
   return (
     <div className="p-6 space-y-8">
@@ -139,6 +140,7 @@ export default async function AdminProductDetailPage({ params }: Props) {
         <ProductForm
           mode="edit"
           categories={categories}
+          targetCurrency={currencySettings.targetCurrency}
           initial={{
             id: shaped.id,
             slug: shaped.slug,
@@ -170,6 +172,8 @@ export default async function AdminProductDetailPage({ params }: Props) {
             "field.dressStyle.hint": m["admin.product.form.dressStyle.hint"],
             "field.finalPrice": m["admin.product.form.finalPrice"],
             "field.finalPrice.hint": m["admin.product.form.finalPrice.hint"],
+            "field.finalPrice.currencyHint":
+              m["admin.product.form.finalPrice.currencyHint"],
             "field.vatHint": m["admin.product.form.vatHint"],
             "placeholder.slug": m["admin.product.form.placeholder.slug"],
             "placeholder.dressStyle": m["admin.product.form.placeholder.dressStyle"],

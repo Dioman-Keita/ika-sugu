@@ -1,3 +1,5 @@
+"use client";
+
 import { cn } from "@/lib/utils";
 import { ProductStatus } from "@/generated/prisma/client";
 import { useUiPreferences } from "@/lib/ui-preferences";

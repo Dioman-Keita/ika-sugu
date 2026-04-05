@@ -122,106 +122,138 @@ export async function syncAdminExchangeRatesAction() {
 
 export async function getAdminStats() {
   await assertAdmin();
-  const targetCurrency = await getCurrentTargetCurrency();
-  const [
-    totalOrders,
-    totalUsers,
-    totalProducts,
-    pendingReviews,
-    ordersByStatusRaw,
-    revenueOrders,
-  ] = await Promise.all([
-    db.order.count(),
-    db.user.count(),
-    db.product.count(),
-    db.review.count({ where: { status: ReviewStatus.PENDING } }),
-    db.order.groupBy({
-      by: ["status"],
-      _count: { id: true },
-    }),
-    db.order.findMany({
-      where: {
-        status: { in: REVENUE_GENERATING_STATUSES },
-      },
-      select: {
-        total: true,
-        currency: true,
-        createdAt: true,
-      },
-    }),
-  ]);
-
-  const convertedRevenueOrders = await Promise.all(
-    revenueOrders.map(async (order) => {
-      const converted = await convertMoney({
-        amount: order.total.toNumber(),
-        sourceCurrency: order.currency,
-        targetCurrency,
-      });
-
-      return {
-        createdAt: order.createdAt,
-        total: converted.amount,
-      };
-    }),
+  await ensureCoreApplicationData();
+  const targetCurrency = await getCurrentTargetCurrency().catch(
+    () => DEFAULT_TARGET_CURRENCY,
   );
 
-  const totalRevenue = convertedRevenueOrders.reduce(
-    (sum, order) => sum + order.total,
-    0,
-  );
+  try {
+    const [
+      totalOrders,
+      totalUsers,
+      totalProducts,
+      pendingReviews,
+      ordersByStatusRaw,
+      revenueOrders,
+    ] = await Promise.all([
+      db.order.count(),
+      db.user.count(),
+      db.product.count(),
+      db.review.count({ where: { status: ReviewStatus.PENDING } }),
+      db.order.groupBy({
+        by: ["status"],
+        _count: { id: true },
+      }),
+      db.order.findMany({
+        where: {
+          status: { in: REVENUE_GENERATING_STATUSES },
+        },
+        select: {
+          total: true,
+          currency: true,
+          createdAt: true,
+        },
+      }),
+    ]);
 
-  const ordersByStatus: Record<string, number> = {};
-  for (const row of ordersByStatusRaw) {
-    ordersByStatus[row.status] = row._count.id;
+    const convertedRevenueOrders = await Promise.all(
+      revenueOrders.map(async (order) => {
+        const converted = await convertMoney({
+          amount: order.total.toNumber(),
+          sourceCurrency: order.currency,
+          targetCurrency,
+        });
+
+        return {
+          createdAt: order.createdAt,
+          total: converted.amount,
+        };
+      }),
+    );
+
+    const totalRevenue = convertedRevenueOrders.reduce(
+      (sum, order) => sum + order.total,
+      0,
+    );
+
+    const ordersByStatus: Record<string, number> = {};
+    for (const row of ordersByStatusRaw) {
+      ordersByStatus[row.status] = row._count.id;
+    }
+
+    const now = new Date();
+    const months: { month: string; revenue: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = d.toISOString().slice(0, 7);
+      const revenue = convertedRevenueOrders
+        .filter((order) => order.createdAt.toISOString().slice(0, 7) === key)
+        .reduce((sum, order) => sum + order.total, 0);
+      months.push({ month: key, revenue });
+    }
+
+    return {
+      totalRevenue,
+      currency: targetCurrency,
+      totalOrders,
+      totalUsers,
+      totalProducts,
+      pendingReviews,
+      ordersByStatus,
+      monthlyRevenue: months,
+    };
+  } catch (error) {
+    console.error("[admin] Failed to build overview stats", error);
+    const now = new Date();
+    const months: { month: string; revenue: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({ month: d.toISOString().slice(0, 7), revenue: 0 });
+    }
+
+    return {
+      totalRevenue: 0,
+      currency: targetCurrency,
+      totalOrders: 0,
+      totalUsers: 0,
+      totalProducts: 0,
+      pendingReviews: 0,
+      ordersByStatus: {},
+      monthlyRevenue: months,
+    };
   }
-
-  const now = new Date();
-  const months: { month: string; revenue: number }[] = [];
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const key = d.toISOString().slice(0, 7); // "2025-01"
-    const revenue = convertedRevenueOrders
-      .filter((order) => order.createdAt.toISOString().slice(0, 7) === key)
-      .reduce((sum, order) => sum + order.total, 0);
-    months.push({ month: key, revenue });
-  }
-
-  return {
-    totalRevenue,
-    currency: targetCurrency,
-    totalOrders,
-    totalUsers,
-    totalProducts,
-    pendingReviews,
-    ordersByStatus,
-    monthlyRevenue: months,
-  };
 }
 
 // ─── Recent Orders (for overview) ─────────────────────────────────────────────
 
 export async function getRecentOrders() {
   await assertAdmin();
-  const orders = await db.order.findMany({
-    take: 6,
-    orderBy: { createdAt: "desc" },
-    include: {
-      user: { select: { name: true, email: true } },
-      items: { select: { quantity: true } },
-    },
-  });
+  await ensureCoreApplicationData();
 
-  return orders.map((o) => ({
-    id: o.id,
-    userName: o.user.name,
-    userEmail: o.user.email,
-    total: o.total.toNumber(),
-    currency: o.currency,
-    status: o.status,
-    createdAt: o.createdAt,
-    itemCount: o.items.reduce((s, i) => s + i.quantity, 0),
-  }));
+  try {
+    const orders = await db.order.findMany({
+      take: 6,
+      orderBy: { createdAt: "desc" },
+      include: {
+        user: { select: { name: true, email: true } },
+        items: { select: { quantity: true } },
+      },
+    });
+
+    return orders.map((o) => ({
+      id: o.id,
+      userName: o.user.name,
+      userEmail: o.user.email,
+      total: o.total.toNumber(),
+      currency: o.currency,
+      status: o.status,
+      createdAt: o.createdAt,
+      itemCount: o.items.reduce((s, i) => s + i.quantity, 0),
+    }));
+  } catch (error) {
+    console.error("[admin] Failed to load recent orders", error);
+    return [];
+  }
 }
 
 // ─── Products ─────────────────────────────────────────────────────────────────
