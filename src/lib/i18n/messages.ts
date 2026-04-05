@@ -6,6 +6,8 @@ export type Messages = Record<string, string>;
 export const messages: Record<Locale, Messages> = {
   en: {
     "common.close": "Close",
+    "common.edit": "Edit",
+    "common.actions": "Actions",
     "common.remove": "Remove",
     "topBanner.text": "Sign up and get 20% off to your first order.",
     "topBanner.cta": "Sign Up Now",
@@ -364,6 +366,7 @@ export const messages: Record<Locale, Messages> = {
     "admin.overview.status.CANCELED": "Canceled",
     "admin.overview.recentOrders": "Recent Orders",
     "admin.overview.noOrders": "No orders yet.",
+    "admin.overview.loading": "Loading dashboard...",
     "admin.overview.table.customer": "Customer",
     "admin.overview.table.items": "Items",
     "admin.overview.table.total": "Total",
@@ -372,6 +375,10 @@ export const messages: Record<Locale, Messages> = {
 
     "admin.products.title": "Products",
     "admin.products.noProducts": "No products found.",
+    "admin.products.empty.title": "No product has been created yet",
+    "admin.products.empty.description":
+      "Start by creating your first product page, then add the sellable variants that belong to it.",
+    "admin.products.empty.cta": "Create the first product",
     "admin.products.table.product": "Product",
     "admin.products.table.category": "Category",
     "admin.products.table.status": "Status",
@@ -409,6 +416,9 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.form.translations": "Translations",
     "admin.product.form.translations.hint":
       "Both French and English are required. The source locale defines the base product content.",
+    "admin.product.form.emptyCategories.title": "No category available yet",
+    "admin.product.form.emptyCategories.description":
+      "This page needs at least one category before a product can be created. After a database reset, run the seed to recreate the catalog structure.",
     "admin.product.form.variants": "Variants",
     "admin.product.form.variants.hint":
       "Colors, sizes, pricing, stock, and variant-specific images.",
@@ -550,6 +560,9 @@ export const messages: Record<Locale, Messages> = {
     "admin.orders.tabs.delivered": "Delivered",
     "admin.orders.tabs.canceled": "Canceled",
     "admin.orders.noOrders": "No orders found.",
+    "admin.orders.empty.title": "No order has been placed yet",
+    "admin.orders.empty.description":
+      "Orders will appear here as soon as customers complete checkout on the storefront.",
     "admin.orders.table.orderId": "Order ID",
     "admin.orders.table.customer": "Customer",
     "admin.orders.table.items": "Items",
@@ -559,6 +572,9 @@ export const messages: Record<Locale, Messages> = {
 
     "admin.users.title": "Users",
     "admin.users.noUsers": "No users found.",
+    "admin.users.empty.title": "No customer account yet",
+    "admin.users.empty.description":
+      "User accounts will appear here after customers sign up or place orders with an account.",
     "admin.users.table.user": "User",
     "admin.users.table.emailVerified": "Email verified",
     "admin.users.table.orders": "Orders",
@@ -572,6 +588,9 @@ export const messages: Record<Locale, Messages> = {
     "admin.reviews.tabs.approved": "Approved",
     "admin.reviews.tabs.rejected": "Rejected",
     "admin.reviews.noReviews": "No reviews found.",
+    "admin.reviews.empty.title": "No review available yet",
+    "admin.reviews.empty.description":
+      "Customer reviews will show up here once shoppers start sharing feedback on published products.",
     "admin.reviews.table.user": "User",
     "admin.reviews.table.product": "Product",
     "admin.reviews.table.rating": "Rating",
@@ -579,6 +598,8 @@ export const messages: Record<Locale, Messages> = {
     "admin.reviews.table.status": "Status",
     "admin.reviews.table.date": "Date",
     "admin.reviews.table.actions": "Actions",
+    "admin.reviews.action.approve": "Approve",
+    "admin.reviews.action.reject": "Reject",
     "admin.reviews.verifiedPurchase": "Verified purchase",
     "admin.reviews.view": "View review",
 
@@ -597,6 +618,8 @@ export const messages: Record<Locale, Messages> = {
   },
   fr: {
     "common.close": "Fermer",
+    "common.edit": "Modifier",
+    "common.actions": "Actions",
     "common.remove": "Supprimer",
     "topBanner.text":
       "Inscrivez-vous et obtenez 20% de réduction sur votre première commande.",
@@ -960,6 +983,7 @@ export const messages: Record<Locale, Messages> = {
     "admin.overview.status.CANCELED": "Annulé",
     "admin.overview.recentOrders": "Commandes récentes",
     "admin.overview.noOrders": "Aucune commande pour l'instant.",
+    "admin.overview.loading": "Chargement du dashboard...",
     "admin.overview.table.customer": "Client",
     "admin.overview.table.items": "Articles",
     "admin.overview.table.total": "Total",
@@ -968,6 +992,10 @@ export const messages: Record<Locale, Messages> = {
 
     "admin.products.title": "Produits",
     "admin.products.noProducts": "Aucun produit trouvé.",
+    "admin.products.empty.title": "Aucun produit n'a encore été créé",
+    "admin.products.empty.description":
+      "Commence par créer ta première fiche produit, puis ajoute les variantes vendables qui lui appartiennent.",
+    "admin.products.empty.cta": "Créer le premier produit",
     "admin.products.table.product": "Produit",
     "admin.products.table.category": "Catégorie",
     "admin.products.table.status": "Statut",
@@ -1005,6 +1033,10 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.form.translations": "Traductions",
     "admin.product.form.translations.hint":
       "Le français et l'anglais sont obligatoires. La langue source définit le contenu principal du produit.",
+    "admin.product.form.emptyCategories.title":
+      "Aucune catégorie n'est encore disponible",
+    "admin.product.form.emptyCategories.description":
+      "Cette page a besoin d'au moins une catégorie avant de pouvoir créer un produit. Après un reset de la base, relance le seed pour recréer la structure du catalogue.",
     "admin.product.form.category": "Catégorie",
     "admin.product.form.variants": "Variantes",
     "admin.product.form.variants.hint":
@@ -1150,6 +1182,9 @@ export const messages: Record<Locale, Messages> = {
     "admin.orders.tabs.delivered": "Livré",
     "admin.orders.tabs.canceled": "Annulé",
     "admin.orders.noOrders": "Aucune commande trouvée.",
+    "admin.orders.empty.title": "Aucune commande n'a encore été passée",
+    "admin.orders.empty.description":
+      "Les commandes apparaîtront ici dès que des clients finaliseront leur checkout sur le storefront.",
     "admin.orders.table.orderId": "Numéro de commande",
     "admin.orders.table.customer": "Client",
     "admin.orders.table.items": "Articles",
@@ -1159,6 +1194,9 @@ export const messages: Record<Locale, Messages> = {
 
     "admin.users.title": "Utilisateurs",
     "admin.users.noUsers": "Aucun utilisateur trouvé.",
+    "admin.users.empty.title": "Aucun compte client pour l'instant",
+    "admin.users.empty.description":
+      "Les comptes utilisateurs apparaîtront ici après une inscription ou une commande passée avec un compte.",
     "admin.users.table.user": "Utilisateur",
     "admin.users.table.emailVerified": "Email vérifié",
     "admin.users.table.orders": "Commandes",
@@ -1172,6 +1210,9 @@ export const messages: Record<Locale, Messages> = {
     "admin.reviews.tabs.approved": "Approuvé",
     "admin.reviews.tabs.rejected": "Rejeté",
     "admin.reviews.noReviews": "Aucun avis trouvé.",
+    "admin.reviews.empty.title": "Aucun avis disponible pour l'instant",
+    "admin.reviews.empty.description":
+      "Les avis clients apparaîtront ici dès que des acheteurs commenceront à commenter les produits publiés.",
     "admin.reviews.table.user": "Utilisateur",
     "admin.reviews.table.product": "Produit",
     "admin.reviews.table.rating": "Note",
@@ -1179,6 +1220,8 @@ export const messages: Record<Locale, Messages> = {
     "admin.reviews.table.status": "Statut",
     "admin.reviews.table.date": "Date",
     "admin.reviews.table.actions": "Actions",
+    "admin.reviews.action.approve": "Approuver",
+    "admin.reviews.action.reject": "Rejeter",
     "admin.reviews.verifiedPurchase": "Achat vérifié",
     "admin.reviews.view": "Voir l'avis",
 

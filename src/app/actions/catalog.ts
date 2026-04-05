@@ -1,6 +1,7 @@
 "use server";
 
 import db from "@/lib/db";
+import { ensureCoreApplicationData } from "@/lib/bootstrap/application";
 import { Product } from "@/types/product.types";
 import { Review } from "@/types/review.types";
 import { Prisma, ProductStatus, ReviewStatus } from "@/generated/prisma/client";
@@ -524,6 +525,7 @@ export const getProductPageAction = async (productId: string, locale: Locale = "
 
 export const getCategoriesAction = async (locale: Locale = "en") => {
   try {
+    await ensureCoreApplicationData();
     const categories = await withDbRetry(() =>
       db.category.findMany({
         include: {

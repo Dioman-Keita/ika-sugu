@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { ProductStatus } from "@/generated/prisma/client";
+import { useUiPreferences } from "@/lib/ui-preferences";
 
 const orderStatusStyles: Record<string, string> = {
   PENDING:
@@ -32,12 +33,21 @@ type Props = {
 };
 
 export default function StatusBadge({ status, type = "order", className }: Props) {
+  const { t } = useUiPreferences();
   const styles =
     type === "review"
       ? reviewStatusStyles
       : type === "product"
         ? productStatusStyles
         : orderStatusStyles;
+
+  const labelKey =
+    type === "review"
+      ? `admin.reviews.tabs.${status.toLowerCase()}`
+      : type === "product"
+        ? `admin.product.status.${status.toLowerCase()}`
+        : `admin.orders.tabs.${status.toLowerCase()}`;
+
   return (
     <span
       className={cn(
@@ -46,7 +56,7 @@ export default function StatusBadge({ status, type = "order", className }: Props
         className,
       )}
     >
-      {status.charAt(0) + status.slice(1).toLowerCase()}
+      {t(labelKey) ?? (status.charAt(0) + status.slice(1).toLowerCase())}
     </span>
   );
 }

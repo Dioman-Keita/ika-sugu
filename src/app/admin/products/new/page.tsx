@@ -1,4 +1,3 @@
-import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
 import { Locale, parseLocale } from "@/lib/i18n/locale";
@@ -12,7 +11,32 @@ export default async function AdminNewProductPage() {
   const m = messages[locale];
 
   const categories = await getAdminCategories(locale);
-  if (!categories.length) return notFound();
+  if (!categories.length) {
+    return (
+      <div className="p-6 space-y-6">
+        <div>
+          <p className="text-sm text-muted-foreground">
+            {m["admin.product.form.subtitle"]}
+          </p>
+          <h1 className="text-2xl font-semibold text-foreground">
+            {m["admin.product.form.title.new"]}
+          </h1>
+        </div>
+
+        <div className="space-y-3 rounded-2xl border border-border bg-surface-card p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-foreground">
+            {m["admin.product.form.emptyCategories.title"]}
+          </h2>
+          <p className="text-sm leading-6 text-muted-foreground">
+            {m["admin.product.form.emptyCategories.description"]}
+          </p>
+          <code className="block rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground">
+            bun run seed
+          </code>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">

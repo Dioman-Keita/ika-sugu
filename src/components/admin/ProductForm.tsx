@@ -177,16 +177,11 @@ export default function ProductForm({
     return Math.max(0, Number((net * (1 + vat / 100)).toFixed(2)));
   }, [basePrice, discountPercentage, vatRate]);
 
-  const variantHelpText =
-    labels["variant.help"] ??
-    "Color and size identify each variant; use Standard/Taille unique when there is only one option.";
-  const skuFallbackText = labels["variant.skuFallback"] ?? "SKU generated automatically";
-  const missingShopSectionMessage =
-    labels["error.variant.shopSection"] ?? "Variant {index}: shop section is required";
-  const missingImagesMessage =
-    labels["error.variant.images"] ?? "Variant {index}: at least one image is required";
-  const vatHintTemplate =
-    labels["field.vatHint"] ?? "VAT {rate}% applied on the discounted base price.";
+  const variantHelpText = labels["variant.help"];
+  const skuFallbackText = labels["variant.skuFallback"];
+  const missingShopSectionMessage = labels["error.variant.shopSection"];
+  const missingImagesMessage = labels["error.variant.images"];
+  const vatHintTemplate = labels["field.vatHint"];
 
   const [variants, setVariants] = useState<VariantInput[]>(
     initial?.variants?.map((variant) => ({
@@ -211,6 +206,13 @@ export default function ProductForm({
       },
     ],
   );
+
+  const displayCurrency = useMemo(
+    () => (variants[0]?.currency ?? "USD").toUpperCase(),
+    [variants],
+  );
+  const displayCurrencyLabel =
+    labels[`currency.${displayCurrency.toLowerCase()}`] ?? displayCurrency;
 
   const updateVariant = (id: string, patch: Partial<VariantInput>) => {
     setVariants((prev) =>
@@ -596,7 +598,7 @@ export default function ProductForm({
               {labels["field.finalPrice"]}
             </label>
             <div className="h-[46px] flex items-center px-4 rounded-xl border border-border bg-background text-sm text-foreground">
-              {finalPrice.toFixed(2)} USD
+              {finalPrice.toFixed(2)} {displayCurrencyLabel}
             </div>
             <p className="text-xs text-muted-foreground">
               {labels["field.finalPrice.hint"]}
@@ -795,7 +797,7 @@ export default function ProductForm({
               <div className="grid lg:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">
-                    {labels["variant.shopSectionLabel"] ?? "Shop section"}
+                    {labels["variant.shopSectionLabel"]}
                   </label>
                   <select
                     value={variant.shopSection ?? ""}
@@ -812,13 +814,13 @@ export default function ProductForm({
                     ))}
                   </select>
                   <p className="text-xs text-muted-foreground">
-                    {labels["variant.shopSectionHint"] ?? ""}
+                    {labels["variant.shopSectionHint"]}
                   </p>
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">
-                    {labels["variant.colorLabel"] ?? "Color"}
+                    {labels["variant.colorLabel"]}
                   </label>
                   <select
                     value={variant.colorHex ?? ""}
@@ -841,13 +843,13 @@ export default function ProductForm({
                     ))}
                   </select>
                   <p className="text-xs text-muted-foreground">
-                    {labels["variant.colorHint"] ?? ""}
+                    {labels["variant.colorHint"]}
                   </p>
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">
-                    {labels["variant.sizeLabel"] ?? "Size"}
+                    {labels["variant.sizeLabel"]}
                   </label>
                   <select
                     value={variant.size}
@@ -862,25 +864,25 @@ export default function ProductForm({
                     ))}{" "}
                   </select>
                   <p className="text-xs text-muted-foreground">
-                    {labels["variant.sizeHint"] ?? ""}
+                    {labels["variant.sizeHint"]}
                   </p>
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">
-                    {labels["variant.skuLabel"] ?? "SKU"}
+                    {labels["variant.skuLabel"]}
                   </label>
                   <div className="w-full rounded-xl border border-border bg-surface-card px-4 py-3 text-sm text-muted-foreground flex items-center">
                     {variant.sku ?? skuFallbackText}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {labels["variant.skuHint"] ?? ""}
+                    {labels["variant.skuHint"]}
                   </p>
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">
-                    {labels["variant.priceLabel"] ?? "Price"}
+                    {labels["variant.priceLabel"]}
                   </label>
                   <input
                     type="text"
@@ -894,7 +896,7 @@ export default function ProductForm({
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">
-                    {labels["variant.compareAtPriceLabel"] ?? "Compare-at price"}
+                    {labels["variant.compareAtPriceLabel"]}
                   </label>
                   <input
                     type="text"
@@ -912,7 +914,7 @@ export default function ProductForm({
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">
-                    {labels["variant.currencyLabel"] ?? "Currency"}
+                    {labels["variant.currencyLabel"]}
                   </label>
                   <select
                     value={variant.currency ?? "USD"}
@@ -932,7 +934,7 @@ export default function ProductForm({
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">
-                  {labels["variant.stockLabel"] ?? "Stock"}
+                  {labels["variant.stockLabel"]}
                 </label>
                 <input
                   type="text"
@@ -947,13 +949,13 @@ export default function ProductForm({
                   placeholder={labels["placeholder.variant.stock"]}
                 />
                 <p className="text-xs text-muted-foreground">
-                  {labels["variant.stockHint"] ?? ""}
+                  {labels["variant.stockHint"]}
                 </p>
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">
-                  {labels["variant.activeLabel"] ?? t("admin.product.variant.active")}
+                  {labels["variant.activeLabel"]}
                 </label>
                 <select
                   value={variant.isActive === false ? "inactive" : "active"}
@@ -966,13 +968,13 @@ export default function ProductForm({
                   <option value="inactive">{t("admin.product.variant.inactive")}</option>
                 </select>
                 <p className="text-xs text-muted-foreground">
-                  {labels["variant.activeHint"] ?? ""}
+                  {labels["variant.activeHint"]}
                 </p>
               </div>
 
               <div className="space-y-2">
                 <p className="text-sm font-medium text-foreground">
-                  {labels["variant.mediaLabel"] ?? "Images"}
+                  {labels["variant.mediaLabel"]}
                 </p>
                 <p className="text-xs text-muted-foreground">{variantHelpText}</p>
               </div>

@@ -70,7 +70,14 @@ export default async function AdminUsersPage({ searchParams }: Props) {
                       colSpan={4}
                       className="px-5 py-10 text-center text-muted-foreground"
                     >
-                      {m["admin.users.noUsers"]}
+                      <div className="mx-auto max-w-md space-y-3">
+                        <p className="text-base font-semibold text-foreground">
+                          {m["admin.users.empty.title"]}
+                        </p>
+                        <p className="text-sm leading-6 text-muted-foreground">
+                          {m["admin.users.empty.description"]}
+                        </p>
+                      </div>
                     </td>
                   </tr>
                 ) : (

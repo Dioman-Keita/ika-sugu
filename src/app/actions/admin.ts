@@ -24,10 +24,14 @@ import {
   isSizeOption,
 } from "@/lib/catalog-options";
 import {
+  convertMoney,
   getSiteCurrencySettings,
+  getCurrentTargetCurrency,
   syncExchangeRates,
   updateSiteCurrencySettings,
 } from "@/lib/currency/server";
+import { ensureCoreApplicationData } from "@/lib/bootstrap/application";
+import { DEFAULT_TARGET_CURRENCY } from "@/lib/currency/shared";
 
 const PAGE_SIZE = 15;
 const REVENUE_GENERATING_STATUSES: OrderStatus[] = [
@@ -52,6 +56,7 @@ const assertAdmin = async () => {
 
 export async function getAdminCurrencySettings() {
   await assertAdmin();
+  await ensureCoreApplicationData();
 
   const settings = await getSiteCurrencySettings();
   const latestRates = await db.exchangeRate.findMany({
@@ -117,41 +122,54 @@ export async function syncAdminExchangeRatesAction() {
 
 export async function getAdminStats() {
   await assertAdmin();
+  const targetCurrency = await getCurrentTargetCurrency();
   const [
     totalOrders,
     totalUsers,
     totalProducts,
     pendingReviews,
-    revenueAgg,
     ordersByStatusRaw,
-    monthlyRevenueRaw,
+    revenueOrders,
   ] = await Promise.all([
     db.order.count(),
     db.user.count(),
     db.product.count(),
     db.review.count({ where: { status: ReviewStatus.PENDING } }),
-    db.order.aggregate({
-      _sum: { total: true },
-      where: {
-        status: { in: REVENUE_GENERATING_STATUSES },
-      },
-    }),
     db.order.groupBy({
       by: ["status"],
       _count: { id: true },
     }),
-    db.$queryRaw<Array<{ month: Date; revenue: number }>>(Prisma.sql`
-      SELECT
-        DATE_TRUNC('month', "createdAt") AS month,
-        COALESCE(SUM(CASE WHEN status IN (${Prisma.join(REVENUE_GENERATING_STATUSES)}) THEN total ELSE 0 END), 0) AS revenue
-      FROM "Order"
-      WHERE "createdAt" >= NOW() - INTERVAL '6 months'
-      GROUP BY DATE_TRUNC('month', "createdAt")
-      ORDER BY month ASC
-    `),
+    db.order.findMany({
+      where: {
+        status: { in: REVENUE_GENERATING_STATUSES },
+      },
+      select: {
+        total: true,
+        currency: true,
+        createdAt: true,
+      },
+    }),
   ]);
 
-  const totalRevenue = revenueAgg._sum.total?.toNumber() ?? 0;
+  const convertedRevenueOrders = await Promise.all(
+    revenueOrders.map(async (order) => {
+      const converted = await convertMoney({
+        amount: order.total.toNumber(),
+        sourceCurrency: order.currency,
+        targetCurrency,
+      });
+
+      return {
+        createdAt: order.createdAt,
+        total: converted.amount,
+      };
+    }),
+  );
+
+  const totalRevenue = convertedRevenueOrders.reduce(
+    (sum, order) => sum + order.total,
+    0,
+  );
 
   const ordersByStatus: Record<string, number> = {};
   for (const row of ordersByStatusRaw) {
@@ -163,15 +181,15 @@ export async function getAdminStats() {
   for (let i = 5; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const key = d.toISOString().slice(0, 7); // "2025-01"
-    const found = monthlyRevenueRaw.find((r) => {
-      const rKey = new Date(r.month).toISOString().slice(0, 7);
-      return rKey === key;
-    });
-    months.push({ month: key, revenue: found ? Number(found.revenue) : 0 });
+    const revenue = convertedRevenueOrders
+      .filter((order) => order.createdAt.toISOString().slice(0, 7) === key)
+      .reduce((sum, order) => sum + order.total, 0);
+    months.push({ month: key, revenue });
   }
 
   return {
     totalRevenue,
+    currency: targetCurrency,
     totalOrders,
     totalUsers,
     totalProducts,
@@ -199,6 +217,7 @@ export async function getRecentOrders() {
     userName: o.user.name,
     userEmail: o.user.email,
     total: o.total.toNumber(),
+    currency: o.currency,
     status: o.status,
     createdAt: o.createdAt,
     itemCount: o.items.reduce((s, i) => s + i.quantity, 0),
@@ -215,6 +234,7 @@ export async function getAdminProducts({
   status?: ProductStatus;
 } = {}) {
   await assertAdmin();
+  const targetCurrency = await getCurrentTargetCurrency();
   const skip = (page - 1) * PAGE_SIZE;
   const where: Prisma.ProductWhereInput = status ? { status } : {};
   const [total, products] = await Promise.all([
@@ -228,29 +248,59 @@ export async function getAdminProducts({
         category: { select: { name: true } },
         variants: {
           where: { isActive: true },
-          select: { id: true, stock: true },
+          select: { id: true, stock: true, price: true, currency: true },
         },
       },
     }),
   ]);
 
+  const mappedProducts = await Promise.all(
+    products.map(async (product) => {
+      const convertedVariantPrices = await Promise.all(
+        product.variants.map(async (variant) => {
+          const converted = await convertMoney({
+            amount: variant.price.toNumber(),
+            sourceCurrency: variant.currency,
+            targetCurrency,
+          });
+
+          return converted.amount;
+        }),
+      );
+
+      const displayPrice =
+        convertedVariantPrices.length > 0
+          ? Math.min(...convertedVariantPrices)
+          : (
+              await convertMoney({
+                amount: product.finalPrice.toNumber(),
+                sourceCurrency: product.variants[0]?.currency ?? DEFAULT_TARGET_CURRENCY,
+                targetCurrency,
+              })
+            ).amount;
+
+      return {
+        id: product.id,
+        name: product.name,
+        slug: product.slug,
+        category: product.category.name,
+        status: product.status,
+        basePrice: product.basePrice.toNumber(),
+        discountPercentage: product.discountPercentage,
+        finalPrice: displayPrice,
+        currency: targetCurrency,
+        activeVariants: product.variants.length,
+        totalStock: product.variants.reduce((sum, variant) => sum + variant.stock, 0),
+        createdAt: product.createdAt,
+      };
+    }),
+  );
+
   return {
     total,
     totalPages: Math.max(1, Math.ceil(total / PAGE_SIZE)),
     currentPage: page,
-    products: products.map((p) => ({
-      id: p.id,
-      name: p.name,
-      slug: p.slug,
-      category: p.category.name,
-      status: p.status,
-      basePrice: p.basePrice.toNumber(),
-      discountPercentage: p.discountPercentage,
-      finalPrice: p.finalPrice.toNumber(),
-      activeVariants: p.variants.length,
-      totalStock: p.variants.reduce((s, v) => s + v.stock, 0),
-      createdAt: p.createdAt,
-    })),
+    products: mappedProducts,
   };
 }
 
@@ -811,6 +861,7 @@ export async function updateAdminProduct(data: UpsertProductInput & { id: string
 
 export async function getAdminCategories(locale?: ProductAuthoringLocale) {
   await assertAdmin();
+  await ensureCoreApplicationData();
   const cats = await db.category.findMany({
     orderBy: { name: "asc" },
     select: {
