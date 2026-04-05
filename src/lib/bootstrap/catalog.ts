@@ -94,8 +94,9 @@ export async function ensureCoreCatalogData() {
   if (categoriesCount > 0) return;
 
   if (!coreCatalogBootstrapPromise) {
-    coreCatalogBootstrapPromise = bootstrapCoreCatalogData().finally(() => {
+    coreCatalogBootstrapPromise = bootstrapCoreCatalogData().catch((error) => {
       coreCatalogBootstrapPromise = null;
+      throw error;
     });
   }
 

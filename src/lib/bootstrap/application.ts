@@ -9,8 +9,9 @@ async function bootstrapApplicationData() {
 
 export async function ensureCoreApplicationData() {
   if (!applicationBootstrapPromise) {
-    applicationBootstrapPromise = bootstrapApplicationData().finally(() => {
+    applicationBootstrapPromise = bootstrapApplicationData().catch((error) => {
       applicationBootstrapPromise = null;
+      throw error;
     });
   }
 

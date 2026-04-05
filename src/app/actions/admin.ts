@@ -372,6 +372,28 @@ const computeFinalPrice = (base: number, discount?: number) => {
   return Math.max(0, Number((base * (1 - pct / 100)).toFixed(2)));
 };
 
+const deriveStoredFinalPrice = (
+  variants: Array<{ price: number; currency: string }>,
+  fallbackPrice: number,
+) => {
+  if (variants.length === 0) return fallbackPrice;
+
+  const normalizedCurrencies = new Set(
+    variants.map((variant) => String(variant.currency ?? "").trim().toUpperCase()),
+  );
+
+  if (normalizedCurrencies.size > 1) {
+    return fallbackPrice;
+  }
+
+  const minVariantPrice = variants.reduce(
+    (min, variant) => Math.min(min, Number(variant.price)),
+    Infinity,
+  );
+
+  return minVariantPrice === Infinity ? fallbackPrice : minVariantPrice;
+};
+
 const slugify = (value: string) =>
   value
     .toLowerCase()
@@ -648,12 +670,7 @@ export async function createAdminProduct(data: UpsertProductInput) {
   const vatRate = Math.max(0, normalized.vatRate ?? 20);
   const finalPriceComputed = Number((net * (1 + vatRate / 100)).toFixed(2));
   const variantsPayload = normalized.variants;
-
-  const minVariantPrice = variantsPayload.reduce(
-    (min, v) => Math.min(min, Number(v.price)),
-    Infinity,
-  );
-  const finalPrice = minVariantPrice === Infinity ? finalPriceComputed : minVariantPrice;
+  const finalPrice = deriveStoredFinalPrice(variantsPayload, finalPriceComputed);
 
   const product = await db.$transaction(async (tx) => {
     const createdProduct = await tx.product.create({
@@ -832,11 +849,7 @@ export async function updateAdminProduct(data: UpsertProductInput & { id: string
       }
     }
 
-    const minVariantPrice = incoming.reduce(
-      (min, v) => Math.min(min, Number(v.price)),
-      Infinity,
-    );
-    const finalPrice = minVariantPrice === Infinity ? computedFinalPrice : minVariantPrice;
+    const finalPrice = deriveStoredFinalPrice(incoming, computedFinalPrice);
 
     const updated = await tx.product.update({
       where: { id: normalized.id },
