@@ -17,9 +17,10 @@ import { FaArrowRight } from "react-icons/fa6";
 import { MdOutlineLocalOffer } from "react-icons/md";
 import { TbBasketExclamation } from "react-icons/tb";
 import { useEffect } from "react";
+import { formatMoney } from "@/lib/currency/shared";
 
 export default function CartContainer() {
-  const { t } = useUiPreferences();
+  const { t, locale } = useUiPreferences();
   const { data: cart, isLoading } = useCartQuery();
   const { mutate: syncCart } = useSyncCartMutation();
 
@@ -29,6 +30,8 @@ export default function CartContainer() {
   }, [syncCart]);
 
   const items = cart?.items ?? [];
+  const cartCurrency =
+    (items[0] as ProductCardProps["data"] | undefined)?.variant.currency ?? "USD";
 
   if (isLoading) {
     return (
@@ -100,7 +103,7 @@ export default function CartContainer() {
                 {t("checkout.subtotal")}
               </span>
               <span className="md:text-xl font-bold text-foreground">
-                ${totalBasePrice.toFixed(2)}
+                {formatMoney(totalBasePrice, cartCurrency, locale)}
               </span>
             </div>
             <div className="flex items-center justify-between">
@@ -108,7 +111,7 @@ export default function CartContainer() {
                 {t("checkout.discount")} (-{discountPercentage}%)
               </span>
               <span className="md:text-xl font-bold text-red-500">
-                -${discountAmount.toFixed(2)}
+                -{formatMoney(discountAmount, cartCurrency, locale)}
               </span>
             </div>
             <div className="flex items-center justify-between">
@@ -123,7 +126,7 @@ export default function CartContainer() {
             <div className="flex items-center justify-between">
               <span className="md:text-xl text-foreground">{t("checkout.total")}</span>
               <span className="text-xl md:text-2xl font-bold text-foreground">
-                ${totalFinalPrice.toFixed(2)}
+                {formatMoney(totalFinalPrice, cartCurrency, locale)}
               </span>
             </div>
           </div>

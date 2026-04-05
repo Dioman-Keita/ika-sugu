@@ -135,7 +135,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
                       <td className="px-5 py-3 text-right font-semibold text-foreground">
                         {new Intl.NumberFormat(locale, {
                           style: "currency",
-                          currency: "USD",
+                          currency: order.currency,
                         }).format(order.total)}
                       </td>
                       <td className="px-5 py-3">

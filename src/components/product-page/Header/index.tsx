@@ -11,9 +11,10 @@ import SizeSelection from "./SizeSelection";
 import AddToCardSection from "./AddToCardSection";
 import { useUiPreferences } from "@/lib/ui-preferences";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { formatMoney } from "@/lib/currency/shared";
 
 const Header = ({ data }: { data: Product }) => {
-  const { t } = useUiPreferences();
+  const { t, locale } = useUiPreferences();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -186,12 +187,20 @@ const Header = ({ data }: { data: Product }) => {
           </div>
           <div className="flex items-center space-x-2.5 sm:space-x-3 mb-5">
             <span className="font-bold text-foreground text-2xl sm:text-[32px]">
-              ${selectedVariantPrice}
+              {formatMoney(
+                selectedVariantPrice,
+                selectedVariant?.currency ?? data.currency,
+                locale,
+              )}
             </span>
             {selectedVariantDiscountPercentage > 0 &&
               selectedVariantCompareAtPrice !== null && (
                 <span className="font-bold text-foreground/40 line-through text-2xl sm:text-[32px]">
-                  ${selectedVariantCompareAtPrice}
+                  {formatMoney(
+                    selectedVariantCompareAtPrice,
+                    selectedVariant?.currency ?? data.currency,
+                    locale,
+                  )}
                 </span>
               )}
             {selectedVariantDiscountPercentage > 0 && (

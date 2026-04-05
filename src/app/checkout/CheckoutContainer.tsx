@@ -18,6 +18,7 @@ import OrderSummary, {
 } from "@/components/checkout-page/OrderSummary";
 
 import { useCartQuery } from "@/hooks/use-cart";
+import { usePlaceOrderMutation } from "@/hooks/use-checkout";
 import { useUiPreferences } from "@/lib/ui-preferences";
 import { TbBasketExclamation } from "react-icons/tb";
 import { Button } from "@/components/ui/button";
@@ -25,8 +26,8 @@ import { Button } from "@/components/ui/button";
 export default function CheckoutContainer() {
   const { t } = useUiPreferences();
   const { data: cart, isLoading } = useCartQuery();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const { mutateAsync: placeOrder, isPending: isSubmitting } = usePlaceOrderMutation();
 
   const cartItems = (cart?.items ?? []) as OrderSummaryLine[];
 
@@ -50,11 +51,17 @@ export default function CheckoutContainer() {
     );
   }
 
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-    // Simulate order processing
-    await new Promise((res) => setTimeout(res, 1200));
-    setIsSubmitting(false);
+  const handleSubmit = async (formData: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    address: string;
+    city: string;
+    country: string;
+    zip: string;
+  }) => {
+    await placeOrder(formData);
     setOrderPlaced(true);
   };
 

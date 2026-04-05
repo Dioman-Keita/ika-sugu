@@ -39,3 +39,6 @@ next-env.d.ts
 # kombai
 .kombai/
 /src/generated/prisma
+
+# other
+developer-profile.md

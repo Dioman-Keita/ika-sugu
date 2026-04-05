@@ -342,6 +342,7 @@ export const messages: Record<Locale, Messages> = {
     "admin.sidebar.orders": "Orders",
     "admin.sidebar.users": "Users",
     "admin.sidebar.reviews": "Reviews",
+    "admin.sidebar.settings": "Settings",
     "admin.sidebar.adminPanel": "Admin Panel",
     "admin.sidebar.backToStore": "Back to Store",
     "admin.sidebar.accountSettings": "Account Settings",
@@ -506,6 +507,35 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.form.uploader.cover": "Cover",
     "admin.product.form.uploader.deleteTitle": "Remove",
     "admin.product.form.uploader.setCoverTitle": "Set as cover",
+    "admin.settings.currency.title": "Currency settings",
+    "admin.settings.currency.subtitle":
+      "Choose the global storefront currency and manage the latest exchange rates.",
+    "admin.settings.currency.targetCurrency": "Target currency",
+    "admin.settings.currency.targetCurrencyHint":
+      "All storefront prices and checkout amounts will be displayed in this currency when a valid rate is available.",
+    "admin.settings.currency.provider": "Rates provider",
+    "admin.settings.currency.lastSync": "Last sync",
+    "admin.settings.currency.neverSynced": "No sync yet",
+    "admin.settings.currency.save": "Save settings",
+    "admin.settings.currency.saving": "Saving...",
+    "admin.settings.currency.sync": "Sync rates now",
+    "admin.settings.currency.syncing": "Syncing...",
+    "admin.settings.currency.recentRates": "Recent exchange rates",
+    "admin.settings.currency.recentRatesHint":
+      "Latest stored rates used as the source of truth for conversions.",
+    "admin.settings.currency.emptyRates":
+      "No exchange rate has been synchronized yet.",
+    "admin.settings.currency.table.pair": "Pair",
+    "admin.settings.currency.table.rate": "Rate",
+    "admin.settings.currency.table.fetchedAt": "Fetched at",
+    "admin.settings.currency.toast.settingsSaved":
+      "Currency settings saved successfully.",
+    "admin.settings.currency.toast.settingsError":
+      "Failed to save currency settings.",
+    "admin.settings.currency.toast.ratesSynced":
+      "{count} exchange rates synchronized.",
+    "admin.settings.currency.toast.ratesError":
+      "Failed to synchronize exchange rates.",
 
     "notFound.title": "Page not found",
     "notFound.subtitle": "Oops! The page you're looking for doesn't exist or has moved.",
@@ -559,6 +589,8 @@ export const messages: Record<Locale, Messages> = {
     "toast.error.createProduct": "Failed to create product.",
     "toast.success.updateProduct": "Product updated successfully.",
     "toast.error.updateProduct": "Failed to update product.",
+    "toast.success.placeOrder": "Order placed successfully.",
+    "toast.error.placeOrder": "Failed to place order.",
     "toast.error.updateOrderStatus": "Failed to update order status.",
     "toast.error.updateReviewStatus": "Failed to update review status.",
     "toast.error.createReview": "Failed to submit review. Please try again.",
@@ -906,6 +938,7 @@ export const messages: Record<Locale, Messages> = {
     "admin.sidebar.orders": "Commandes",
     "admin.sidebar.users": "Utilisateurs",
     "admin.sidebar.reviews": "Avis",
+    "admin.sidebar.settings": "Paramètres",
     "admin.sidebar.adminPanel": "Panneau d'administration",
     "admin.sidebar.backToStore": "Retour à la boutique",
     "admin.sidebar.accountSettings": "Paramètres du compte",
@@ -1070,6 +1103,35 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.form.uploader.cover": "Principale",
     "admin.product.form.uploader.deleteTitle": "Supprimer",
     "admin.product.form.uploader.setCoverTitle": "Définir comme principale",
+    "admin.settings.currency.title": "Paramètres de devise",
+    "admin.settings.currency.subtitle":
+      "Choisissez la devise globale du storefront et pilotez les derniers taux de change.",
+    "admin.settings.currency.targetCurrency": "Devise cible",
+    "admin.settings.currency.targetCurrencyHint":
+      "Tous les prix du storefront et du checkout seront affichés dans cette devise lorsqu'un taux valide est disponible.",
+    "admin.settings.currency.provider": "Provider de taux",
+    "admin.settings.currency.lastSync": "Dernière synchronisation",
+    "admin.settings.currency.neverSynced": "Aucune synchronisation pour l'instant",
+    "admin.settings.currency.save": "Enregistrer les paramètres",
+    "admin.settings.currency.saving": "Enregistrement...",
+    "admin.settings.currency.sync": "Synchroniser les taux",
+    "admin.settings.currency.syncing": "Synchronisation...",
+    "admin.settings.currency.recentRates": "Derniers taux de change",
+    "admin.settings.currency.recentRatesHint":
+      "Derniers taux stockés et utilisés comme source de vérité pour les conversions.",
+    "admin.settings.currency.emptyRates":
+      "Aucun taux de change n'a encore été synchronisé.",
+    "admin.settings.currency.table.pair": "Paire",
+    "admin.settings.currency.table.rate": "Taux",
+    "admin.settings.currency.table.fetchedAt": "Récupéré le",
+    "admin.settings.currency.toast.settingsSaved":
+      "Les paramètres de devise ont été enregistrés.",
+    "admin.settings.currency.toast.settingsError":
+      "Impossible d'enregistrer les paramètres de devise.",
+    "admin.settings.currency.toast.ratesSynced":
+      "{count} taux de change synchronisés.",
+    "admin.settings.currency.toast.ratesError":
+      "Impossible de synchroniser les taux de change.",
     "admin.product.form.action.cancel": "Annuler",
     "admin.product.form.action.saving": "Enregistrement...",
     "admin.product.form.action.regenerateSlug": "R\u00e9g\u00e9n\u00e9rer",
@@ -1127,6 +1189,8 @@ export const messages: Record<Locale, Messages> = {
     "toast.error.createProduct": "Erreur lors de la création du produit.",
     "toast.success.updateProduct": "Produit mis à jour.",
     "toast.error.updateProduct": "Erreur lors de la mise à jour du produit.",
+    "toast.success.placeOrder": "Commande enregistrée avec succès.",
+    "toast.error.placeOrder": "Impossible d'enregistrer la commande.",
     "toast.error.updateOrderStatus": "Impossible de mettre à jour le statut.",
     "toast.error.updateReviewStatus": "Impossible de mettre à jour le statut de l'avis.",
     "toast.error.createReview": "Impossible de publier l'avis. Réessayez.",

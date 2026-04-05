@@ -14,6 +14,7 @@ import { deleteStorageFiles } from "@/lib/storage/deleteImages";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import {
   CURRENCY_OPTIONS,
+  type CurrencyOption,
   DRESS_STYLE_OPTIONS,
   SHOP_SECTION_OPTIONS,
   SIZE_OPTIONS,
@@ -22,6 +23,11 @@ import {
   isShopSectionOption,
   isSizeOption,
 } from "@/lib/catalog-options";
+import {
+  getSiteCurrencySettings,
+  syncExchangeRates,
+  updateSiteCurrencySettings,
+} from "@/lib/currency/server";
 
 const PAGE_SIZE = 15;
 const REVENUE_GENERATING_STATUSES: OrderStatus[] = [
@@ -43,6 +49,69 @@ const assertAdmin = async () => {
 
   if (!isAdminEmail(session.user?.email)) throw new Error("Forbidden");
 };
+
+export async function getAdminCurrencySettings() {
+  await assertAdmin();
+
+  const settings = await getSiteCurrencySettings();
+  const latestRates = await db.exchangeRate.findMany({
+    orderBy: [{ fetchedAt: "desc" }, { createdAt: "desc" }],
+    take: 6,
+    select: {
+      id: true,
+      baseCurrency: true,
+      quoteCurrency: true,
+      rate: true,
+      fetchedAt: true,
+      provider: true,
+    },
+  });
+
+  return {
+    targetCurrency: settings.targetCurrency,
+    ratesProvider: settings.ratesProvider,
+    exchangeRatesUpdatedAt: settings.exchangeRatesUpdatedAt,
+    latestRates: latestRates.map((rate) => ({
+      ...rate,
+      rate: Number(rate.rate),
+    })),
+  };
+}
+
+export async function updateAdminCurrencySettingsAction(targetCurrency: CurrencyOption) {
+  await assertAdmin();
+
+  if (!isCurrencyOption(targetCurrency)) {
+    throw new Error(
+      `Unsupported target currency. Allowed values: ${CURRENCY_OPTIONS.join(", ")}`,
+    );
+  }
+
+  const updated = await updateSiteCurrencySettings(targetCurrency);
+  revalidatePath("/admin/settings");
+  revalidatePath("/");
+  revalidatePath("/shop");
+  revalidatePath("/cart");
+  revalidatePath("/checkout");
+
+  return {
+    targetCurrency: updated.targetCurrency,
+    exchangeRatesUpdatedAt: updated.exchangeRatesUpdatedAt,
+  };
+}
+
+export async function syncAdminExchangeRatesAction() {
+  await assertAdmin();
+
+  const result = await syncExchangeRates();
+  revalidatePath("/admin/settings");
+  revalidatePath("/");
+  revalidatePath("/shop");
+  revalidatePath("/cart");
+  revalidatePath("/checkout");
+
+  return result;
+}
 
 // ─── Stat helpers ─────────────────────────────────────────────────────────────
 
@@ -802,6 +871,7 @@ export async function getAdminOrders({
       userName: o.user.name,
       userEmail: o.user.email,
       total: o.total.toNumber(),
+      currency: o.currency,
       status: o.status,
       createdAt: o.createdAt,
       itemCount: o.items.reduce((s, i) => s + i.quantity, 0),

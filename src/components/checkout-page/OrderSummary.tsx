@@ -6,6 +6,7 @@ import { FaArrowRight } from "react-icons/fa6";
 import { Loader2 } from "lucide-react";
 import { useUiPreferences } from "@/lib/ui-preferences";
 import { translateAttribute } from "@/lib/i18n/messages";
+import { formatMoney } from "@/lib/currency/shared";
 /** Cart payloads may still be typed with Prisma `Decimal` before serialization. */
 type OrderSummaryMoney = number | { toNumber: () => number };
 
@@ -18,6 +19,7 @@ export type OrderSummaryLine = {
   variant: {
     price: OrderSummaryMoney;
     compareAtPrice?: OrderSummaryMoney | null;
+    currency?: string | null;
     images: string[];
     size: string;
     colorName: string;
@@ -35,6 +37,7 @@ type OrderSummaryProps = {
 
 const OrderSummary = ({ items, isSubmitting }: OrderSummaryProps) => {
   const { t, locale } = useUiPreferences();
+  const checkoutCurrency = items[0]?.variant.currency ?? "USD";
 
   const totalBasePrice = items.reduce((sum: number, item: OrderSummaryLine) => {
     const finalPrice = toMoneyNumber(item.variant.price);
@@ -90,7 +93,7 @@ const OrderSummary = ({ items, isSubmitting }: OrderSummaryProps) => {
                 </p>
               </div>
               <span className="font-bold text-sm text-foreground shrink-0">
-                ${Math.round(finalPrice * item.quantity)}
+                {formatMoney(finalPrice * item.quantity, item.variant.currency, locale)}
               </span>
             </div>
           );
@@ -103,14 +106,18 @@ const OrderSummary = ({ items, isSubmitting }: OrderSummaryProps) => {
       <div className="flex flex-col space-y-4">
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground">{t("checkout.subtotal")}</span>
-          <span className="font-bold text-foreground">${totalBasePrice.toFixed(2)}</span>
+          <span className="font-bold text-foreground">
+            {formatMoney(totalBasePrice, checkoutCurrency, locale)}
+          </span>
         </div>
         {discountAmount > 0 && (
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">
               {t("checkout.discount")} (-{discountPercentage}%)
             </span>
-            <span className="font-bold text-red-500">-${discountAmount.toFixed(2)}</span>
+            <span className="font-bold text-red-500">
+              -{formatMoney(discountAmount, checkoutCurrency, locale)}
+            </span>
           </div>
         )}
         <div className="flex items-center justify-between">
@@ -121,7 +128,7 @@ const OrderSummary = ({ items, isSubmitting }: OrderSummaryProps) => {
         <div className="flex items-center justify-between">
           <span className="text-foreground font-medium">{t("checkout.total")}</span>
           <span className="text-xl md:text-2xl font-bold text-foreground">
-            ${totalFinalPrice.toFixed(2)}
+            {formatMoney(totalFinalPrice, checkoutCurrency, locale)}
           </span>
         </div>
       </div>

@@ -29,6 +29,7 @@ export default function AdminSidebar() {
     { href: "/admin/orders", label: t("admin.sidebar.orders"), icon: ShoppingCart },
     { href: "/admin/users", label: t("admin.sidebar.users"), icon: Users },
     { href: "/admin/reviews", label: t("admin.sidebar.reviews"), icon: Star },
+    { href: "/admin/settings", label: t("admin.sidebar.settings"), icon: Settings },
   ];
 
   return (
