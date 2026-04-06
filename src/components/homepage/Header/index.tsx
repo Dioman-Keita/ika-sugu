@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 import { integralCF } from "@/styles/fonts";
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
 import * as motion from "framer-motion/client";
 import { useUiPreferences } from "@/lib/ui-preferences";
 
