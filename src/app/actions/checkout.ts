@@ -3,9 +3,13 @@
 import { Prisma, OrderStatus } from "@/generated/prisma/client";
 import db from "@/lib/db";
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { revalidatePath } from "next/cache";
 import { convertMoney, getCurrentTargetCurrency } from "@/lib/currency/server";
+import { stripe } from "@/lib/stripe";
+import { headers, cookies } from "next/headers";
+import { revalidatePath } from "next/cache";
+import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
+import { parseLocale } from "@/lib/i18n/locale";
+import { getMessages } from "@/lib/i18n/messages";
 
 export type CheckoutInput = {
   firstName: string;
@@ -27,9 +31,14 @@ const vatPortionFromGross = (gross: Prisma.Decimal, vatPct: Prisma.Decimal) => {
 };
 
 export async function placeOrderAction(input: CheckoutInput) {
+  const cookieStore = await cookies();
+  const cookieLocale = cookieStore.get(LOCALE_COOKIE_KEY)?.value;
+  const locale = parseLocale(cookieLocale) || "en";
+  const t = getMessages(locale);
+
   const session = await auth.api.getSession({ headers: await headers() });
   const userId = session?.user?.id;
-  if (!userId) throw new Error("Unauthorized");
+  if (!userId) throw new Error(t("checkout.error.unauthorized"));
 
   const requiredFields: Array<keyof CheckoutInput> = [
     "firstName",
@@ -43,7 +52,7 @@ export async function placeOrderAction(input: CheckoutInput) {
 
   for (const field of requiredFields) {
     if (!String(input[field] ?? "").trim()) {
-      throw new Error(`Checkout field "${field}" is required.`);
+      throw new Error(t("checkout.error.fieldRequired", { field }));
     }
   }
 
@@ -57,6 +66,7 @@ export async function placeOrderAction(input: CheckoutInput) {
               product: {
                 select: {
                   id: true,
+                  name: true,
                   vatRate: true,
                 },
               },
@@ -68,7 +78,7 @@ export async function placeOrderAction(input: CheckoutInput) {
   });
 
   if (!cart || cart.items.length === 0) {
-    throw new Error("Cart is empty.");
+    throw new Error(t("checkout.error.cartEmpty"));
   }
 
   const targetCurrency = await getCurrentTargetCurrency();
@@ -84,9 +94,7 @@ export async function placeOrderAction(input: CheckoutInput) {
       });
 
       if (converted.currency !== targetCurrency) {
-        throw new Error(
-          `Unable to convert ${sourceCurrency} to ${targetCurrency} for checkout.`,
-        );
+        throw new Error(t("checkout.error.conversionFailed"));
       }
 
       const quantity = item.quantity;
@@ -157,8 +165,64 @@ export async function placeOrderAction(input: CheckoutInput) {
   revalidatePath("/checkout");
   revalidatePath("/");
 
+  // Determine base URL for redirects
+  const headersList = await headers();
+  const host = headersList.get("host") || "localhost:3000";
+  const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
+  const baseUrl = `${protocol}://${host}`;
+
+  // Create Stripe Checkout Session
+  const lineItems = cart.items.map((item) => {
+    // Determine image URL
+    const imageUrl = item.variant.images[0]
+      ? item.variant.images[0].startsWith("http")
+        ? item.variant.images[0]
+        : `${baseUrl}${item.variant.images[0].startsWith("/") ? "" : "/"}${item.variant.images[0]}`
+      : undefined;
+
+    // Convert Stripe expects value in the smallest currency unit (e.g. cents)
+    const itemSnapshot = lineSnapshots.find((ls) => ls.productId === item.variant.product.id && ls.quantity === item.quantity);
+    const unitPriceValue = itemSnapshot ? Number(itemSnapshot.unitPrice) : 0;
+    const vatValue = itemSnapshot ? Number(itemSnapshot.vatAmount) / item.quantity : 0;
+    
+    // Simplification for Stripe: sending gross price as unit_amount
+    const grossUnitPrice = unitPriceValue + vatValue;
+
+    return {
+      price_data: {
+        currency: targetCurrency.toLowerCase(),
+        product_data: {
+          name: `${item.variant.product.name} - ${item.variant.colorName} (${item.variant.size})`,
+          images: imageUrl ? [imageUrl] : [],
+        },
+        unit_amount: Math.round(grossUnitPrice * 100),
+      },
+      quantity: item.quantity,
+    };
+  });
+
+  const stripeSession = await stripe.checkout.sessions.create({
+    payment_method_types: ["card"],
+    mode: "payment",
+    line_items: lineItems,
+    customer_email: input.email.trim(),
+    client_reference_id: order.id,
+    metadata: {
+      orderId: order.id,
+    },
+    success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${baseUrl}/checkout/cancel`,
+  });
+
+  // Save the Stripe Session ID to the order
+  await db.order.update({
+    where: { id: order.id },
+    data: { stripeSessionId: stripeSession.id },
+  });
+
   return {
     id: order.id,
     currency: targetCurrency,
+    url: stripeSession.url,
   };
 }

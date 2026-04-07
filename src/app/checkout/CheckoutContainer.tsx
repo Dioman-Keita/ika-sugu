@@ -61,8 +61,12 @@ export default function CheckoutContainer() {
     country: string;
     zip: string;
   }) => {
-    await placeOrder(formData);
-    setOrderPlaced(true);
+    const response = await placeOrder(formData);
+    if (response?.url) {
+      window.location.href = response.url;
+    } else {
+      setOrderPlaced(true);
+    }
   };
 
   if (orderPlaced) {

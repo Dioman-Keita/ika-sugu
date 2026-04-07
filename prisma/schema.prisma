@@ -211,6 +211,8 @@ model Order {
   taxTotal Decimal @db.Decimal(12, 2) // sum of item VAT amounts
   total    Decimal @db.Decimal(12, 2) // subtotal + taxTotal
 
+  stripeSessionId String? @unique
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
