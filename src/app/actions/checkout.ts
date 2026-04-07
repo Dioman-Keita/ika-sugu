@@ -106,6 +106,7 @@ export async function placeOrderAction(input: CheckoutInput) {
 
       return {
         productId: item.variant.product.id,
+        variantId: item.variant.id,
         quantity,
         unitPrice: netUnit,
         totalPrice: netTotal,
@@ -181,7 +182,7 @@ export async function placeOrderAction(input: CheckoutInput) {
       : undefined;
 
     // Convert Stripe expects value in the smallest currency unit (e.g. cents)
-    const itemSnapshot = lineSnapshots.find((ls) => ls.productId === item.variant.product.id && ls.quantity === item.quantity);
+    const itemSnapshot = lineSnapshots.find((ls) => ls.variantId === item.variantId);
     const unitPriceValue = itemSnapshot ? Number(itemSnapshot.unitPrice) : 0;
     const vatValue = itemSnapshot ? Number(itemSnapshot.vatAmount) / item.quantity : 0;
     

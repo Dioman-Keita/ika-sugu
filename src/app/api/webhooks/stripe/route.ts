@@ -28,13 +28,39 @@ export async function POST(req: Request) {
 
     if (orderId) {
       try {
-        await db.order.update({
-          where: { id: orderId },
-          data: { status: OrderStatus.PAID },
+        await db.$transaction(async (tx) => {
+          const order = await tx.order.findUnique({
+            where: { id: orderId },
+            include: { items: true },
+          });
+
+          if (!order || order.status === OrderStatus.PAID) {
+            return;
+          }
+
+          // 1. Mark order as PAID
+          await tx.order.update({
+            where: { id: orderId },
+            data: { status: OrderStatus.PAID },
+          });
+
+          // 2. Decrement stock for each variant in the order
+          for (const item of order.items) {
+            if (item.variantId) {
+              await tx.productVariant.update({
+                where: { id: item.variantId },
+                data: {
+                  stock: {
+                    decrement: item.quantity,
+                  },
+                },
+              });
+            }
+          }
         });
       } catch (err) {
-        console.error("Error updating order status:", err);
-        return NextResponse.json({ error: "Failed to update order" }, { status: 500 });
+        console.error("Error processing webook payment confirmation:", err);
+        return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 });
       }
     }
   }
