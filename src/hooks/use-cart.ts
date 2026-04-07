@@ -108,12 +108,12 @@ export function useAddToCartMutation() {
       return { previousCart };
     },
 
-    onError: (_err, _vars, context) => {
+    onError: (error, _vars, context) => {
       // Rollback to snapshot on error
       if (context?.previousCart) {
         queryClient.setQueryData(CART_QUERY_KEY, context.previousCart);
       }
-      toast.error(t("toast.error.addToCart"));
+      toast.error(error instanceof Error ? error.message : t("toast.error.addToCart"));
     },
 
     onSettled: () => {
@@ -151,11 +151,11 @@ export function useUpdateQuantityMutation() {
       return { previousCart };
     },
 
-    onError: (_err, _vars, context) => {
+    onError: (error, _vars, context) => {
       if (context?.previousCart) {
         queryClient.setQueryData(CART_QUERY_KEY, context.previousCart);
       }
-      toast.error(t("toast.error.updateQuantity"));
+      toast.error(error instanceof Error ? error.message : t("toast.error.updateQuantity"));
     },
 
     onSettled: () => {

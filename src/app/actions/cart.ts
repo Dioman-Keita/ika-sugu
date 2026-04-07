@@ -7,6 +7,9 @@ import { revalidatePath } from "next/cache";
 import crypto from "node:crypto";
 import type { Prisma } from "@/generated/prisma/client";
 import { convertMoney, getCurrentTargetCurrency } from "@/lib/currency/server";
+import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
+import { parseLocale } from "@/lib/i18n/locale";
+import { getMessages } from "@/lib/i18n/messages";
 
 const GUEST_CART_COOKIE_NAME =
   process.env.NEXT_PUBLIC_GUEST_CART_COOKIE_NAME || "guest_cart_id";
@@ -217,7 +220,20 @@ export async function getCartAction(options: GetCartOptions = {}): Promise<CartD
  * Adds an item to the cart.
  */
 export async function addToCartAction(variantId: string, quantity: number = 1) {
+  const cookieStore = await cookies();
+  const cookieLocale = cookieStore.get(LOCALE_COOKIE_KEY)?.value;
+  const locale = parseLocale(cookieLocale) || "en";
+  const t = getMessages(locale);
+
   const cart = await getCartAction();
+
+  const variant = await db.productVariant.findUnique({
+    where: { id: variantId },
+    select: { stock: true },
+  });
+
+  if (!variant) throw new Error("Variant not found");
+  if (variant.stock <= 0) throw new Error(t("cart.error.outOfStock"));
 
   const existingItem = await db.cartItem.findUnique({
     where: {
@@ -229,11 +245,18 @@ export async function addToCartAction(variantId: string, quantity: number = 1) {
   });
 
   if (existingItem) {
+    const newQuantity = existingItem.quantity + quantity;
+    if (newQuantity > variant.stock) {
+      throw new Error(t("cart.error.stockExceeded", { stock: variant.stock }));
+    }
     await db.cartItem.update({
       where: { id: existingItem.id },
-      data: { quantity: existingItem.quantity + quantity },
+      data: { quantity: newQuantity },
     });
   } else {
+    if (quantity > variant.stock) {
+      throw new Error(t("cart.error.stockExceeded", { stock: variant.stock }));
+    }
     await db.cartItem.create({
       data: {
         cartId: cart.id,
@@ -258,6 +281,21 @@ export async function updateCartQuantityAction(itemId: string, quantity: number)
   }
 
   if (quantity < 1) return removeFromCartAction(itemId);
+
+  const cookieStore = await cookies();
+  const cookieLocale = cookieStore.get(LOCALE_COOKIE_KEY)?.value;
+  const locale = parseLocale(cookieLocale) || "en";
+  const t = getMessages(locale);
+
+  const cartItem = await db.cartItem.findUnique({
+    where: { id: itemId },
+    include: { variant: { select: { stock: true } } },
+  });
+
+  if (!cartItem) throw new Error("Cart item not found");
+  if (quantity > cartItem.variant.stock) {
+    throw new Error(t("cart.error.stockExceeded", { stock: cartItem.variant.stock }));
+  }
 
   const result = await db.cartItem.updateMany({
     where: { id: itemId, cartId: cart.id },
