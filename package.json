@@ -7,10 +7,10 @@
     "src/*"
   ],
   "scripts": {
-    "dev": "next dev",
+    "dev": "bun --bun next dev",
     "generate-prisma-client": "bunx prisma generate",
     "build": "bun run generate-prisma-client && next build --webpack",
-    "start": "next start",
+    "start": "bun --bun next start",
     "seed": "bun run src/scripts/seed.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
