@@ -1,12 +1,11 @@
 "use server";
 
-import { Prisma, OrderStatus } from "@/generated/prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import db from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { convertMoney, getCurrentTargetCurrency } from "@/lib/currency/server";
 import { stripe } from "@/lib/stripe";
 import { headers, cookies } from "next/headers";
-import { revalidatePath } from "next/cache";
 import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
 import { parseLocale } from "@/lib/i18n/locale";
 import { getMessages } from "@/lib/i18n/messages";
@@ -121,16 +120,6 @@ export async function placeOrderAction(input: CheckoutInput) {
     }),
   );
 
-  const subtotal = lineSnapshots.reduce(
-    (sum, line) => sum.add(line.totalPrice),
-    new Prisma.Decimal(0),
-  );
-  const taxTotal = lineSnapshots.reduce(
-    (sum, line) => sum.add(line.vatAmount),
-    new Prisma.Decimal(0),
-  );
-  const total = subtotal.add(taxTotal).toDecimalPlaces(2);
-
   // Determine base URL for redirects
   const headersList = await headers();
   const host = headersList.get("host") || "localhost:3000";
@@ -150,7 +139,7 @@ export async function placeOrderAction(input: CheckoutInput) {
     const itemSnapshot = lineSnapshots.find((ls) => ls.variantId === item.variant.id);
     const unitPriceValue = itemSnapshot ? Number(itemSnapshot.unitPrice) : 0;
     const vatValue = itemSnapshot ? Number(itemSnapshot.vatAmount) / item.quantity : 0;
-    
+
     // Total price sent to Stripe
     const grossUnitPrice = unitPriceValue + vatValue;
 
@@ -166,7 +155,7 @@ export async function placeOrderAction(input: CheckoutInput) {
             vatRate: String(item.variant.product.vatRate),
             unitPrice: String(unitPriceValue),
             sourceCurrency: item.variant.currency,
-          }
+          },
         },
         unit_amount: Math.round(grossUnitPrice * 100),
       },

@@ -20,11 +20,11 @@ const nextConfig = {
    * which is essential for native drivers and crypto modules.
    */
   serverExternalPackages: [
-    "stripe", 
-    "node:crypto", 
-    "pg", 
-    "@prisma/client", 
-    "@prisma/adapter-pg"
+    "stripe",
+    "node:crypto",
+    "pg",
+    "@prisma/client",
+    "@prisma/adapter-pg",
   ],
 };
 

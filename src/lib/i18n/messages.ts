@@ -208,9 +208,11 @@ export const messages: Record<Locale, Messages> = {
       "Thank you for your purchase. You will receive a confirmation email shortly.",
     "checkout.continueShopping": "Continue Shopping",
     "checkout.success.title": "Order Confirmed!",
-    "checkout.success.description": "Thank you for your purchase. Your payment has been processed successfully.",
+    "checkout.success.description":
+      "Thank you for your purchase. Your payment has been processed successfully.",
     "checkout.cancel.title": "Payment Cancelled",
-    "checkout.cancel.description": "You have cancelled the payment process. No charges have been made.",
+    "checkout.cancel.description":
+      "You have cancelled the payment process. No charges have been made.",
     "checkout.cancel.backToCart": "Back to Cart",
     "checkout.error.unauthorized": "Unauthorized. Please sign in.",
     "checkout.error.cartEmpty": "Your cart is empty.",
@@ -808,16 +810,19 @@ export const messages: Record<Locale, Messages> = {
     "product.faq.a6":
       "Indiquez la période de retour, les conditions et la procédure de remboursement ou d'échange.",
     "checkout.success.title": "Commande confirmée !",
-    "checkout.success.description": "Merci pour votre achat ! Votre paiement a été traité avec succès.",
+    "checkout.success.description":
+      "Merci pour votre achat ! Votre paiement a été traité avec succès.",
     "checkout.cancel.title": "Paiement annulé",
-    "checkout.cancel.description": "Vous avez annulé le processus de paiement. Aucun montant ne vous a été facturé.",
+    "checkout.cancel.description":
+      "Vous avez annulé le processus de paiement. Aucun montant ne vous a été facturé.",
     "checkout.cancel.backToCart": "Retourner au panier",
     "checkout.error.unauthorized": "Session expirée. Veuillez vous reconnecter.",
     "checkout.error.cartEmpty": "Votre panier est vide.",
     "checkout.error.fieldRequired": "Le champ '{field}' est obligatoire.",
     "checkout.error.conversionFailed": "La conversion de devise a échoué.",
     "cart.error.outOfStock": "Désolé, plus de stock disponible pour cet article.",
-    "cart.error.stockExceeded": "Vous ne pouvez pas ajouter plus d'unités (Stock limité à {stock}).",
+    "cart.error.stockExceeded":
+      "Vous ne pouvez pas ajouter plus d'unités (Stock limité à {stock}).",
     "cart.title": "votre panier",
     "cart.empty": "Votre panier est vide.",
     "cart.shop": "Boutique",

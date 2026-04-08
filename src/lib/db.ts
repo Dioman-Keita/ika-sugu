@@ -1,8 +1,8 @@
 /**
  * Database Initialization with Turbopack/Bun Stability Fix.
- * 
+ *
  * We use Top-level await to dynamically load 'pg' and Prisma drivers.
- * This prevents Turbopack from mis-hashing these native modules during 
+ * This prevents Turbopack from mis-hashing these native modules during
  * build time, while maintaining a synchronous-like API for the rest of the app.
  */
 
@@ -30,7 +30,7 @@ const prismaClientSingleton = () => {
     parsedUrl.port = "6543";
     if (process.env.NODE_ENV !== "production" && !didWarnSupabasePort) {
       didWarnSupabasePort = true;
-      console.warn('[db] Auto-switching to Supabase pooler port 6543.');
+      console.warn("[db] Auto-switching to Supabase pooler port 6543.");
     }
   }
 

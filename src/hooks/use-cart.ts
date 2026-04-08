@@ -155,7 +155,9 @@ export function useUpdateQuantityMutation() {
       if (context?.previousCart) {
         queryClient.setQueryData(CART_QUERY_KEY, context.previousCart);
       }
-      toast.error(error instanceof Error ? error.message : t("toast.error.updateQuantity"));
+      toast.error(
+        error instanceof Error ? error.message : t("toast.error.updateQuantity"),
+      );
     },
 
     onSettled: () => {

@@ -47,8 +47,8 @@ const ShippingForm = ({ onSubmit, isSubmitting }: ShippingFormProps) => {
 
   const set =
     (key: keyof FormData) =>
-      (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-        setForm((prev) => ({ ...prev, [key]: e.target.value }));
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+      setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

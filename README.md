@@ -62,6 +62,7 @@
 ## 🛡️ Architecture: Server-First Philosophy
 
 Ika Sugu adheres to a **Server-First** approach. Most business logic, data validation, and security checks are handled in **Server Actions** (`src/app/actions`) or **Route Handlers**. This ensures:
+
 - **Security**: Database secrets never leak to the client.
 - **Performance**: Reduced bundle size by keeping heavy logic on the server.
 - **Stability**: Centralized error handling and revalidation.
@@ -73,21 +74,27 @@ Ika Sugu adheres to a **Server-First** approach. Most business logic, data valid
 To test payments locally, you **MUST** use the Stripe CLI. Follow these steps:
 
 ### 1. Install Stripe CLI
+
 - **macOS (Homebrew)**: `brew install stripe/stripe-cli/stripe`
 - **Windows (Scoop)**: `scoop bucket add stripe; scoop install stripe` (or use Chocolatey: `choco install stripe-cli`)
 - **Linux**: See official [apt/rpm guides](https://docs.stripe.com/stripe-cli).
 
 ### 2. Login & Link Account
+
 Before any test payment, you must authenticate:
+
 ```bash
 stripe login
 ```
 
 ### 3. Forward Webhooks
+
 Open a dedicated terminal and run:
+
 ```bash
 stripe listen --forward-to localhost:3000/api/webhooks/stripe
 ```
+
 > [!IMPORTANT]
 > Copy the `whsec_...` secret provided by this command and paste it into your `.env` as `STRIPE_WEBHOOK_SECRET`. **The payment flow will fail if this is missing or incorrect.**
 
@@ -98,30 +105,34 @@ stripe listen --forward-to localhost:3000/api/webhooks/stripe
 Ika Sugu uses Supabase for product image hosting with a "Drag & Drop" interface in the Admin panel.
 
 ### 1. Create Bucket
+
 In your Supabase Dashboard, create a **Public** bucket named `products`.
 
 ### 2. Security Policies (RLS)
+
 By default, **RLS is enabled**. To allow admins to manage images safely, run this SQL in your Supabase SQL Editor:
 
 ```sql
 -- 1. Give public read access to everyone
-create policy "Public Read Access" on storage.objects for select 
+create policy "Public Read Access" on storage.objects for select
 using ( bucket_id = 'products' );
 
 -- 2. Allow authenticated users to upload/manage images
-create policy "Authenticated Admin Management" on storage.objects 
+create policy "Authenticated Admin Management" on storage.objects
 for all using (
-  bucket_id = 'products' 
+  bucket_id = 'products'
   AND auth.role() = 'authenticated'
 );
 ```
 
 ### 3. Service Role Bypass
+
 For critical cleanup operations (deleting files when a product is deleted), the server uses the `SUPABASE_SERVICE_ROLE_KEY`. This key bypasses RLS to ensure database integrity. **NEVER expose this key to the client.**
 
 ---
 
 ## 🚦 Quick Start
+
 1. `bun install`
 2. Configure `.env.examples` -> `.env`
 3. `bun run generate-prisma-client`
@@ -131,4 +142,5 @@ For critical cleanup operations (deleting files when a product is deleted), the 
 ---
 
 ## 📜 License
+
 MIT License. Developed with ❤️ by **Dioman Keita**.
