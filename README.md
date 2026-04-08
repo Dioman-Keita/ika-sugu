@@ -1,89 +1,134 @@
-> This is a personal project by Dioman Keita, originally inspired by next-ecommerce-shopco but completely rebuilt for modern, high-performance standards.
+# 📦 Ika Sugu - High-Performance E-Commerce
 
-# Ika Sugu - Modern E-Commerce Platform
+> **Ika Sugu** (Malinke for "Your Market") is a state-of-the-art, full-stack e-commerce platform built with **Next.js 16**, **Bun**, and **Turbopack**. It focuses on **Variant-first** product management and **Atomic** payment processing.
 
-**Ika Sugu** is a high-performance, full-stack Next.js 16 e-commerce platform built on Bun. It emphasizes a **Variant-first philosophy**, blistering fast **Optimistic UI**, and a complete, highly-functional **Admin Dashboard**.
+![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)
+![Bun](https://img.shields.io/badge/Bun-Runtime-black?style=for-the-badge&logo=bun)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![Tailwind](https://img.shields.io/badge/Tailwind_CSS_v4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
+![Stripe](https://img.shields.io/badge/Stripe-Atomic-6772E5?style=for-the-badge&logo=stripe&logoColor=white)
 
-## Overview
+---
 
-Based on industry standards, Ika Sugu bridges the gap between premium design and cutting-edge web development. It leverages a highly optimized data-fetching layer with TanStack Query and implements rock-solid authentication with BetterAuth.
+## 📂 Project Structure
 
-## Core Features
+```text
+├── 📜 admin-product-authoring.md
+├── 📄 bun.lock
+├── 🗂️ components.json
+├── 📜 currency-philosophy.md
+├── 📜 developer-profile.md
+├── 📜 emmergency.md
+├── 📄 eslint.config.mjs
+├── 📜 GEMINI.md
+├── 📜 kimi-suggestion.md
+├── 📄 LICENSE
+├── 🟨 next-env.d.ts
+├── 📄 next.config.mjs
+├── 🗂️ package.json
+├── 📄 postcss.config.mjs
+├── 📜 PR.md
+├── 📁 prisma
+│ ├── 📁 migrations
+│ ├── 📄 schema.prisma
+├── 🟨 prisma.config.ts
+├── 📁 public
+│ ├── 📁 icons
+│ ├── 📁 images
+│ ├── 🖼️ next.svg
+│ ├── 🖼️ vercel.svg
+├── 📜 README.md
+├── 📁 src
+│ ├── 📁 app
+│ │ ├── 📁 actions (Server Actions - Core Logic)
+│ │ ├── 📁 admin (Dashboard)
+│ │ ├── 📁 api (Webhooks & API Routes)
+│ │ ├── 📁 shop (Storefront)
+│ ├── 📁 components
+│ │ ├── 📁 admin
+│ │ ├── 📁 shop-page
+│ │ ├── 📁 ui (ShadCN UI)
+│ ├── 📁 generated (Prisma Client)
+│ ├── 📁 hooks (TanStack Query)
+│ ├── 📁 lib (Auth, DB, Stripe, I18n)
+│ ├── 📁 styles (Tailwind CSS v4)
+├── 📄 tailwind.config.mjs
+├── 🗂️ tsconfig.json
+```
 
-- **Storefront & Admin Dashboard**: Complete end-to-end management of products, variants, orders, and users.
-- **Variant-First Philosophy**: Deep integration of product variants (color/size) natively tied to unique SKUs.
-- **Optimistic UI**: Instantaneous user feedback backed by resilient TanStack Query mutations.
-- **Authentication**: Modern and secure auth flows powered by BetterAuth.
-- **Payment Processing**: Stripe integration designed and architected (implementation upcoming).
+---
 
-## Technology Stack
+## 🛡️ Architecture: Server-First Philosophy
 
-- **Framework**: Next.js 16 (Full App Router)
-- **Runtime**: [Bun](https://bun.sh/)
-- **State Management & Data Fetching**: TanStack Query
-- **Styling**: Tailwind CSS v4 + Framer Motion
-- **UI Components**: ShadCN UI
-- **Database & ORM**: PostgreSQL with Prisma
-- **Auth**: BetterAuth
-- **Code Quality**: Prettier, TypeScript
-- **Hosting**: Vercel
+Ika Sugu adheres to a **Server-First** approach. Most business logic, data validation, and security checks are handled in **Server Actions** (`src/app/actions`) or **Route Handlers**. This ensures:
+- **Security**: Database secrets never leak to the client.
+- **Performance**: Reduced bundle size by keeping heavy logic on the server.
+- **Stability**: Centralized error handling and revalidation.
 
-## Getting Started
+---
 
-To run Ika Sugu locally, follow these steps:
+## 💳 Local Payment Testing (Stripe CLI)
 
-1. **Clone the repository:**
+To test payments locally, you **MUST** use the Stripe CLI. Follow these steps:
 
-   ```bash
-   git clone https://github.com/Dioman-Keita/ika-sugu.git
-   cd ika-sugu
-   ```
+### 1. Install Stripe CLI
+- **macOS (Homebrew)**: `brew install stripe/stripe-cli/stripe`
+- **Windows (Scoop)**: `scoop bucket add stripe; scoop install stripe` (or use Chocolatey: `choco install stripe-cli`)
+- **Linux**: See official [apt/rpm guides](https://docs.stripe.com/stripe-cli).
 
-2. **Install dependencies (using Bun):**
+### 2. Login & Link Account
+Before any test payment, you must authenticate:
+```bash
+stripe login
+```
 
-   ```bash
-   bun install
-   ```
+### 3. Forward Webhooks
+Open a dedicated terminal and run:
+```bash
+stripe listen --forward-to localhost:3000/api/webhooks/stripe
+```
+> [!IMPORTANT]
+> Copy the `whsec_...` secret provided by this command and paste it into your `.env` as `STRIPE_WEBHOOK_SECRET`. **The payment flow will fail if this is missing or incorrect.**
 
-3. **Set up Environment Variables:**
-   Configure your Database and BetterAuth keys in `.env`.
+---
 
-4. **Initialize Prisma & Seed Database:**
+## ☁️ Supabase Storage Setup
 
-   ```bash
-   bun run generate-prisma-client
-   bun run seed
-   ```
+Ika Sugu uses Supabase for product image hosting with a "Drag & Drop" interface in the Admin panel.
 
-5. **Run the development server:**
-   ```bash
-   bun run dev
-   ```
+### 1. Create Bucket
+In your Supabase Dashboard, create a **Public** bucket named `products`.
 
-Navigate to [http://localhost:3000](http://localhost:3000) to view the app!
+### 2. Security Policies (RLS)
+By default, **RLS is enabled**. To allow admins to manage images safely, run this SQL in your Supabase SQL Editor:
 
-## Project Structure Highlights
+```sql
+-- 1. Give public read access to everyone
+create policy "Public Read Access" on storage.objects for select 
+using ( bucket_id = 'products' );
 
-- `src/app/` - Next.js 16 App Router (Storefront & `/admin` dashboard)
-- `src/app/actions/` - Server Actions handling secure mutations
-- `src/components/` - ShadCN reusable UI and domain components
-- `src/lib/` - Auth configurations, database setup, and core utilities
-- `src/hooks/` - TanStack Query custom hooks
+-- 2. Allow authenticated users to upload/manage images
+create policy "Authenticated Admin Management" on storage.objects 
+for all using (
+  bucket_id = 'products' 
+  AND auth.role() = 'authenticated'
+);
+```
 
-## Contributing
+### 3. Service Role Bypass
+For critical cleanup operations (deleting files when a product is deleted), the server uses the `SUPABASE_SERVICE_ROLE_KEY`. This key bypasses RLS to ensure database integrity. **NEVER expose this key to the client.**
 
-Contributions are welcome! If you'd like to contribute, please follow these steps:
+---
 
-1. Fork the repository.
-2. Create a new branch (`git checkout -b feature/your-feature-name`).
-3. Make your changes.
-4. Push to the branch (`git push origin feature/your-feature-name`).
-5. Open a pull request.
+## 🚦 Quick Start
+1. `bun install`
+2. Configure `.env.examples` -> `.env`
+3. `bun run generate-prisma-client`
+4. `bun run seed`
+5. `bun run dev`
 
-## Issues
+---
 
-Feel free to submit issues for any bugs, feature requests, or general questions related to the project.
-
-## License
-
-This project is licensed under the MIT License.
+## 📜 License
+MIT License. Developed with ❤️ by **Dioman Keita**.

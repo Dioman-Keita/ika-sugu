@@ -131,41 +131,6 @@ export async function placeOrderAction(input: CheckoutInput) {
   );
   const total = subtotal.add(taxTotal).toDecimalPlaces(2);
 
-  const order = await db.$transaction(async (tx) => {
-    const createdOrder = await tx.order.create({
-      data: {
-        userId,
-        status: OrderStatus.PENDING,
-        currency: targetCurrency,
-        customerEmail: input.email.trim(),
-        customerPhone: input.phone.trim() || null,
-        shippingAddress: {
-          firstName: input.firstName.trim(),
-          lastName: input.lastName.trim(),
-          address: input.address.trim(),
-          city: input.city.trim(),
-          country: input.country.trim(),
-          zip: input.zip.trim(),
-        },
-        subtotal,
-        taxTotal,
-        total,
-        items: {
-          create: lineSnapshots,
-        },
-      },
-      select: { id: true },
-    });
-
-    await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
-
-    return createdOrder;
-  });
-
-  revalidatePath("/cart");
-  revalidatePath("/checkout");
-  revalidatePath("/");
-
   // Determine base URL for redirects
   const headersList = await headers();
   const host = headersList.get("host") || "localhost:3000";
@@ -182,11 +147,11 @@ export async function placeOrderAction(input: CheckoutInput) {
       : undefined;
 
     // Convert Stripe expects value in the smallest currency unit (e.g. cents)
-    const itemSnapshot = lineSnapshots.find((ls) => ls.variantId === item.variantId);
+    const itemSnapshot = lineSnapshots.find((ls) => ls.variantId === item.variant.id);
     const unitPriceValue = itemSnapshot ? Number(itemSnapshot.unitPrice) : 0;
     const vatValue = itemSnapshot ? Number(itemSnapshot.vatAmount) / item.quantity : 0;
     
-    // Simplification for Stripe: sending gross price as unit_amount
+    // Total price sent to Stripe
     const grossUnitPrice = unitPriceValue + vatValue;
 
     return {
@@ -195,6 +160,13 @@ export async function placeOrderAction(input: CheckoutInput) {
         product_data: {
           name: `${item.variant.product.name} - ${item.variant.colorName} (${item.variant.size})`,
           images: imageUrl ? [imageUrl] : [],
+          metadata: {
+            productId: item.variant.productId,
+            variantId: item.variant.id,
+            vatRate: String(item.variant.product.vatRate),
+            unitPrice: String(unitPriceValue),
+            sourceCurrency: item.variant.currency,
+          }
         },
         unit_amount: Math.round(grossUnitPrice * 100),
       },
@@ -207,22 +179,26 @@ export async function placeOrderAction(input: CheckoutInput) {
     mode: "payment",
     line_items: lineItems,
     customer_email: input.email.trim(),
-    client_reference_id: order.id,
+    client_reference_id: userId,
     metadata: {
-      orderId: order.id,
+      userId,
+      firstName: input.firstName.trim(),
+      lastName: input.lastName.trim(),
+      email: input.email.trim(),
+      phone: input.phone.trim() || "",
+      address: input.address.trim(),
+      city: input.city.trim(),
+      country: input.country.trim(),
+      zip: input.zip.trim(),
+      cartId: cart.id,
+      targetCurrency,
     },
     success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${baseUrl}/checkout/cancel`,
   });
 
-  // Save the Stripe Session ID to the order
-  await db.order.update({
-    where: { id: order.id },
-    data: { stripeSessionId: stripeSession.id },
-  });
-
   return {
-    id: order.id,
+    id: "session_" + stripeSession.id, // Temporary ID placeholder
     currency: targetCurrency,
     url: stripeSession.url,
   };

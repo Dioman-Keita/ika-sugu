@@ -14,6 +14,18 @@ const nextConfig = {
         ]
       : [],
   },
+  /**
+   * Fix for Turbopack/Bun chunk loading errors.
+   * Marking these packages as external tells Turbopack to NOT try and bundle them,
+   * which is essential for native drivers and crypto modules.
+   */
+  serverExternalPackages: [
+    "stripe", 
+    "node:crypto", 
+    "pg", 
+    "@prisma/client", 
+    "@prisma/adapter-pg"
+  ],
 };
 
 export default nextConfig;

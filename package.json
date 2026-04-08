@@ -7,7 +7,7 @@
     "src/*"
   ],
   "scripts": {
-    "dev": "bun --bun next dev",
+    "dev": "next dev",
     "generate-prisma-client": "bunx prisma generate",
     "build": "bun run generate-prisma-client && next build --webpack",
     "start": "bun --bun next start",
