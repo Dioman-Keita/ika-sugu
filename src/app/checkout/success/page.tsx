@@ -2,7 +2,6 @@ import { cookies } from "next/headers";
 import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
 import { parseLocale } from "@/lib/i18n/locale";
 import { getMessages } from "@/lib/i18n/messages";
-import { Check } from "lucide-react";
 import CheckoutStatusHero from "@/components/checkout-page/CheckoutStatusHero";
 
 export default async function CheckoutSuccessPage() {
@@ -18,7 +17,6 @@ export default async function CheckoutSuccessPage() {
       ctaLabel={t("checkout.continueShopping")}
       ctaHref="/shop"
       tone="success"
-      Icon={Check}
     />
   );
 }

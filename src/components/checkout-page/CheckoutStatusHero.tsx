@@ -4,7 +4,7 @@ import Link from "next/link";
 import * as motion from "framer-motion/client";
 import { cn } from "@/lib/utils";
 import { integralCF } from "@/styles/fonts";
-import type { LucideIcon } from "lucide-react";
+import { Check, X } from "lucide-react";
 
 type CheckoutStatusHeroProps = {
   title: string;
@@ -12,7 +12,6 @@ type CheckoutStatusHeroProps = {
   ctaLabel: string;
   ctaHref: string;
   tone: "success" | "cancel";
-  Icon: LucideIcon;
 };
 
 const toneStyles = {
@@ -32,9 +31,9 @@ export default function CheckoutStatusHero({
   ctaLabel,
   ctaHref,
   tone,
-  Icon,
 }: CheckoutStatusHeroProps) {
   const styles = toneStyles[tone];
+  const Icon = tone === "success" ? Check : X;
 
   return (
     <div className="flex flex-col items-center justify-center py-32 text-center px-4">

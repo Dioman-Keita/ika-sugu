@@ -2,7 +2,6 @@ import { cookies } from "next/headers";
 import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
 import { parseLocale } from "@/lib/i18n/locale";
 import { getMessages } from "@/lib/i18n/messages";
-import { X } from "lucide-react";
 import CheckoutStatusHero from "@/components/checkout-page/CheckoutStatusHero";
 
 export default async function CheckoutCancelPage() {
@@ -18,7 +17,6 @@ export default async function CheckoutCancelPage() {
       ctaLabel={t("checkout.cancel.backToCart")}
       ctaHref="/cart"
       tone="cancel"
-      Icon={X}
     />
   );
 }

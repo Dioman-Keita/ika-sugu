@@ -34,9 +34,11 @@ function StatCard({
       >
         <Icon size={18} className="text-foreground" />
       </div>
-      <div>
+      <div className="min-w-0 flex-1">
         <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-2xl font-bold text-foreground leading-tight">{value}</p>
+        <p className="text-xl sm:text-2xl font-bold text-foreground leading-tight whitespace-nowrap">
+          {value}
+        </p>
         {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
       </div>
     </div>
@@ -67,10 +69,12 @@ export default function AdminOverviewContent({ locale }: { locale: Locale }) {
   });
 
   const formattedRevenue = new Intl.NumberFormat(locale, {
+    notation: "compact",
+    compactDisplay: "short",
     style: "currency",
     currency: stats.currency,
     minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    maximumFractionDigits: 1,
   }).format(stats.totalRevenue);
 
   const orderStatuses = [

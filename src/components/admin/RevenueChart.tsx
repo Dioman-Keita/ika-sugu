@@ -21,15 +21,11 @@ type Props = {
 
 export default function RevenueChart({ data, currency, locale, revenueLabel }: Props) {
   const tickFormatter = (value: number) => {
-    const compact = new Intl.NumberFormat(locale, {
+    return new Intl.NumberFormat(locale, {
       notation: "compact",
       maximumFractionDigits: 1,
+      minimumFractionDigits: 0,
     }).format(value);
-
-    return formatMoney(Number.isFinite(value) ? value : 0, currency, locale).replace(
-      /[\d\s.,]+/,
-      compact,
-    );
   };
 
   return (
@@ -47,7 +43,7 @@ export default function RevenueChart({ data, currency, locale, revenueLabel }: P
           tickLine={false}
           tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
           tickFormatter={tickFormatter}
-          width={48}
+          width={36}
         />
         <Tooltip
           cursor={{ fill: "hsl(var(--muted))", radius: 6 }}
