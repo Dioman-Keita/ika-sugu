@@ -2,6 +2,7 @@ import "dotenv/config";
 
 import { OrderStatus, Prisma, ReviewStatus } from "../generated/prisma/client";
 import db from "../lib/db";
+import { vatPortionFromGross } from "../lib/pricing/vat";
 
 const prisma = db;
 
@@ -13,11 +14,6 @@ const grossPrice = (base: number, discountPct: number, vatPct: number) => {
     new Prisma.Decimal(1).sub(new Prisma.Decimal(discountPct).div(100)),
   );
   return toMoney(net.mul(new Prisma.Decimal(1).add(new Prisma.Decimal(vatPct).div(100))));
-};
-
-const vatPortionFromGross = (gross: Prisma.Decimal, vatPct: Prisma.Decimal) => {
-  const net = gross.div(new Prisma.Decimal(1).add(vatPct.div(100)));
-  return gross.sub(net).toDecimalPlaces(2);
 };
 
 const toSku = (productSlug: string, colorName: string, size: string) =>

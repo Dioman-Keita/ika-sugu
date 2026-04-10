@@ -151,6 +151,7 @@ const ShippingForm = ({ onSubmit, isSubmitting }: ShippingFormProps) => {
               <option value="JP">Japan</option>
               <option value="SN">Senegal</option>
               <option value="CI">Côte d&apos;Ivoire</option>
+              <option value="ML">Mali</option>
             </select>
           </Field>
           <Field label={t("checkout.zip")} className="sm:col-span-1">

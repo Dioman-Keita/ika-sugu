@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { integralCF } from "@/styles/fonts";
 import {
@@ -16,7 +16,6 @@ import ShippingForm from "@/components/checkout-page/ShippingForm";
 import OrderSummary, {
   type OrderSummaryLine,
 } from "@/components/checkout-page/OrderSummary";
-
 import { useCartQuery } from "@/hooks/use-cart";
 import { usePlaceOrderMutation } from "@/hooks/use-checkout";
 import { useUiPreferences } from "@/lib/ui-preferences";
@@ -26,7 +25,6 @@ import { Button } from "@/components/ui/button";
 export default function CheckoutContainer() {
   const { t } = useUiPreferences();
   const { data: cart, isLoading } = useCartQuery();
-  const [orderPlaced, setOrderPlaced] = useState(false);
   const { mutateAsync: placeOrder, isPending: isSubmitting } = usePlaceOrderMutation();
 
   const cartItems = (cart?.items ?? []) as OrderSummaryLine[];
@@ -39,7 +37,7 @@ export default function CheckoutContainer() {
     );
   }
 
-  if (cartItems.length === 0 && !orderPlaced) {
+  if (cartItems.length === 0) {
     return (
       <div className="flex items-center flex-col text-muted-foreground mt-32 space-y-4 text-center">
         <TbBasketExclamation strokeWidth={1} className="text-6xl" />
@@ -61,34 +59,13 @@ export default function CheckoutContainer() {
     country: string;
     zip: string;
   }) => {
-    await placeOrder(formData);
-    setOrderPlaced(true);
+    const response = await placeOrder(formData);
+    if (response?.url) {
+      window.location.href = response.url;
+      return;
+    }
+    toast.error(t("checkout.error.redirectUnavailable"));
   };
-
-  if (orderPlaced) {
-    return (
-      <div className="flex flex-col items-center justify-center py-24 text-center space-y-4">
-        <div className="w-20 h-20 rounded-full bg-surface-section flex items-center justify-center text-4xl">
-          ✓
-        </div>
-        <h2
-          className={cn(
-            integralCF.className,
-            "text-[32px] md:text-[40px] text-foreground uppercase",
-          )}
-        >
-          {t("checkout.orderConfirmed")}
-        </h2>
-        <p className="text-muted-foreground max-w-sm">{t("checkout.thankYou")}</p>
-        <Link
-          href="/shop"
-          className="mt-4 inline-flex items-center justify-center bg-foreground text-background rounded-full px-10 py-3 font-medium text-sm hover:opacity-90 transition-opacity"
-        >
-          {t("checkout.continueShopping")}
-        </Link>
-      </div>
-    );
-  }
 
   return (
     <>
@@ -122,12 +99,10 @@ export default function CheckoutContainer() {
       </h2>
 
       <div className="flex flex-col lg:flex-row gap-5 items-start">
-        {/* Left — shipping form */}
         <div className="w-full">
           <ShippingForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />
         </div>
 
-        {/* Right — order summary */}
         <OrderSummary items={cartItems} isSubmitting={isSubmitting} />
       </div>
     </>

@@ -8,6 +8,7 @@ import { messages } from "@/lib/i18n/messages";
 import db from "@/lib/db";
 import { getAdminCategories, getAdminCurrencySettings } from "@/app/actions/admin";
 import ProductForm from "@/components/admin/ProductForm";
+import { removeVatFromGrossPrice } from "@/lib/pricing/vat";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -57,6 +58,7 @@ const shapeProduct = (product: ProductShape | null) => {
   const translationMap = new Map(
     product.translations.map((translation) => [translation.locale, translation]),
   );
+  const vatRate = Number(product.vatRate ?? 20);
 
   const variants =
     product.variants?.map((v) => ({
@@ -65,8 +67,11 @@ const shapeProduct = (product: ProductShape | null) => {
       colorName: v.colorName,
       colorHex: v.colorHex ?? undefined,
       size: v.size,
-      price: Number(v.price),
-      compareAtPrice: v.compareAtPrice ? Number(v.compareAtPrice) : null,
+      price: removeVatFromGrossPrice(Number(v.price), vatRate),
+      compareAtPrice:
+        v.compareAtPrice === null || v.compareAtPrice === undefined
+          ? null
+          : removeVatFromGrossPrice(Number(v.compareAtPrice), vatRate),
       currency: v.currency ?? "USD",
       stock: v.stock,
       isActive: v.isActive,
@@ -238,8 +243,11 @@ export default async function AdminProductDetailPage({ params }: Props) {
             "variant.skuHint": m["admin.product.form.variant.skuHint"],
             "variant.skuFallback": m["admin.product.form.variant.skuFallback"],
             "variant.priceLabel": m["admin.product.form.variant.priceLabel"],
+            "variant.priceHint": m["admin.product.form.variant.priceHint"],
             "variant.compareAtPriceLabel":
               m["admin.product.form.variant.compareAtPriceLabel"],
+            "variant.compareAtPriceHint":
+              m["admin.product.form.variant.compareAtPriceHint"],
             "variant.currencyLabel": m["admin.product.form.variant.currencyLabel"],
             "variant.mediaLabel": m["admin.product.form.variant.mediaLabel"],
             "currency.usd": m["currency.usd"],

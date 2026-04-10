@@ -1,9 +1,17 @@
-import { Pool } from "pg";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../generated/prisma/client";
+/**
+ * Database Initialization with Turbopack/Bun Stability Fix.
+ *
+ * We use Top-level await to dynamically load 'pg' and Prisma drivers.
+ * This prevents Turbopack from mis-hashing these native modules during
+ * build time, while maintaining a synchronous-like API for the rest of the app.
+ */
+
+// 1. Dynamic imports of native drivers (Must be at the top level for consistency)
+const { Pool } = await import("pg");
+const { PrismaPg } = await import("@prisma/adapter-pg");
+const { PrismaClient } = await import("../generated/prisma/client");
 
 let didWarnSupabasePort = false;
-let didWarnInsecureDbSsl = false;
 
 const prismaClientSingleton = () => {
   const connectionString = process.env.DATABASE_URL;
@@ -17,13 +25,12 @@ const prismaClientSingleton = () => {
     hostname.endsWith(".supabase.co") || hostname.endsWith(".supabase.com");
   const isSupabasePooler = hostname.endsWith(".pooler.supabase.com");
 
+  // Supabase Pooler Port Handling (6543)
   if (isSupabasePooler && (parsedUrl.port === "" || parsedUrl.port === "5432")) {
     parsedUrl.port = "6543";
     if (process.env.NODE_ENV !== "production" && !didWarnSupabasePort) {
       didWarnSupabasePort = true;
-      console.warn(
-        '[db] DATABASE_URL points to Supabase pooler but uses port 5432; using 6543 instead. Update your ".env" to avoid this warning.',
-      );
+      console.warn("[db] Auto-switching to Supabase pooler port 6543.");
     }
   }
 
@@ -46,18 +53,7 @@ const prismaClientSingleton = () => {
         : { rejectUnauthorized: true }
     : undefined;
 
-  if (
-    isSupabase &&
-    allowInsecureDbSsl &&
-    process.env.NODE_ENV !== "production" &&
-    !didWarnInsecureDbSsl
-  ) {
-    didWarnInsecureDbSsl = true;
-    console.warn(
-      "[db] ALLOW_INSECURE_DB_SSL=true disables TLS certificate validation. Do not use this in production.",
-    );
-  }
-
+  // Initialize Connection Pool
   const pool = new Pool({
     connectionString: normalizedConnectionString,
     ...(ssl ? { ssl } : {}),
@@ -77,7 +73,7 @@ const prismaClientSingleton = () => {
 };
 
 const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
+  prisma: ReturnType<typeof prismaClientSingleton> | undefined;
 };
 
 export const db = globalForPrisma.prisma ?? prismaClientSingleton();
