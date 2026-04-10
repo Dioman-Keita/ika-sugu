@@ -44,19 +44,19 @@ const ProductCard = ({ data }: ProductCardProps) => {
           <span className="text-foreground/60">/5</span>
         </span>
       </div>
-      <div className="flex items-center space-x-1.25 xl:space-x-2.5">
+      <div className="flex flex-col items-start gap-1">
         <span className="font-bold text-foreground text-xl xl:text-2xl">
           {formatMoney(data.finalPrice, data.currency, locale)}
         </span>
         {data.discountPercentage > 0 && (
-          <span className="font-bold text-foreground/40 line-through text-xl xl:text-2xl">
-            {formatMoney(data.basePrice, data.currency, locale)}
-          </span>
-        )}
-        {data.discountPercentage > 0 && (
-          <span className="font-medium text-[10px] xl:text-xs py-1.5 px-3.5 rounded-full bg-[#FF3333]/10 text-[#FF3333]">
-            {`-${data.discountPercentage}%`}
-          </span>
+          <div className="flex flex-wrap items-center gap-1.5 xl:gap-2.5">
+            <span className="font-bold text-foreground/40 line-through text-lg xl:text-xl">
+              {formatMoney(data.basePrice, data.currency, locale)}
+            </span>
+            <span className="font-medium text-[10px] xl:text-xs py-1.5 px-3.5 rounded-full bg-[#FF3333]/10 text-[#FF3333]">
+              {`-${data.discountPercentage}%`}
+            </span>
+          </div>
         )}
       </div>
     </Link>
