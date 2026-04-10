@@ -218,6 +218,8 @@ export const messages: Record<Locale, Messages> = {
     "checkout.error.cartEmpty": "Your cart is empty.",
     "checkout.error.fieldRequired": "Field '{field}' is required.",
     "checkout.error.conversionFailed": "Currency conversion failed.",
+    "checkout.error.redirectUnavailable":
+      "Unable to redirect to Stripe checkout. Please try again.",
     "cart.error.outOfStock": "Sorry, no more stock available for this item.",
     "cart.error.stockExceeded": "You cannot add more units (Stock limited to {stock}).",
     "checkout.contactInfo": "Contact information",
@@ -454,8 +456,12 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.form.variant.skuHint":
       "Generated from the product slug, color, and size. It stays stable after creation.",
     "admin.product.form.variant.skuFallback": "Generated automatically",
-    "admin.product.form.variant.priceLabel": "Price",
-    "admin.product.form.variant.compareAtPriceLabel": "Compare-at price",
+    "admin.product.form.variant.priceLabel": "Price excl. VAT",
+    "admin.product.form.variant.priceHint":
+      "Enter the net price; the system stores the final price incl. VAT using the current global VAT rate ({rate}%).",
+    "admin.product.form.variant.compareAtPriceLabel": "Compare-at price excl. VAT",
+    "admin.product.form.variant.compareAtPriceHint":
+      "Enter the crossed-out net price; it will be normalized incl. VAT with the same VAT rate ({rate}%).",
     "admin.product.form.variant.currencyLabel": "Currency",
     "admin.product.form.variant.mediaLabel": "Images",
     "admin.product.form.variant.help":
@@ -496,8 +502,9 @@ export const messages: Record<Locale, Messages> = {
       "Short product description in English...",
     "admin.product.form.placeholder.dressStyle": "Choose a dress style",
     "admin.product.form.placeholder.variant.size": "Choose a size",
-    "admin.product.form.placeholder.variant.price": "Price incl. VAT",
-    "admin.product.form.placeholder.variant.compareAtPrice": "Compare-at price",
+    "admin.product.form.placeholder.variant.price": "Net price before VAT",
+    "admin.product.form.placeholder.variant.compareAtPrice":
+      "Crossed-out net price before VAT",
     "admin.product.form.placeholder.variant.colorPalette": "Choose a preset color",
     "admin.product.form.placeholder.variant.shopSection": "Choose a shop section",
     "admin.product.form.placeholder.variant.stock": "Stock",
@@ -620,7 +627,8 @@ export const messages: Record<Locale, Messages> = {
     "toast.error.createProduct": "Failed to create product.",
     "toast.success.updateProduct": "Product updated successfully.",
     "toast.error.updateProduct": "Failed to update product.",
-    "toast.success.placeOrder": "Order placed successfully.",
+    "toast.info.placeOrderRedirect":
+      "You will be redirected to Stripe to complete your payment.",
     "toast.error.placeOrder": "Failed to place order.",
     "toast.error.updateOrderStatus": "Failed to update order status.",
     "toast.error.updateReviewStatus": "Failed to update review status.",
@@ -820,6 +828,8 @@ export const messages: Record<Locale, Messages> = {
     "checkout.error.cartEmpty": "Votre panier est vide.",
     "checkout.error.fieldRequired": "Le champ '{field}' est obligatoire.",
     "checkout.error.conversionFailed": "La conversion de devise a échoué.",
+    "checkout.error.redirectUnavailable":
+      "Impossible de vous rediriger vers Stripe pour finaliser le paiement. Réessayez.",
     "cart.error.outOfStock": "Désolé, plus de stock disponible pour cet article.",
     "cart.error.stockExceeded":
       "Vous ne pouvez pas ajouter plus d'unités (Stock limité à {stock}).",
@@ -1083,8 +1093,12 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.form.variant.skuHint":
       "Généré à partir du slug produit, de la couleur et de la taille. Il reste stable après création.",
     "admin.product.form.variant.skuFallback": "Généré automatiquement",
-    "admin.product.form.variant.priceLabel": "Prix",
-    "admin.product.form.variant.compareAtPriceLabel": "Prix barré",
+    "admin.product.form.variant.priceLabel": "Prix HT",
+    "admin.product.form.variant.priceHint":
+      "Saisissez le prix hors taxes ; le système enregistre automatiquement le prix TTC avec la TVA globale actuelle ({rate} %).",
+    "admin.product.form.variant.compareAtPriceLabel": "Prix barré HT",
+    "admin.product.form.variant.compareAtPriceHint":
+      "Saisissez le prix barré hors taxes ; il sera normalisé en TTC avec la même TVA ({rate} %).",
     "admin.product.form.variant.currencyLabel": "Devise",
     "admin.product.form.variant.mediaLabel": "Images",
     "admin.product.form.variant.help":
@@ -1125,8 +1139,9 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.form.placeholder.dressStyle": "Choisir un style vestimentaire",
     "admin.product.form.error.category": "Choisissez une catégorie",
     "admin.product.form.placeholder.variant.size": "Choisir une taille",
-    "admin.product.form.placeholder.variant.price": "Prix TTC",
-    "admin.product.form.placeholder.variant.compareAtPrice": "Prix barré",
+    "admin.product.form.placeholder.variant.price": "Prix HT avant TVA",
+    "admin.product.form.placeholder.variant.compareAtPrice":
+      "Prix barré HT avant TVA",
     "admin.product.form.placeholder.variant.colorPalette":
       "Choisir une couleur prédéfinie",
     "admin.product.form.placeholder.variant.shopSection": "Choisir une section boutique",
@@ -1254,7 +1269,8 @@ export const messages: Record<Locale, Messages> = {
     "toast.error.createProduct": "Erreur lors de la création du produit.",
     "toast.success.updateProduct": "Produit mis à jour.",
     "toast.error.updateProduct": "Erreur lors de la mise à jour du produit.",
-    "toast.success.placeOrder": "Commande enregistrée avec succès.",
+    "toast.info.placeOrderRedirect":
+      "Vous allez être redirigé vers Stripe pour finaliser le paiement.",
     "toast.error.placeOrder": "Impossible d'enregistrer la commande.",
     "toast.error.updateOrderStatus": "Impossible de mettre à jour le statut.",
     "toast.error.updateReviewStatus": "Impossible de mettre à jour le statut de l'avis.",

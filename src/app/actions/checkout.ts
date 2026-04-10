@@ -4,6 +4,9 @@ import { Prisma } from "@/generated/prisma/client";
 import db from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { convertMoney, getCurrentTargetCurrency } from "@/lib/currency/server";
+import { toStripeMinorAmount } from "@/lib/payments/stripe-money";
+import { vatPortionFromGross } from "@/lib/pricing/vat";
+import { getCanonicalSiteUrl } from "@/lib/site-url";
 import { stripe } from "@/lib/stripe";
 import { headers, cookies } from "next/headers";
 import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
@@ -23,11 +26,6 @@ export type CheckoutInput = {
 
 const toMoney = (value: number) => new Prisma.Decimal(value).toDecimalPlaces(2);
 const toRate = (value: number) => new Prisma.Decimal(value).toDecimalPlaces(8);
-
-const vatPortionFromGross = (gross: Prisma.Decimal, vatPct: Prisma.Decimal) => {
-  const net = gross.div(new Prisma.Decimal(1).add(vatPct.div(100)));
-  return gross.sub(net).toDecimalPlaces(2);
-};
 
 export async function placeOrderAction(input: CheckoutInput) {
   const cookieStore = await cookies();
@@ -120,11 +118,11 @@ export async function placeOrderAction(input: CheckoutInput) {
     }),
   );
 
-  // Determine base URL for redirects
   const headersList = await headers();
-  const host = headersList.get("host") || "localhost:3000";
-  const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
-  const baseUrl = `${protocol}://${host}`;
+  const requestHost = headersList.get("host") || "localhost:3000";
+  const requestProtocol = process.env.NODE_ENV === "development" ? "http" : "https";
+  const fallbackBaseUrl = `${requestProtocol}://${requestHost}`;
+  const baseUrl = getCanonicalSiteUrl() ?? fallbackBaseUrl;
 
   // Create Stripe Checkout Session
   const lineItems = cart.items.map((item) => {
@@ -154,10 +152,13 @@ export async function placeOrderAction(input: CheckoutInput) {
             variantId: item.variant.id,
             vatRate: String(item.variant.product.vatRate),
             unitPrice: String(unitPriceValue),
-            sourceCurrency: item.variant.currency,
+            sourceCurrency: itemSnapshot?.sourceCurrency ?? item.variant.currency,
+            sourceUnitGrossPrice: String(
+              itemSnapshot ? Number(itemSnapshot.sourceUnitGrossPrice) : Number(item.variant.price),
+            ),
           },
         },
-        unit_amount: Math.round(grossUnitPrice * 100),
+        unit_amount: toStripeMinorAmount(grossUnitPrice, targetCurrency),
       },
       quantity: item.quantity,
     };
@@ -187,7 +188,7 @@ export async function placeOrderAction(input: CheckoutInput) {
   });
 
   return {
-    id: "session_" + stripeSession.id, // Temporary ID placeholder
+    checkoutSessionId: stripeSession.id,
     currency: targetCurrency,
     url: stripeSession.url,
   };

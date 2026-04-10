@@ -16,6 +16,7 @@ import {
 } from "@/lib/catalog-options";
 import { translateAttribute } from "@/lib/i18n/messages";
 import { useUiPreferences } from "@/lib/ui-preferences";
+import { applyVatToNetPrice, removeVatFromGrossPrice } from "@/lib/pricing/vat";
 import { ProductStatus } from "@/generated/prisma/client";
 
 type CreateProductResult = Awaited<ReturnType<typeof createAdminProduct>>;
@@ -185,15 +186,23 @@ export default function ProductForm({
   const missingShopSectionMessage = labels["error.variant.shopSection"];
   const missingImagesMessage = labels["error.variant.images"];
   const vatHintTemplate = labels["field.vatHint"];
+  const variantPriceHintTemplate = labels["variant.priceHint"];
+  const variantCompareAtPriceHintTemplate = labels["variant.compareAtPriceHint"];
+  const currentVatRate = useMemo(() => Math.max(0, parseDecimalInput(vatRate)), [vatRate]);
 
   const [variants, setVariants] = useState<VariantInput[]>(
     initial?.variants?.map((variant) => ({
       ...variant,
-      price: formatDecimalInput(variant.price),
+      price: formatDecimalInput(removeVatFromGrossPrice(parseDecimalInput(variant.price), currentVatRate)),
       compareAtPrice:
         variant.compareAtPrice === null || variant.compareAtPrice === undefined
           ? null
-          : formatDecimalInput(variant.compareAtPrice),
+          : formatDecimalInput(
+              removeVatFromGrossPrice(
+                parseDecimalInput(variant.compareAtPrice),
+                currentVatRate,
+              ),
+            ),
       stock: formatIntegerInput(variant.stock),
       images: variant.images ?? [],
     })) ?? [
@@ -412,13 +421,16 @@ export default function ProductForm({
         colorName: variant.colorName || "Standard",
         colorHex: variant.colorHex ?? null,
         size: variant.size || "Unique",
-        price: parseDecimalInput(variant.price),
+        price: applyVatToNetPrice(parseDecimalInput(variant.price), currentVatRate),
         compareAtPrice:
           variant.compareAtPrice === null ||
           variant.compareAtPrice === undefined ||
           String(variant.compareAtPrice).trim() === ""
             ? null
-            : parseDecimalInput(variant.compareAtPrice),
+            : applyVatToNetPrice(
+                parseDecimalInput(variant.compareAtPrice),
+                currentVatRate,
+              ),
         currency: variant.currency || "USD",
         stock: parseIntegerInput(variant.stock),
         isActive: variant.isActive ?? true,
@@ -887,6 +899,12 @@ export default function ProductForm({
                     className="w-full rounded-xl border border-border bg-surface-card px-4 py-3 text-sm text-foreground"
                     placeholder={labels["placeholder.variant.price"]}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    {variantPriceHintTemplate.replace(
+                      "{rate}",
+                      currentVatRate.toFixed(1),
+                    )}
+                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -905,6 +923,12 @@ export default function ProductForm({
                     className="w-full rounded-xl border border-border bg-surface-card px-4 py-3 text-sm text-foreground"
                     placeholder={labels["placeholder.variant.compareAtPrice"]}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    {variantCompareAtPriceHintTemplate.replace(
+                      "{rate}",
+                      currentVatRate.toFixed(1),
+                    )}
+                  </p>
                 </div>
 
                 <div className="space-y-2">

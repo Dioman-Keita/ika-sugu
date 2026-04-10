@@ -32,6 +32,7 @@ import {
 } from "@/lib/currency/server";
 import { ensureCoreApplicationData } from "@/lib/bootstrap/application";
 import { DEFAULT_TARGET_CURRENCY } from "@/lib/currency/shared";
+import { applyVatToNetPrice } from "@/lib/pricing/vat";
 
 const PAGE_SIZE = 15;
 const REVENUE_GENERATING_STATUSES: OrderStatus[] = [
@@ -495,9 +496,9 @@ const normalizeProductInput = (data: UpsertProductInput) => {
     const currency = String(variant.currency ?? "USD")
       .trim()
       .toUpperCase();
-    const price = Number(variant.price);
+    const priceNet = Number(variant.price);
     const stock = Number(variant.stock ?? 0);
-    const compareAtPrice =
+    const compareAtPriceNet =
       variant.compareAtPrice === null || variant.compareAtPrice === undefined
         ? null
         : Number(variant.compareAtPrice);
@@ -521,7 +522,7 @@ const normalizeProductInput = (data: UpsertProductInput) => {
         `Variant ${index + 1}: unsupported currency. Allowed values: ${CURRENCY_OPTIONS.join(", ")}`,
       );
     }
-    if (!Number.isFinite(price) || price < 0) {
+    if (!Number.isFinite(priceNet) || priceNet < 0) {
       throw new Error(`Variant ${index + 1}: price must be a valid positive number`);
     }
     if (!Number.isFinite(stock) || stock < 0) {
@@ -531,8 +532,8 @@ const normalizeProductInput = (data: UpsertProductInput) => {
       throw new Error(`Variant ${index + 1}: at least one image is required`);
     }
     if (
-      compareAtPrice !== null &&
-      (!Number.isFinite(compareAtPrice) || compareAtPrice < price)
+      compareAtPriceNet !== null &&
+      (!Number.isFinite(compareAtPriceNet) || compareAtPriceNet < priceNet)
     ) {
       throw new Error(
         `Variant ${index + 1}: compare-at price must be greater than or equal to price`,
@@ -545,8 +546,9 @@ const normalizeProductInput = (data: UpsertProductInput) => {
       colorName,
       colorHex: variant.colorHex?.trim() || null,
       size,
-      price,
-      compareAtPrice,
+      price: applyVatToNetPrice(priceNet, vatRate),
+      compareAtPrice:
+        compareAtPriceNet === null ? null : applyVatToNetPrice(compareAtPriceNet, vatRate),
       currency,
       stock,
       isActive,

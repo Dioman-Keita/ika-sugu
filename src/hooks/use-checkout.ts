@@ -14,7 +14,7 @@ export function usePlaceOrderMutation() {
     mutationFn: (input: CheckoutInput) => placeOrderAction(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CART_QUERY_KEY });
-      toast.success(t("toast.success.placeOrder"));
+      toast(t("toast.info.placeOrderRedirect"));
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : t("toast.error.placeOrder"));

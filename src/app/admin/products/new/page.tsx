@@ -139,8 +139,11 @@ export default async function AdminNewProductPage() {
             "variant.skuHint": m["admin.product.form.variant.skuHint"],
             "variant.skuFallback": m["admin.product.form.variant.skuFallback"],
             "variant.priceLabel": m["admin.product.form.variant.priceLabel"],
+            "variant.priceHint": m["admin.product.form.variant.priceHint"],
             "variant.compareAtPriceLabel":
               m["admin.product.form.variant.compareAtPriceLabel"],
+            "variant.compareAtPriceHint":
+              m["admin.product.form.variant.compareAtPriceHint"],
             "variant.currencyLabel": m["admin.product.form.variant.currencyLabel"],
             "variant.mediaLabel": m["admin.product.form.variant.mediaLabel"],
             "currency.usd": m["currency.usd"],

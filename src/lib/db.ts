@@ -59,6 +59,9 @@ const prismaClientSingleton = () => {
     ...(ssl ? { ssl } : {}),
     max: isSupabasePooler ? 3 : 10,
     connectionTimeoutMillis: 15000,
+    idleTimeoutMillis: 30000,
+    maxLifetimeSeconds: 60,
+    keepAlive: true,
   });
 
   pool.on("error", (err) => {
