@@ -15,17 +15,11 @@ const nextConfig = {
       : [],
   },
   /**
-   * Fix for Turbopack/Bun chunk loading errors.
-   * Marking these packages as external tells Turbopack to NOT try and bundle them,
-   * which is essential for native drivers and crypto modules.
+   * Keep Stripe externalized on the server.
+   * We intentionally avoid externalizing pg/Prisma driver packages because
+   * Turbopack + Bun on Windows can fail to resolve their generated external chunks.
    */
-  serverExternalPackages: [
-    "stripe",
-    "node:crypto",
-    "pg",
-    "@prisma/client",
-    "@prisma/adapter-pg",
-  ],
+  serverExternalPackages: ["stripe"],
 };
 
 export default nextConfig;

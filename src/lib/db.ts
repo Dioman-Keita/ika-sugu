@@ -1,15 +1,6 @@
-/**
- * Database Initialization with Turbopack/Bun Stability Fix.
- *
- * We use Top-level await to dynamically load 'pg' and Prisma drivers.
- * This prevents Turbopack from mis-hashing these native modules during
- * build time, while maintaining a synchronous-like API for the rest of the app.
- */
-
-// 1. Dynamic imports of native drivers (Must be at the top level for consistency)
-const { Pool } = await import("pg");
-const { PrismaPg } = await import("@prisma/adapter-pg");
-const { PrismaClient } = await import("../generated/prisma/client");
+import { Pool } from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "../generated/prisma";
 
 let didWarnSupabasePort = false;
 
@@ -25,7 +16,6 @@ const prismaClientSingleton = () => {
     hostname.endsWith(".supabase.co") || hostname.endsWith(".supabase.com");
   const isSupabasePooler = hostname.endsWith(".pooler.supabase.com");
 
-  // Supabase Pooler Port Handling (6543)
   if (isSupabasePooler && (parsedUrl.port === "" || parsedUrl.port === "5432")) {
     parsedUrl.port = "6543";
     if (process.env.NODE_ENV !== "production" && !didWarnSupabasePort) {
@@ -53,7 +43,6 @@ const prismaClientSingleton = () => {
         : { rejectUnauthorized: true }
     : undefined;
 
-  // Initialize Connection Pool
   const pool = new Pool({
     connectionString: normalizedConnectionString,
     ...(ssl ? { ssl } : {}),
