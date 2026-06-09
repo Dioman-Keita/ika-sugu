@@ -10,10 +10,10 @@ import { useCartCount } from "@/hooks/use-cart";
 import type { AuthSession } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { formatMonthYear } from "@/lib/i18n/format";
+import { getCustomerOrders, type CustomerOrder } from "@/app/actions/orders";
 import AccountProfile from "./AccountProfile";
 import AccountOrders from "./AccountOrders";
 import AccountSettings from "./AccountSettings";
-import { mockOrders } from "../_data/mockOrders";
 import { checkIsAdmin } from "@/app/actions/user";
 
 type Tab = "profile" | "orders" | "settings";
@@ -40,6 +40,8 @@ export default function AccountDashboard({ session }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>("profile");
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [orders, setOrders] = useState<CustomerOrder[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(true);
 
   useEffect(() => {
     const fetchAdminStatus = async () => {
@@ -52,6 +54,35 @@ export default function AccountDashboard({ session }: Props) {
     };
 
     fetchAdminStatus();
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchOrders = async () => {
+      setOrdersLoading(true);
+      try {
+        const customerOrders = await getCustomerOrders();
+        if (isMounted) {
+          setOrders(customerOrders);
+        }
+      } catch (error) {
+        console.error("[account] Failed to load customer orders", error);
+        if (isMounted) {
+          setOrders([]);
+        }
+      } finally {
+        if (isMounted) {
+          setOrdersLoading(false);
+        }
+      }
+    };
+
+    fetchOrders();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const cartTotalQuantities = useCartCount();
@@ -121,7 +152,9 @@ export default function AccountDashboard({ session }: Props) {
         {/* Stats row */}
         <div className="flex divide-x divide-border border-t border-border">
           <div className="flex-1 px-4 py-3 text-center">
-            <p className="text-xl font-bold text-foreground">{mockOrders.length}</p>
+            <p className="text-xl font-bold text-foreground">
+              {ordersLoading ? "..." : orders.length}
+            </p>
             <p className="text-xs text-muted-foreground">{t("account.header.orders")}</p>
           </div>
           <div className="flex-1 px-4 py-3 text-center">
@@ -155,7 +188,9 @@ export default function AccountDashboard({ session }: Props) {
       {/* Tab content */}
       <div>
         {activeTab === "profile" && <AccountProfile session={session} />}
-        {activeTab === "orders" && <AccountOrders />}
+        {activeTab === "orders" && (
+          <AccountOrders orders={orders} isLoading={ordersLoading} />
+        )}
         {activeTab === "settings" && <AccountSettings />}
       </div>
     </div>

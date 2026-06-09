@@ -6,10 +6,10 @@ import { ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUiPreferences } from "@/lib/ui-preferences";
 import { toIntlLocale } from "@/lib/i18n/format";
-import { mockOrders, type MockOrder, type OrderStatus } from "../_data/mockOrders";
+import type { CustomerOrder, CustomerOrderStatus } from "@/app/actions/orders";
 import { cn } from "@/lib/utils";
 
-const statusStyles: Record<OrderStatus, string> = {
+const statusStyles: Record<CustomerOrderStatus, string> = {
   delivered: "bg-green-500/10 text-green-500 border border-green-500/20",
   shipped: "bg-blue-500/10 text-blue-500 border border-blue-500/20",
   processing:
@@ -17,14 +17,14 @@ const statusStyles: Record<OrderStatus, string> = {
   cancelled: "bg-red-500/10 text-red-500 border border-red-500/20",
 };
 
-const statusKeys: Record<OrderStatus, string> = {
+const statusKeys: Record<CustomerOrderStatus, string> = {
   delivered: "account.orders.status.delivered",
   shipped: "account.orders.status.shipped",
   processing: "account.orders.status.processing",
   cancelled: "account.orders.status.cancelled",
 };
 
-function OrderCard({ order }: { order: MockOrder }) {
+function OrderCard({ order }: { order: CustomerOrder }) {
   const { t, locale } = useUiPreferences();
 
   const formattedDate = new Intl.DateTimeFormat(toIntlLocale(locale), {
@@ -112,10 +112,42 @@ function OrderCard({ order }: { order: MockOrder }) {
   );
 }
 
-export default function AccountOrders() {
+function OrderSkeleton() {
+  return (
+    <div className="space-y-3 animate-pulse">
+      {[1, 2, 3].map((item) => (
+        <div
+          key={item}
+          className="border border-border rounded-[20px] bg-surface-card overflow-hidden"
+        >
+          <div className="h-14 bg-surface-section border-b border-border" />
+          <div className="px-5 py-4 flex items-center gap-3">
+            <div className="w-14 h-14 rounded-xl bg-surface-section" />
+            <div className="flex-1 space-y-2">
+              <div className="h-4 w-20 rounded bg-border" />
+              <div className="h-5 w-24 rounded bg-border" />
+            </div>
+            <div className="h-8 w-24 rounded-full bg-border" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+type Props = {
+  orders: CustomerOrder[];
+  isLoading: boolean;
+};
+
+export default function AccountOrders({ orders, isLoading }: Props) {
   const { t } = useUiPreferences();
 
-  if (mockOrders.length === 0) {
+  if (isLoading) {
+    return <OrderSkeleton />;
+  }
+
+  if (orders.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <div className="w-16 h-16 rounded-full bg-surface-section flex items-center justify-center mb-4">
@@ -140,7 +172,7 @@ export default function AccountOrders() {
         {t("account.orders.title")}
       </h2>
       <div className="space-y-3">
-        {mockOrders.map((order) => (
+        {orders.map((order) => (
           <OrderCard key={order.id} order={order} />
         ))}
       </div>

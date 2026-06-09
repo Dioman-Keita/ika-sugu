@@ -1,0 +1,91 @@
+"use server";
+
+import { headers } from "next/headers";
+import { OrderStatus } from "@/generated/prisma/client";
+import { auth } from "@/lib/auth";
+import db from "@/lib/db";
+
+export type CustomerOrderStatus =
+  | "delivered"
+  | "shipped"
+  | "processing"
+  | "cancelled";
+
+export type CustomerOrderProduct = {
+  id: string;
+  name: string;
+  image: string;
+  price: number;
+  quantity: number;
+  size?: string;
+  color?: string;
+};
+
+export type CustomerOrder = {
+  id: string;
+  date: string;
+  status: CustomerOrderStatus;
+  total: number;
+  currency: string;
+  products: CustomerOrderProduct[];
+};
+
+function mapCustomerOrderStatus(status: OrderStatus): CustomerOrderStatus {
+  switch (status) {
+    case OrderStatus.DELIVERED:
+      return "delivered";
+    case OrderStatus.SHIPPED:
+      return "shipped";
+    case OrderStatus.CANCELED:
+      return "cancelled";
+    case OrderStatus.PENDING:
+    case OrderStatus.PAID:
+    default:
+      return "processing";
+  }
+}
+
+export async function getCustomerOrders(): Promise<CustomerOrder[]> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session?.user?.id) {
+    return [];
+  }
+
+  const orders = await db.order.findMany({
+    where: { userId: session.user.id },
+    orderBy: { createdAt: "desc" },
+    include: {
+      items: {
+        orderBy: { createdAt: "asc" },
+        include: {
+          product: { select: { id: true, name: true } },
+          variant: {
+            select: {
+              id: true,
+              colorName: true,
+              images: true,
+              size: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return orders.map((order) => ({
+    id: order.id,
+    date: order.createdAt.toISOString(),
+    status: mapCustomerOrderStatus(order.status),
+    total: order.total.toNumber(),
+    currency: order.currency,
+    products: order.items.map((item) => ({
+      id: item.id,
+      name: item.product.name,
+      image: item.variant?.images[0] ?? "/images/pic1.png",
+      price: item.sourceUnitGrossPrice.toNumber(),
+      quantity: item.quantity,
+      size: item.variant?.size,
+      color: item.variant?.colorName,
+    })),
+  }));
+}
