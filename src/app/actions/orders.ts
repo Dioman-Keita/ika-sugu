@@ -1,7 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
-import { OrderStatus } from "@/generated/prisma/client";
+import { OrderStatus } from "@/generated/prisma";
 import { auth } from "@/lib/auth";
 import db from "@/lib/db";
 
@@ -45,32 +45,69 @@ function mapCustomerOrderStatus(status: OrderStatus): CustomerOrderStatus {
   }
 }
 
+const isTransientDbError = (error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error);
+  const normalizedMessage = message.toLowerCase();
+
+  return (
+    normalizedMessage.includes("connection") ||
+    normalizedMessage.includes("timeout") ||
+    normalizedMessage.includes("econnreset") ||
+    normalizedMessage.includes("unexpectedly")
+  );
+};
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const withDbRetry = async <T>(fn: () => Promise<T>): Promise<T> => {
+  try {
+    return await fn();
+  } catch (error) {
+    if (!isTransientDbError(error)) throw error;
+    await sleep(250);
+    return await fn();
+  }
+};
+
+const withDbFallback = async <T>(fn: () => Promise<T>, fallback: T): Promise<T> => {
+  try {
+    return await withDbRetry(fn);
+  } catch (error) {
+    if (!isTransientDbError(error)) throw error;
+    return fallback;
+  }
+};
+
 export async function getCustomerOrders(): Promise<CustomerOrder[]> {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user?.id) {
     return [];
   }
 
-  const orders = await db.order.findMany({
-    where: { userId: session.user.id },
-    orderBy: { createdAt: "desc" },
-    include: {
-      items: {
-        orderBy: { createdAt: "asc" },
+  const orders = await withDbFallback(
+    () =>
+      db.order.findMany({
+        where: { userId: session.user.id },
+        orderBy: { createdAt: "desc" },
         include: {
-          product: { select: { id: true, name: true } },
-          variant: {
-            select: {
-              id: true,
-              colorName: true,
-              images: true,
-              size: true,
+          items: {
+            orderBy: { createdAt: "asc" },
+            include: {
+              product: { select: { id: true, name: true } },
+              variant: {
+                select: {
+                  id: true,
+                  colorName: true,
+                  images: true,
+                  size: true,
+                },
+              },
             },
           },
         },
-      },
-    },
-  });
+      }),
+    [],
+  );
 
   return orders.map((order) => ({
     id: order.id,
