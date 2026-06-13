@@ -986,6 +986,65 @@ export async function getAdminOrders({
   };
 }
 
+export async function getAdminOrderDetail(id: string) {
+  await assertAdmin();
+
+  const order = await db.order.findUnique({
+    where: { id },
+    include: {
+      user: { select: { name: true, email: true } },
+      items: {
+        include: {
+          product: { select: { id: true, name: true } },
+          variant: {
+            select: {
+              id: true,
+              colorName: true,
+              images: true,
+              size: true,
+              sku: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!order) return null;
+
+  return {
+    id: order.id,
+    userName: order.user.name,
+    userEmail: order.user.email,
+    customerEmail: order.customerEmail,
+    customerPhone: order.customerPhone,
+    shippingAddress: order.shippingAddress as any,
+    status: order.status,
+    currency: order.currency,
+    subtotal: order.subtotal.toNumber(),
+    taxTotal: order.taxTotal.toNumber(),
+    total: order.total.toNumber(),
+    stripeSessionId: order.stripeSessionId,
+    createdAt: order.createdAt,
+    items: order.items.map((item) => ({
+      id: item.id,
+      productName: item.product.name,
+      variantName: item.variant
+        ? `${item.variant.colorName} / ${item.variant.size}`
+        : null,
+      sku: item.variant?.sku,
+      image: item.variant?.images[0],
+      quantity: item.quantity,
+      unitPrice: item.unitPrice.toNumber(),
+      totalPrice: item.totalPrice.toNumber(),
+      vatRate: item.vatRate.toNumber(),
+      vatAmount: item.vatAmount.toNumber(),
+      sourceCurrency: item.sourceCurrency,
+      sourceUnitGrossPrice: item.sourceUnitGrossPrice.toNumber(),
+    })),
+  };
+}
+
 export async function updateOrderStatusAction(id: string, status: OrderStatus) {
   await assertAdmin();
   await db.order.update({ where: { id }, data: { status } });

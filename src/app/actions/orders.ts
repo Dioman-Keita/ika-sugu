@@ -27,6 +27,7 @@ export type CustomerOrder = {
   status: CustomerOrderStatus;
   total: number;
   currency: string;
+  rawStatus: OrderStatus;
   products: CustomerOrderProduct[];
 };
 
@@ -115,6 +116,7 @@ export async function getCustomerOrders(): Promise<CustomerOrder[]> {
     status: mapCustomerOrderStatus(order.status),
     total: order.total.toNumber(),
     currency: order.currency,
+    rawStatus: order.status,
     products: order.items.map((item) => ({
       id: item.id,
       name: item.product.name,
@@ -125,4 +127,55 @@ export async function getCustomerOrders(): Promise<CustomerOrder[]> {
       color: item.variant?.colorName,
     })),
   }));
+}
+
+export async function getOrderDetail(orderId: string): Promise<CustomerOrder | null> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session?.user?.id) {
+    return null;
+  }
+
+  const order = await withDbFallback(
+    () =>
+      db.order.findUnique({
+        where: { id: orderId, userId: session.user.id },
+        include: {
+          items: {
+            orderBy: { createdAt: "asc" },
+            include: {
+              product: { select: { id: true, name: true } },
+              variant: {
+                select: {
+                  id: true,
+                  colorName: true,
+                  images: true,
+                  size: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+    null,
+  );
+
+  if (!order) return null;
+
+  return {
+    id: order.id,
+    date: order.createdAt.toISOString(),
+    status: mapCustomerOrderStatus(order.status),
+    total: order.total.toNumber(),
+    currency: order.currency,
+    rawStatus: order.status,
+    products: order.items.map((item) => ({
+      id: item.id,
+      name: item.product.name,
+      image: item.variant?.images[0] ?? "/images/pic1.png",
+      price: item.sourceUnitGrossPrice.toNumber(),
+      quantity: item.quantity,
+      size: item.variant?.size,
+      color: item.variant?.colorName,
+    })),
+  };
 }
