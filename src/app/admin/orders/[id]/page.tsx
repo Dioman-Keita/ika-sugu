@@ -1,7 +1,7 @@
 import { ArrowLeft, Package, User, MapPin, Receipt, CreditCard } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getAdminOrderDetail, updateOrderStatusAction } from "@/app/actions/admin";
+import { getAdminOrderDetail } from "@/app/actions/admin";
 import { OrderStatus } from "@/generated/prisma/client";
 import StatusBadge from "@/components/admin/StatusBadge";
 import { cookies } from "next/headers";

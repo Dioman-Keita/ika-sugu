@@ -1,4 +1,4 @@
-import { ArrowLeft, Package, MapPin, Receipt } from "lucide-react";
+import { ArrowLeft, Package, Receipt } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getOrderDetail } from "@/app/actions/orders";
