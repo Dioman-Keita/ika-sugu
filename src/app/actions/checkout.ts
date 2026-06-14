@@ -154,7 +154,9 @@ export async function placeOrderAction(input: CheckoutInput) {
             unitPrice: String(unitPriceValue),
             sourceCurrency: itemSnapshot?.sourceCurrency ?? item.variant.currency,
             sourceUnitGrossPrice: String(
-              itemSnapshot ? Number(itemSnapshot.sourceUnitGrossPrice) : Number(item.variant.price),
+              itemSnapshot
+                ? Number(itemSnapshot.sourceUnitGrossPrice)
+                : Number(item.variant.price),
             ),
           },
         },

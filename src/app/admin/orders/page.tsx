@@ -125,30 +125,54 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
                   orders.map((order) => (
                     <tr
                       key={order.id}
-                      className="hover:bg-surface-section/50 transition-colors"
+                      className="hover:bg-surface-section/50 transition-colors group cursor-pointer"
                     >
-                      <td className="px-5 py-3">
+                      <td className="px-5 py-3 relative">
+                        <Link
+                          href={`/admin/orders/${order.id}`}
+                          className="absolute inset-0 z-0"
+                        />
                         <span className="font-mono text-xs text-muted-foreground">
                           #{order.id.slice(-8).toUpperCase()}
                         </span>
                       </td>
-                      <td className="px-5 py-3">
+                      <td className="px-5 py-3 relative">
+                        <Link
+                          href={`/admin/orders/${order.id}`}
+                          className="absolute inset-0 z-0"
+                        />
                         <p className="font-medium text-foreground">{order.userName}</p>
                         <p className="text-xs text-muted-foreground">{order.userEmail}</p>
                       </td>
-                      <td className="px-5 py-3 text-right text-muted-foreground">
+                      <td className="px-5 py-3 text-right text-muted-foreground relative">
+                        <Link
+                          href={`/admin/orders/${order.id}`}
+                          className="absolute inset-0 z-0"
+                        />
                         {order.itemCount}
                       </td>
-                      <td className="px-5 py-3 text-right font-semibold text-foreground">
+                      <td className="px-5 py-3 text-right font-semibold text-foreground relative">
+                        <Link
+                          href={`/admin/orders/${order.id}`}
+                          className="absolute inset-0 z-0"
+                        />
                         {new Intl.NumberFormat(locale, {
                           style: "currency",
                           currency: order.currency,
                         }).format(order.total)}
                       </td>
-                      <td className="px-5 py-3">
+                      <td className="px-5 py-3 relative">
+                        <Link
+                          href={`/admin/orders/${order.id}`}
+                          className="absolute inset-0 z-0"
+                        />
                         <StatusBadge status={order.status} />
                       </td>
-                      <td className="px-5 py-3 text-xs text-muted-foreground">
+                      <td className="px-5 py-3 text-xs text-muted-foreground relative">
+                        <Link
+                          href={`/admin/orders/${order.id}`}
+                          className="absolute inset-0 z-0"
+                        />
                         {new Intl.DateTimeFormat(locale, {
                           month: "short",
                           day: "numeric",

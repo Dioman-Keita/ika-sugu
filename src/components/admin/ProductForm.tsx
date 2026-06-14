@@ -188,12 +188,17 @@ export default function ProductForm({
   const vatHintTemplate = labels["field.vatHint"];
   const variantPriceHintTemplate = labels["variant.priceHint"];
   const variantCompareAtPriceHintTemplate = labels["variant.compareAtPriceHint"];
-  const currentVatRate = useMemo(() => Math.max(0, parseDecimalInput(vatRate)), [vatRate]);
+  const currentVatRate = useMemo(
+    () => Math.max(0, parseDecimalInput(vatRate)),
+    [vatRate],
+  );
 
   const [variants, setVariants] = useState<VariantInput[]>(
     initial?.variants?.map((variant) => ({
       ...variant,
-      price: formatDecimalInput(removeVatFromGrossPrice(parseDecimalInput(variant.price), currentVatRate)),
+      price: formatDecimalInput(
+        removeVatFromGrossPrice(parseDecimalInput(variant.price), currentVatRate),
+      ),
       compareAtPrice:
         variant.compareAtPrice === null || variant.compareAtPrice === undefined
           ? null

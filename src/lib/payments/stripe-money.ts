@@ -18,7 +18,10 @@ export const toStripeMinorAmount = (
   currency: string | null | undefined,
 ) => {
   const { factor } = getStripeScaleFactor(currency);
-  return Math.round(roundMoney(amount, normalizeCurrencyCode(currency) ?? DEFAULT_TARGET_CURRENCY) * factor);
+  return Math.round(
+    roundMoney(amount, normalizeCurrencyCode(currency) ?? DEFAULT_TARGET_CURRENCY) *
+      factor,
+  );
 };
 
 export const fromStripeMinorAmount = (

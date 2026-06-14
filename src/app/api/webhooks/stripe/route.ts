@@ -25,11 +25,7 @@ export async function POST(req: Request) {
     let event: Stripe.Event;
     try {
       // Async validation is required when using createFetchHttpClient (SubtleCrypto)
-      event = await stripe.webhooks.constructEventAsync(
-        body,
-        signature,
-        webhookSecret,
-      );
+      event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
       console.error(`❌ [STRIPE WEBHOOK] Signature Error: ${message}`);
@@ -109,10 +105,7 @@ export async function POST(req: Request) {
               },
               subtotal: itemsData.reduce((acc, i) => acc + i.totalPrice, 0),
               taxTotal: itemsData.reduce((acc, i) => acc + i.vatAmount, 0),
-              total: fromStripeMinorAmount(
-                session.amount_total,
-                session.currency,
-              ),
+              total: fromStripeMinorAmount(session.amount_total, session.currency),
               items: { create: itemsData },
             },
           });
