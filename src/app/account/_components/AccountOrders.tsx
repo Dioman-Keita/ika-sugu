@@ -100,25 +100,13 @@ function OrderCard({ order }: { order: CustomerOrder }) {
 
         {/* Action */}
         <div className="flex gap-2 shrink-0">
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-full text-xs"
-            asChild
-          >
+          <Button variant="outline" size="sm" className="rounded-full text-xs" asChild>
             <Link href={`/account/orders/${order.id}`}>
               {t("account.orders.viewOrder")}
             </Link>
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-full text-xs"
-            asChild
-          >
-            <Link href={`/shop`}>
-              {t("account.orders.reorder")}
-            </Link>
+          <Button variant="outline" size="sm" className="rounded-full text-xs" asChild>
+            <Link href={`/shop`}>{t("account.orders.reorder")}</Link>
           </Button>
         </div>
       </div>

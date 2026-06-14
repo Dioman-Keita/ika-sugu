@@ -8,6 +8,7 @@ import { Locale, parseLocale } from "@/lib/i18n/locale";
 import { messages } from "@/lib/i18n/messages";
 import Image from "next/image";
 import { translateAttribute } from "@/lib/i18n/messages";
+import StatusBadge from "@/components/admin/StatusBadge";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -74,9 +75,7 @@ export default async function OrderDetailPage({ params }: Props) {
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-foreground truncate">
-                      {item.name}
-                    </p>
+                    <p className="font-semibold text-foreground truncate">{item.name}</p>
                     <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
                       {item.color && (
                         <span>
@@ -89,9 +88,7 @@ export default async function OrderDetailPage({ params }: Props) {
                         </span>
                       )}
                     </div>
-                    <p className="mt-1 text-sm font-medium">
-                      x{item.quantity}
-                    </p>
+                    <p className="mt-1 text-sm font-medium">x{item.quantity}</p>
                   </div>
                   <div className="text-right shrink-0">
                     <p className="font-bold text-foreground">
@@ -122,7 +119,9 @@ export default async function OrderDetailPage({ params }: Props) {
             </div>
             <div className="p-6 space-y-4">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{m["account.orders.detail.subtotal"]}</span>
+                <span className="text-muted-foreground">
+                  {m["account.orders.detail.subtotal"]}
+                </span>
                 <span className="font-medium">
                   {new Intl.NumberFormat(locale, {
                     style: "currency",
@@ -131,7 +130,9 @@ export default async function OrderDetailPage({ params }: Props) {
                 </span>
               </div>
               <div className="pt-4 border-t border-border flex justify-between items-center">
-                <span className="font-bold text-lg">{m["account.orders.detail.total"]}</span>
+                <span className="font-bold text-lg">
+                  {m["account.orders.detail.total"]}
+                </span>
                 <span className="font-black text-2xl">
                   {new Intl.NumberFormat(locale, {
                     style: "currency",

@@ -611,6 +611,8 @@ export const messages: Record<Locale, Messages> = {
     "admin.orders.detail.sku": "SKU",
     "admin.orders.detail.quantity": "Qty",
     "admin.orders.detail.price": "Price",
+    "admin.orders.updateStatus.success": "Order status updated successfully.",
+    "admin.orders.updateStatus.error": "Failed to update order status.",
 
     "admin.users.title": "Users",
     "admin.users.noUsers": "No users found.",
@@ -1173,8 +1175,7 @@ export const messages: Record<Locale, Messages> = {
     "admin.product.form.error.category": "Choisissez une catégorie",
     "admin.product.form.placeholder.variant.size": "Choisir une taille",
     "admin.product.form.placeholder.variant.price": "Prix HT avant TVA",
-    "admin.product.form.placeholder.variant.compareAtPrice":
-      "Prix barré HT avant TVA",
+    "admin.product.form.placeholder.variant.compareAtPrice": "Prix barré HT avant TVA",
     "admin.product.form.placeholder.variant.colorPalette":
       "Choisir une couleur prédéfinie",
     "admin.product.form.placeholder.variant.shopSection": "Choisir une section boutique",
@@ -1278,6 +1279,9 @@ export const messages: Record<Locale, Messages> = {
     "admin.orders.detail.sku": "SKU",
     "admin.orders.detail.quantity": "Qté",
     "admin.orders.detail.price": "Prix",
+    "admin.orders.updateStatus.success": "Statut de la commande mis à jour.",
+    "admin.orders.updateStatus.error":
+      "Impossible de mettre à jour le statut de la commande.",
 
     "admin.users.title": "Utilisateurs",
     "admin.users.noUsers": "Aucun utilisateur trouvé.",

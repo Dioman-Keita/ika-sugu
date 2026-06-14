@@ -548,7 +548,9 @@ const normalizeProductInput = (data: UpsertProductInput) => {
       size,
       price: applyVatToNetPrice(priceNet, vatRate),
       compareAtPrice:
-        compareAtPriceNet === null ? null : applyVatToNetPrice(compareAtPriceNet, vatRate),
+        compareAtPriceNet === null
+          ? null
+          : applyVatToNetPrice(compareAtPriceNet, vatRate),
       currency,
       stock,
       isActive,

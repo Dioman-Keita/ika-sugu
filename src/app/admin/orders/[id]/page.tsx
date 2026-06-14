@@ -9,6 +9,7 @@ import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
 import { Locale, parseLocale } from "@/lib/i18n/locale";
 import { messages } from "@/lib/i18n/messages";
 import Image from "next/image";
+import OrderStatusUpdate from "@/components/admin/OrderStatusUpdate";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -49,7 +50,10 @@ export default async function AdminOrderDetailPage({ params }: Props) {
             </Link>
             <div>
               <h1 className="text-lg font-bold text-foreground">
-                {m["admin.orders.detail.title"].replace("{id}", order.id.slice(-8).toUpperCase())}
+                {m["admin.orders.detail.title"].replace(
+                  "{id}",
+                  order.id.slice(-8).toUpperCase(),
+                )}
               </h1>
               <p className="text-xs text-muted-foreground">
                 {new Intl.DateTimeFormat(locale, {
@@ -100,9 +104,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
                     <p className="font-medium text-foreground truncate">
                       {item.productName}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      {item.variantName}
-                    </p>
+                    <p className="text-xs text-muted-foreground">{item.variantName}</p>
                     {item.sku && (
                       <p className="text-[10px] font-mono text-muted-foreground mt-1">
                         {m["admin.orders.detail.sku"]}: {item.sku}
@@ -117,7 +119,8 @@ export default async function AdminOrderDetailPage({ params }: Props) {
                       }).format(item.totalPrice)}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {item.quantity} x {new Intl.NumberFormat(locale, {
+                      {item.quantity} x{" "}
+                      {new Intl.NumberFormat(locale, {
                         style: "currency",
                         currency: order.currency,
                       }).format(item.unitPrice)}
@@ -136,7 +139,9 @@ export default async function AdminOrderDetailPage({ params }: Props) {
             </div>
             <div className="p-5 space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{m["admin.orders.detail.subtotal"]}</span>
+                <span className="text-muted-foreground">
+                  {m["admin.orders.detail.subtotal"]}
+                </span>
                 <span className="text-foreground">
                   {new Intl.NumberFormat(locale, {
                     style: "currency",
@@ -145,7 +150,9 @@ export default async function AdminOrderDetailPage({ params }: Props) {
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{m["admin.orders.detail.vat"]}</span>
+                <span className="text-muted-foreground">
+                  {m["admin.orders.detail.vat"]}
+                </span>
                 <span className="text-foreground">
                   {new Intl.NumberFormat(locale, {
                     style: "currency",
@@ -192,7 +199,9 @@ export default async function AdminOrderDetailPage({ params }: Props) {
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     {m["checkout.phone"]}
                   </p>
-                  <p className="text-sm font-medium text-foreground">{order.customerPhone}</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {order.customerPhone}
+                  </p>
                 </div>
               )}
             </div>
@@ -202,18 +211,26 @@ export default async function AdminOrderDetailPage({ params }: Props) {
           <div className="border border-border rounded-2xl bg-surface-card overflow-hidden">
             <div className="px-5 py-4 border-b border-border bg-surface-section flex items-center gap-2">
               <MapPin size={18} className="text-muted-foreground" />
-              <h2 className="font-semibold">{m["admin.orders.detail.shippingAddress"]}</h2>
+              <h2 className="font-semibold">
+                {m["admin.orders.detail.shippingAddress"]}
+              </h2>
             </div>
             <div className="p-5 text-sm space-y-1">
               {shipping ? (
                 <>
-                  <p className="font-medium text-foreground">{shipping.firstName} {shipping.lastName}</p>
+                  <p className="font-medium text-foreground">
+                    {shipping.firstName} {shipping.lastName}
+                  </p>
                   <p className="text-muted-foreground">{shipping.streetAddress}</p>
-                  <p className="text-muted-foreground">{shipping.zip} {shipping.city}</p>
+                  <p className="text-muted-foreground">
+                    {shipping.zip} {shipping.city}
+                  </p>
                   <p className="text-muted-foreground">{shipping.country}</p>
                 </>
               ) : (
-                <p className="text-muted-foreground italic">No shipping address provided</p>
+                <p className="text-muted-foreground italic">
+                  No shipping address provided
+                </p>
               )}
             </div>
           </div>

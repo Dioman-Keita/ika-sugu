@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { useUiPreferences } from "@/lib/ui-preferences";
 
 type Props = {
   orderId: string;
@@ -24,15 +26,18 @@ type Props = {
 export default function OrderStatusUpdate({ orderId, currentStatus, messages }: Props) {
   const [status, setStatus] = useState<OrderStatus>(currentStatus);
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+  const { t } = useUiPreferences();
 
   const handleStatusChange = (newStatus: OrderStatus) => {
     startTransition(async () => {
       try {
         await updateOrderStatusAction(orderId, newStatus);
         setStatus(newStatus);
-        toast.success("Order status updated successfully");
+        router.refresh();
+        toast.success(t("admin.orders.updateStatus.success"));
       } catch (error) {
-        toast.error("Failed to update order status");
+        toast.error(t("admin.orders.updateStatus.error"));
         console.error(error);
       }
     });

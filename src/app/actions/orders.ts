@@ -5,11 +5,7 @@ import { OrderStatus } from "@/generated/prisma";
 import { auth } from "@/lib/auth";
 import db from "@/lib/db";
 
-export type CustomerOrderStatus =
-  | "delivered"
-  | "shipped"
-  | "processing"
-  | "cancelled";
+export type CustomerOrderStatus = "delivered" | "shipped" | "processing" | "cancelled";
 
 export type CustomerOrderProduct = {
   id: string;
