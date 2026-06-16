@@ -161,9 +161,10 @@ const ProductCard = ({ data }: ProductCardProps) => {
           </div>
           <CartCounter
             initialValue={data.quantity}
-            onAdd={(value) => handleUpdateQuantity(value)}
-            onRemove={(value) => handleUpdateQuantity(value)}
+            onAdd={handleUpdateQuantity}
+            onRemove={handleUpdateQuantity}
             isZeroDelete
+            disabled={isPending}
             className="px-5 py-3 max-h-8 md:max-h-10 min-w-[105px] max-w-[105px] sm:max-w-32"
           />
         </div>
