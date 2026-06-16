@@ -1,7 +1,7 @@
 "use client";
 
 import CartCounter from "@/components/ui/CartCounter";
-import React, { useState } from "react";
+import { useState } from "react";
 import AddToCartBtn from "./AddToCartBtn";
 import { Product } from "@/types/product.types";
 
@@ -22,19 +22,20 @@ const AddToCardSection = ({
   const isOutOfStock = maxQuantity <= 0;
 
   return (
-    <div className="fixed md:relative w-full bg-background border-t md:border-none border-border/50 bottom-0 left-0 p-4 md:p-0 z-10 flex items-center justify-between sm:justify-start md:justify-center">
+    <div className="fixed md:relative w-full bg-background border-t md:border-none border-border/50 bottom-0 left-0 p-4 md:p-0 z-10 flex items-center gap-3 sm:gap-5">
       <CartCounter
         key={`${selectedVariantId ?? "variant"}-${selectedColor}-${selectedSize}`}
         onAdd={setQuantity}
         onRemove={setQuantity}
         initialValue={1}
-        maxValue={Math.max(1, maxQuantity)}
+        maxValue={maxQuantity > 0 ? maxQuantity : undefined}
+        disabled={isOutOfStock}
       />
       <AddToCartBtn
         data={{
           ...data,
           srcUrl: data.srcUrl,
-          quantity: Math.min(quantity, Math.max(1, maxQuantity)),
+          quantity: maxQuantity > 0 ? Math.min(quantity, maxQuantity) : 1,
           selectedColor,
           selectedSize,
           selectedVariantId,

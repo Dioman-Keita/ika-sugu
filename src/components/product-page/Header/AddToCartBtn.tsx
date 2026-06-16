@@ -34,7 +34,7 @@ const AddToCartBtn = ({
       type="button"
       disabled={isDisabled}
       className={cn(
-        "bg-foreground text-background w-full ml-3 sm:ml-5 rounded-full h-11 md:h-[52px] text-sm sm:text-base hover:bg-foreground/80 transition-all flex items-center justify-center",
+        "bg-foreground text-background flex-1 min-w-0 rounded-full h-11 md:h-[52px] text-sm sm:text-base hover:bg-foreground/80 transition-all flex items-center justify-center",
         isDisabled && "bg-foreground/40 cursor-not-allowed hover:bg-foreground/40",
       )}
       onClick={handleAddToCart}
