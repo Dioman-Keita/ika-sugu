@@ -91,13 +91,22 @@ export default function RegisterClient({ googleEnabled }: { googleEnabled: boole
                 });
                 if (error) {
                   setError(translateAuthError(error.message ?? String(error), locale));
+                  setIsSubmitting(false);
                   return;
                 }
 
                 await syncCart().catch(() => {});
 
-                router.push(safeNext);
-              } finally {
+                // Keep the loader spinning through the navigation so the user
+                // always has feedback until the destination page renders.
+                router.replace(safeNext);
+              } catch (err) {
+                setError(
+                  translateAuthError(
+                    err instanceof Error ? err.message : String(err),
+                    locale,
+                  ),
+                );
                 setIsSubmitting(false);
               }
             }}
@@ -262,12 +271,23 @@ export default function RegisterClient({ googleEnabled }: { googleEnabled: boole
                       setError(
                         translateAuthError(error.message ?? String(error), locale),
                       );
+                      setIsSubmitting(false);
                       return;
                     }
                     if (data?.url) {
+                      // Full-page redirect to Google — keep the loader spinning
+                      // until the browser actually leaves this page.
                       window.location.href = data.url;
+                      return;
                     }
-                  } finally {
+                    setIsSubmitting(false);
+                  } catch (err) {
+                    setError(
+                      translateAuthError(
+                        err instanceof Error ? err.message : String(err),
+                        locale,
+                      ),
+                    );
                     setIsSubmitting(false);
                   }
                 }}

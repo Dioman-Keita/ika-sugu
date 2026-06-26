@@ -233,7 +233,7 @@ export async function getRecentOrders() {
 
   try {
     const orders = await db.order.findMany({
-      take: 6,
+      take: 30,
       orderBy: { createdAt: "desc" },
       include: {
         user: { select: { name: true, email: true } },
@@ -1020,7 +1020,14 @@ export async function getAdminOrderDetail(id: string) {
     userEmail: order.user.email,
     customerEmail: order.customerEmail,
     customerPhone: order.customerPhone,
-    shippingAddress: order.shippingAddress as any,
+    shippingAddress: order.shippingAddress as {
+      firstName: string;
+      lastName: string;
+      address: string;
+      city: string;
+      zip: string;
+      country: string;
+    } | null,
     status: order.status,
     currency: order.currency,
     subtotal: order.subtotal.toNumber(),
@@ -1042,6 +1049,8 @@ export async function getAdminOrderDetail(id: string) {
       vatRate: item.vatRate.toNumber(),
       vatAmount: item.vatAmount.toNumber(),
       sourceCurrency: item.sourceCurrency,
+      targetCurrency: item.targetCurrency,
+      exchangeRate: item.exchangeRate ? item.exchangeRate.toNumber() : null,
       sourceUnitGrossPrice: item.sourceUnitGrossPrice.toNumber(),
     })),
   };

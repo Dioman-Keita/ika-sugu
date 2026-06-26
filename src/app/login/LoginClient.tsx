@@ -70,18 +70,29 @@ export default function LoginClient({ googleEnabled }: { googleEnabled: boolean 
                 });
                 if (error) {
                   setError(translateAuthError(error.message ?? String(error), locale));
+                  setIsSubmitting(false);
                   return;
                 }
 
                 // OPTIMISTIC SYNC: Sync cart *before* redirecting so the UI never flashes an empty cart
                 await syncCart().catch(() => {});
 
+                // Keep the loader spinning through the navigation. Resetting
+                // isSubmitting here would stop the loader the instant the session
+                // resolves, leaving the user on an idle-looking form while the
+                // destination page is still loading — which feels broken.
                 if (data?.redirect && data.url) {
                   window.location.href = data.url;
                   return;
                 }
-                router.push(safeNext);
-              } finally {
+                router.replace(safeNext);
+              } catch (err) {
+                setError(
+                  translateAuthError(
+                    err instanceof Error ? err.message : String(err),
+                    locale,
+                  ),
+                );
                 setIsSubmitting(false);
               }
             }}
@@ -179,12 +190,23 @@ export default function LoginClient({ googleEnabled }: { googleEnabled: boolean 
                       setError(
                         translateAuthError(error.message ?? String(error), locale),
                       );
+                      setIsSubmitting(false);
                       return;
                     }
                     if (data?.url) {
+                      // Full-page redirect to Google — keep the loader spinning
+                      // until the browser actually leaves this page.
                       window.location.href = data.url;
+                      return;
                     }
-                  } finally {
+                    setIsSubmitting(false);
+                  } catch (err) {
+                    setError(
+                      translateAuthError(
+                        err instanceof Error ? err.message : String(err),
+                        locale,
+                      ),
+                    );
                     setIsSubmitting(false);
                   }
                 }}

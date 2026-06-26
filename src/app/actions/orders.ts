@@ -17,6 +17,15 @@ export type CustomerOrderProduct = {
   color?: string;
 };
 
+export type CustomerShippingAddress = {
+  firstName: string;
+  lastName: string;
+  address: string;
+  city: string;
+  country: string;
+  zip: string;
+};
+
 export type CustomerOrder = {
   id: string;
   date: string;
@@ -24,6 +33,7 @@ export type CustomerOrder = {
   total: number;
   currency: string;
   rawStatus: OrderStatus;
+  shippingAddress: CustomerShippingAddress | null;
   products: CustomerOrderProduct[];
 };
 
@@ -40,6 +50,22 @@ function mapCustomerOrderStatus(status: OrderStatus): CustomerOrderStatus {
     default:
       return "processing";
   }
+}
+
+function parseShippingAddress(value: unknown): CustomerShippingAddress | null {
+  if (!value || typeof value !== "object") return null;
+  const a = value as Record<string, unknown>;
+  const str = (key: string) => (typeof a[key] === "string" ? (a[key] as string) : "");
+  const address: CustomerShippingAddress = {
+    firstName: str("firstName"),
+    lastName: str("lastName"),
+    address: str("address"),
+    city: str("city"),
+    country: str("country"),
+    zip: str("zip"),
+  };
+  const hasAnyValue = Object.values(address).some((v) => v.trim().length > 0);
+  return hasAnyValue ? address : null;
 }
 
 const isTransientDbError = (error: unknown) => {
@@ -113,6 +139,7 @@ export async function getCustomerOrders(): Promise<CustomerOrder[]> {
     total: order.total.toNumber(),
     currency: order.currency,
     rawStatus: order.status,
+    shippingAddress: parseShippingAddress(order.shippingAddress),
     products: order.items.map((item) => ({
       id: item.id,
       name: item.product.name,
@@ -164,6 +191,7 @@ export async function getOrderDetail(orderId: string): Promise<CustomerOrder | n
     total: order.total.toNumber(),
     currency: order.currency,
     rawStatus: order.status,
+    shippingAddress: parseShippingAddress(order.shippingAddress),
     products: order.items.map((item) => ({
       id: item.id,
       name: item.product.name,

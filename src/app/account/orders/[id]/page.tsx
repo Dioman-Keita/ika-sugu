@@ -1,4 +1,4 @@
-import { ArrowLeft, Package, Receipt } from "lucide-react";
+import { ArrowLeft, MapPin, Package, Receipt } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getOrderDetail } from "@/app/actions/orders";
@@ -26,9 +26,7 @@ export default async function OrderDetailPage({ params }: Props) {
     notFound();
   }
 
-  // NOTE: CustomerOrder doesn't currently include shipping address in its type.
-  // We might need to extend it if we want to show it on the customer side too.
-  // For now, let's focus on items and totals as defined in CustomerOrder.
+  const shipping = order.shippingAddress;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -110,8 +108,36 @@ export default async function OrderDetailPage({ params }: Props) {
           </div>
         </div>
 
-        {/* Right Column: Summary */}
+        {/* Right Column: Shipping & Summary */}
         <div className="space-y-6">
+          {/* Shipping Address */}
+          <div className="border border-border rounded-[20px] bg-surface-card overflow-hidden">
+            <div className="px-6 py-4 border-b border-border flex items-center gap-2 bg-surface-section/50">
+              <MapPin size={18} className="text-muted-foreground" />
+              <h2 className="font-semibold">
+                {m["account.orders.detail.shippingAddress"]}
+              </h2>
+            </div>
+            <div className="p-6 text-sm space-y-1">
+              {shipping ? (
+                <>
+                  <p className="font-medium text-foreground">
+                    {shipping.firstName} {shipping.lastName}
+                  </p>
+                  <p className="text-muted-foreground">{shipping.address}</p>
+                  <p className="text-muted-foreground">
+                    {shipping.zip} {shipping.city}
+                  </p>
+                  <p className="text-muted-foreground">{shipping.country}</p>
+                </>
+              ) : (
+                <p className="text-muted-foreground italic">
+                  {m["account.orders.detail.noShippingAddress"]}
+                </p>
+              )}
+            </div>
+          </div>
+
           <div className="border border-border rounded-[20px] bg-surface-card overflow-hidden">
             <div className="px-6 py-4 border-b border-border flex items-center gap-2 bg-surface-section/50">
               <Receipt size={18} className="text-muted-foreground" />

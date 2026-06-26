@@ -30,11 +30,14 @@ export default async function AdminOrderDetailPage({ params }: Props) {
   const shipping = order.shippingAddress as {
     firstName: string;
     lastName: string;
-    streetAddress: string;
+    address: string;
     city: string;
     zip: string;
     country: string;
-  };
+  } | null;
+
+  const formatCurrency = (value: number, currency: string = order.currency) =>
+    new Intl.NumberFormat(locale, { style: "currency", currency }).format(value);
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -110,6 +113,41 @@ export default async function AdminOrderDetailPage({ params }: Props) {
                         {m["admin.orders.detail.sku"]}: {item.sku}
                       </p>
                     )}
+                    <dl className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 text-[11px] text-muted-foreground sm:grid-cols-2">
+                      <div className="flex items-center gap-1">
+                        <dt className="font-medium">
+                          {m["admin.orders.detail.originalPrice"]}:
+                        </dt>
+                        <dd className="text-foreground">
+                          {formatCurrency(
+                            item.sourceUnitGrossPrice,
+                            item.sourceCurrency,
+                          )}
+                        </dd>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <dt className="font-medium">
+                          {m["admin.orders.detail.exchangeRate"]}:
+                        </dt>
+                        <dd className="text-foreground">
+                          {item.exchangeRate &&
+                          item.sourceCurrency !== item.targetCurrency
+                            ? `1 ${item.sourceCurrency} = ${new Intl.NumberFormat(
+                                locale,
+                                { maximumFractionDigits: 4 },
+                              ).format(item.exchangeRate)} ${item.targetCurrency}`
+                            : m["admin.orders.detail.noConversion"]}
+                        </dd>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <dt className="font-medium">
+                          {m["admin.orders.detail.vatRate"]}:
+                        </dt>
+                        <dd className="text-foreground">
+                          {item.vatRate}% ({formatCurrency(item.vatAmount)})
+                        </dd>
+                      </div>
+                    </dl>
                   </div>
                   <div className="text-right shrink-0">
                     <p className="font-semibold text-foreground">
@@ -221,7 +259,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
                   <p className="font-medium text-foreground">
                     {shipping.firstName} {shipping.lastName}
                   </p>
-                  <p className="text-muted-foreground">{shipping.streetAddress}</p>
+                  <p className="text-muted-foreground">{shipping.address}</p>
                   <p className="text-muted-foreground">
                     {shipping.zip} {shipping.city}
                   </p>
@@ -242,6 +280,12 @@ export default async function AdminOrderDetailPage({ params }: Props) {
               <h2 className="font-semibold">{m["admin.orders.detail.payment"]}</h2>
             </div>
             <div className="p-5 space-y-4">
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  {m["admin.orders.detail.targetCurrency"]}
+                </p>
+                <p className="text-sm font-medium text-foreground">{order.currency}</p>
+              </div>
               <div>
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   {m["admin.orders.detail.stripeId"]}
