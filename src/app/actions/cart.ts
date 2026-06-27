@@ -7,9 +7,6 @@ import { revalidatePath } from "next/cache";
 import crypto from "node:crypto";
 import type { Prisma } from "@/generated/prisma/client";
 import { convertMoney, getCurrentTargetCurrency } from "@/lib/currency/server";
-import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
-import { parseLocale } from "@/lib/i18n/locale";
-import { getMessages } from "@/lib/i18n/messages";
 
 const GUEST_CART_COOKIE_NAME =
   process.env.NEXT_PUBLIC_GUEST_CART_COOKIE_NAME || "guest_cart_id";
@@ -66,6 +63,25 @@ export type CartDTO = {
   id: string;
   items: unknown[];
 } & Record<string, unknown>;
+
+/**
+ * Expected (non-exceptional) failures from cart mutations. These are **returned**,
+ * never thrown: Next.js strips thrown Server Action error messages in production,
+ * so a `throw new Error("...")` would reach the client as the generic, scary
+ * "An error occurred in the Server Components render" message instead of our
+ * friendly localized text. Returning a discriminated union keeps the reason
+ * intact across the server→client boundary so the UI can show a proper toast.
+ */
+export type CartMutationError =
+  | { code: "outOfStock" }
+  | { code: "stockExceeded"; stock: number }
+  | { code: "invalidQuantity" }
+  | { code: "notFound" }
+  | { code: "notInitialized" };
+
+export type CartMutationResult =
+  | { success: true }
+  | { success: false; error: CartMutationError };
 
 function emptyCartShell(): CartDTO {
   return {
@@ -219,11 +235,13 @@ export async function getCartAction(options: GetCartOptions = {}): Promise<CartD
 /**
  * Adds an item to the cart.
  */
-export async function addToCartAction(variantId: string, quantity: number = 1) {
-  const cookieStore = await cookies();
-  const cookieLocale = cookieStore.get(LOCALE_COOKIE_KEY)?.value;
-  const locale = parseLocale(cookieLocale) || "en";
-  const t = getMessages(locale);
+export async function addToCartAction(
+  variantId: string,
+  quantity: number = 1,
+): Promise<CartMutationResult> {
+  if (!Number.isInteger(quantity) || quantity < 1) {
+    return { success: false, error: { code: "invalidQuantity" } };
+  }
 
   const cart = await getCartAction();
 
@@ -232,8 +250,8 @@ export async function addToCartAction(variantId: string, quantity: number = 1) {
     select: { stock: true },
   });
 
-  if (!variant) throw new Error("Variant not found");
-  if (variant.stock <= 0) throw new Error(t("cart.error.outOfStock"));
+  if (!variant) return { success: false, error: { code: "notFound" } };
+  if (variant.stock <= 0) return { success: false, error: { code: "outOfStock" } };
 
   const existingItem = await db.cartItem.findUnique({
     where: {
@@ -247,7 +265,7 @@ export async function addToCartAction(variantId: string, quantity: number = 1) {
   if (existingItem) {
     const newQuantity = existingItem.quantity + quantity;
     if (newQuantity > variant.stock) {
-      throw new Error(t("cart.error.stockExceeded", { stock: variant.stock }));
+      return { success: false, error: { code: "stockExceeded", stock: variant.stock } };
     }
     await db.cartItem.update({
       where: { id: existingItem.id },
@@ -255,7 +273,7 @@ export async function addToCartAction(variantId: string, quantity: number = 1) {
     });
   } else {
     if (quantity > variant.stock) {
-      throw new Error(t("cart.error.stockExceeded", { stock: variant.stock }));
+      return { success: false, error: { code: "stockExceeded", stock: variant.stock } };
     }
     await db.cartItem.create({
       data: {
@@ -274,27 +292,28 @@ export async function addToCartAction(variantId: string, quantity: number = 1) {
 /**
  * Updates the quantity of a cart item (caller's cart only).
  */
-export async function updateCartQuantityAction(itemId: string, quantity: number) {
+export async function updateCartQuantityAction(
+  itemId: string,
+  quantity: number,
+): Promise<CartMutationResult> {
   const cart = await getCartAction();
   if (!cart.id) {
-    throw new Error("Cart not initialized");
+    return { success: false, error: { code: "notInitialized" } };
   }
 
   if (quantity < 1) return removeFromCartAction(itemId);
 
-  const cookieStore = await cookies();
-  const cookieLocale = cookieStore.get(LOCALE_COOKIE_KEY)?.value;
-  const locale = parseLocale(cookieLocale) || "en";
-  const t = getMessages(locale);
-
-  const cartItem = await db.cartItem.findUnique({
-    where: { id: itemId },
+  const cartItem = await db.cartItem.findFirst({
+    where: { id: itemId, cartId: cart.id },
     include: { variant: { select: { stock: true } } },
   });
 
-  if (!cartItem) throw new Error("Cart item not found");
+  if (!cartItem) return { success: false, error: { code: "notFound" } };
   if (quantity > cartItem.variant.stock) {
-    throw new Error(t("cart.error.stockExceeded", { stock: cartItem.variant.stock }));
+    return {
+      success: false,
+      error: { code: "stockExceeded", stock: cartItem.variant.stock },
+    };
   }
 
   const result = await db.cartItem.updateMany({
@@ -303,7 +322,7 @@ export async function updateCartQuantityAction(itemId: string, quantity: number)
   });
 
   if (result.count !== 1) {
-    throw new Error("Cart item not found");
+    return { success: false, error: { code: "notFound" } };
   }
 
   revalidatePath("/cart");
@@ -313,10 +332,12 @@ export async function updateCartQuantityAction(itemId: string, quantity: number)
 /**
  * Removes an item from the cart (caller's cart only).
  */
-export async function removeFromCartAction(itemId: string) {
+export async function removeFromCartAction(
+  itemId: string,
+): Promise<CartMutationResult> {
   const cart = await getCartAction();
   if (!cart.id) {
-    throw new Error("Cart not initialized");
+    return { success: false, error: { code: "notInitialized" } };
   }
 
   const result = await db.cartItem.deleteMany({
@@ -324,7 +345,7 @@ export async function removeFromCartAction(itemId: string) {
   });
 
   if (result.count !== 1) {
-    throw new Error("Cart item not found");
+    return { success: false, error: { code: "notFound" } };
   }
 
   revalidatePath("/cart");

@@ -8,7 +8,7 @@ import {
   removeFromCartAction,
   syncCartAction,
 } from "@/app/actions/cart";
-import type { CartDTO } from "@/app/actions/cart";
+import type { CartDTO, CartMutationError } from "@/app/actions/cart";
 import type { ProductCardProps } from "@/components/cart-page/ProductCard";
 import { CART_QUERY_KEY } from "./query-keys";
 import { toast } from "sonner";
@@ -16,6 +16,45 @@ import { useUiPreferences } from "@/lib/ui-preferences";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type CartLine = ProductCardProps["data"];
+
+/**
+ * Thrown client-side when a cart action returns an expected failure, so the
+ * mutation's `onError` rollback + toast flow runs with a controlled, localized
+ * message. (The action *returns* the reason rather than throwing it, because
+ * Next.js strips thrown Server Action messages in production.)
+ */
+class CartMutationException extends Error {
+  constructor(public readonly detail: CartMutationError) {
+    super(detail.code);
+    this.name = "CartMutationException";
+  }
+}
+
+/** Maps a cart action failure to a friendly localized toast message. */
+function resolveCartErrorMessage(
+  error: unknown,
+  fallback: string,
+  t: (key: string) => string,
+): string {
+  if (error instanceof CartMutationException) {
+    switch (error.detail.code) {
+      case "outOfStock":
+        return t("cart.error.outOfStock");
+      case "stockExceeded":
+        return t("cart.error.stockExceeded").replace(
+          "{stock}",
+          String(error.detail.stock),
+        );
+      case "invalidQuantity":
+        return t("cart.error.invalidQuantity");
+      case "notFound":
+        return t("cart.error.notFound");
+      case "notInitialized":
+        return t("cart.error.notInitialized");
+    }
+  }
+  return fallback;
+}
 
 export type AppCart = Omit<CartDTO, "items"> & {
   items: CartLine[];
@@ -57,8 +96,17 @@ export function useAddToCartMutation() {
   const { t } = useUiPreferences();
 
   return useMutation({
-    mutationFn: ({ variantId, quantity }: { variantId: string; quantity: number }) =>
-      addToCartAction(variantId, quantity),
+    mutationFn: async ({
+      variantId,
+      quantity,
+    }: {
+      variantId: string;
+      quantity: number;
+    }) => {
+      const result = await addToCartAction(variantId, quantity);
+      if (!result.success) throw new CartMutationException(result.error);
+      return result;
+    },
 
     onMutate: async ({ variantId, quantity }) => {
       // 1. Cancel any in-flight cart fetches so they don't overwrite our optimistic data
@@ -113,7 +161,7 @@ export function useAddToCartMutation() {
       if (context?.previousCart) {
         queryClient.setQueryData(CART_QUERY_KEY, context.previousCart);
       }
-      toast.error(error instanceof Error ? error.message : t("toast.error.addToCart"));
+      toast.error(resolveCartErrorMessage(error, t("toast.error.addToCart"), t));
     },
 
     onSettled: () => {
@@ -132,8 +180,11 @@ export function useUpdateQuantityMutation() {
   const { t } = useUiPreferences();
 
   return useMutation({
-    mutationFn: ({ itemId, quantity }: { itemId: string; quantity: number }) =>
-      updateCartQuantityAction(itemId, quantity),
+    mutationFn: async ({ itemId, quantity }: { itemId: string; quantity: number }) => {
+      const result = await updateCartQuantityAction(itemId, quantity);
+      if (!result.success) throw new CartMutationException(result.error);
+      return result;
+    },
 
     onMutate: async ({ itemId, quantity }) => {
       await queryClient.cancelQueries({ queryKey: CART_QUERY_KEY });
@@ -155,9 +206,7 @@ export function useUpdateQuantityMutation() {
       if (context?.previousCart) {
         queryClient.setQueryData(CART_QUERY_KEY, context.previousCart);
       }
-      toast.error(
-        error instanceof Error ? error.message : t("toast.error.updateQuantity"),
-      );
+      toast.error(resolveCartErrorMessage(error, t("toast.error.updateQuantity"), t));
     },
 
     onSettled: () => {
@@ -175,7 +224,11 @@ export function useRemoveItemMutation() {
   const { t } = useUiPreferences();
 
   return useMutation({
-    mutationFn: (itemId: string) => removeFromCartAction(itemId),
+    mutationFn: async (itemId: string) => {
+      const result = await removeFromCartAction(itemId);
+      if (!result.success) throw new CartMutationException(result.error);
+      return result;
+    },
 
     onMutate: async (itemId) => {
       await queryClient.cancelQueries({ queryKey: CART_QUERY_KEY });
@@ -191,11 +244,11 @@ export function useRemoveItemMutation() {
       return { previousCart };
     },
 
-    onError: (_err, _vars, context) => {
+    onError: (error, _vars, context) => {
       if (context?.previousCart) {
         queryClient.setQueryData(CART_QUERY_KEY, context.previousCart);
       }
-      toast.error(t("toast.error.removeItem"));
+      toast.error(resolveCartErrorMessage(error, t("toast.error.removeItem"), t));
     },
 
     onSettled: () => {

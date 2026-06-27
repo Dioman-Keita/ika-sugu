@@ -7,7 +7,11 @@ import {
   Package,
   Clock,
   DollarSign,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAdminStats, useRecentOrders } from "@/hooks/use-admin";
 import RevenueChart from "@/components/admin/RevenueChart";
 import StatusBadge from "@/components/admin/StatusBadge";
@@ -45,7 +49,11 @@ function StatCard({
   );
 }
 
+const RECENT_ORDERS_PAGE_SIZE = 6;
+
 export default function AdminOverviewContent({ locale }: { locale: Locale }) {
+  const router = useRouter();
+  const [ordersPage, setOrdersPage] = useState(1);
   const { data: stats, isLoading: statsLoading } = useAdminStats();
   const { data: recentOrders, isLoading: ordersLoading } = useRecentOrders();
   const m = messages[locale];
@@ -57,6 +65,16 @@ export default function AdminOverviewContent({ locale }: { locale: Locale }) {
       </div>
     );
   }
+
+  const totalOrderPages = Math.max(
+    1,
+    Math.ceil(recentOrders.length / RECENT_ORDERS_PAGE_SIZE),
+  );
+  const currentOrdersPage = Math.min(ordersPage, totalOrderPages);
+  const paginatedOrders = recentOrders.slice(
+    (currentOrdersPage - 1) * RECENT_ORDERS_PAGE_SIZE,
+    currentOrdersPage * RECENT_ORDERS_PAGE_SIZE,
+  );
 
   const revenueChartData = stats.monthlyRevenue.map(({ month, revenue }) => {
     const [year, monthIndex] = month.split("-").map((v) => Number(v));
@@ -208,10 +226,19 @@ export default function AdminOverviewContent({ locale }: { locale: Locale }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {recentOrders.map((order) => (
+                {paginatedOrders.map((order) => (
                   <tr
                     key={order.id}
-                    className="hover:bg-surface-section/50 transition-colors"
+                    role="link"
+                    tabIndex={0}
+                    onClick={() => router.push(`/admin/orders/${order.id}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        router.push(`/admin/orders/${order.id}`);
+                      }
+                    }}
+                    className="cursor-pointer hover:bg-surface-section/50 transition-colors focus:outline-none focus-visible:bg-surface-section/50"
                   >
                     <td className="px-5 py-3">
                       <p className="font-medium text-foreground">{order.userName}</p>
@@ -238,6 +265,35 @@ export default function AdminOverviewContent({ locale }: { locale: Locale }) {
                 ))}
               </tbody>
             </table>
+            {totalOrderPages > 1 && (
+              <div className="flex items-center justify-between border-t border-border px-5 py-3">
+                <button
+                  type="button"
+                  onClick={() => setOrdersPage(Math.max(1, currentOrdersPage - 1))}
+                  disabled={currentOrdersPage === 1}
+                  className="flex items-center gap-1 h-8 px-2 rounded-lg text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:bg-surface-section disabled:pointer-events-none disabled:opacity-40"
+                >
+                  <ChevronLeft size={14} />
+                  {m["pagination.previous"]}
+                </button>
+                <span className="text-xs text-muted-foreground">
+                  {m["admin.overview.table.pageOf"]
+                    .replace("{current}", String(currentOrdersPage))
+                    .replace("{total}", String(totalOrderPages))}
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setOrdersPage(Math.min(totalOrderPages, currentOrdersPage + 1))
+                  }
+                  disabled={currentOrdersPage === totalOrderPages}
+                  className="flex items-center gap-1 h-8 px-2 rounded-lg text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:bg-surface-section disabled:pointer-events-none disabled:opacity-40"
+                >
+                  {m["pagination.next"]}
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -12,6 +12,7 @@ import { headers } from "next/headers";
 import { auth, isAdminEmail } from "@/lib/auth";
 import { deleteStorageFiles } from "@/lib/storage/deleteImages";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
+import { parseShippingAddress } from "@/lib/orders/shipping-address";
 import {
   CURRENCY_OPTIONS,
   type CurrencyOption,
@@ -233,7 +234,7 @@ export async function getRecentOrders() {
 
   try {
     const orders = await db.order.findMany({
-      take: 6,
+      take: 30,
       orderBy: { createdAt: "desc" },
       include: {
         user: { select: { name: true, email: true } },
@@ -1020,7 +1021,7 @@ export async function getAdminOrderDetail(id: string) {
     userEmail: order.user.email,
     customerEmail: order.customerEmail,
     customerPhone: order.customerPhone,
-    shippingAddress: order.shippingAddress as any,
+    shippingAddress: parseShippingAddress(order.shippingAddress),
     status: order.status,
     currency: order.currency,
     subtotal: order.subtotal.toNumber(),
@@ -1042,6 +1043,8 @@ export async function getAdminOrderDetail(id: string) {
       vatRate: item.vatRate.toNumber(),
       vatAmount: item.vatAmount.toNumber(),
       sourceCurrency: item.sourceCurrency,
+      targetCurrency: item.targetCurrency,
+      exchangeRate: item.exchangeRate ? item.exchangeRate.toNumber() : null,
       sourceUnitGrossPrice: item.sourceUnitGrossPrice.toNumber(),
     })),
   };

@@ -4,6 +4,10 @@ import { headers } from "next/headers";
 import { OrderStatus } from "@/generated/prisma";
 import { auth } from "@/lib/auth";
 import db from "@/lib/db";
+import {
+  parseShippingAddress,
+  type CustomerShippingAddress,
+} from "@/lib/orders/shipping-address";
 
 export type CustomerOrderStatus = "delivered" | "shipped" | "processing" | "cancelled";
 
@@ -24,6 +28,7 @@ export type CustomerOrder = {
   total: number;
   currency: string;
   rawStatus: OrderStatus;
+  shippingAddress: CustomerShippingAddress | null;
   products: CustomerOrderProduct[];
 };
 
@@ -113,6 +118,7 @@ export async function getCustomerOrders(): Promise<CustomerOrder[]> {
     total: order.total.toNumber(),
     currency: order.currency,
     rawStatus: order.status,
+    shippingAddress: parseShippingAddress(order.shippingAddress),
     products: order.items.map((item) => ({
       id: item.id,
       name: item.product.name,
@@ -164,6 +170,7 @@ export async function getOrderDetail(orderId: string): Promise<CustomerOrder | n
     total: order.total.toNumber(),
     currency: order.currency,
     rawStatus: order.status,
+    shippingAddress: parseShippingAddress(order.shippingAddress),
     products: order.items.map((item) => ({
       id: item.id,
       name: item.product.name,
