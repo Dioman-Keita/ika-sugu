@@ -45,6 +45,12 @@ function resolveCartErrorMessage(
           "{stock}",
           String(error.detail.stock),
         );
+      case "invalidQuantity":
+        return t("cart.error.invalidQuantity");
+      case "notFound":
+        return t("cart.error.notFound");
+      case "notInitialized":
+        return t("cart.error.notInitialized");
     }
   }
   return fallback;

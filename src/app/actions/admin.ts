@@ -12,6 +12,7 @@ import { headers } from "next/headers";
 import { auth, isAdminEmail } from "@/lib/auth";
 import { deleteStorageFiles } from "@/lib/storage/deleteImages";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
+import { parseShippingAddress } from "@/lib/orders/shipping-address";
 import {
   CURRENCY_OPTIONS,
   type CurrencyOption,
@@ -1020,14 +1021,7 @@ export async function getAdminOrderDetail(id: string) {
     userEmail: order.user.email,
     customerEmail: order.customerEmail,
     customerPhone: order.customerPhone,
-    shippingAddress: order.shippingAddress as {
-      firstName: string;
-      lastName: string;
-      address: string;
-      city: string;
-      zip: string;
-      country: string;
-    } | null,
+    shippingAddress: parseShippingAddress(order.shippingAddress),
     status: order.status,
     currency: order.currency,
     subtotal: order.subtotal.toNumber(),

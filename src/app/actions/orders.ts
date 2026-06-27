@@ -4,6 +4,10 @@ import { headers } from "next/headers";
 import { OrderStatus } from "@/generated/prisma";
 import { auth } from "@/lib/auth";
 import db from "@/lib/db";
+import {
+  parseShippingAddress,
+  type CustomerShippingAddress,
+} from "@/lib/orders/shipping-address";
 
 export type CustomerOrderStatus = "delivered" | "shipped" | "processing" | "cancelled";
 
@@ -15,15 +19,6 @@ export type CustomerOrderProduct = {
   quantity: number;
   size?: string;
   color?: string;
-};
-
-export type CustomerShippingAddress = {
-  firstName: string;
-  lastName: string;
-  address: string;
-  city: string;
-  country: string;
-  zip: string;
 };
 
 export type CustomerOrder = {
@@ -50,22 +45,6 @@ function mapCustomerOrderStatus(status: OrderStatus): CustomerOrderStatus {
     default:
       return "processing";
   }
-}
-
-function parseShippingAddress(value: unknown): CustomerShippingAddress | null {
-  if (!value || typeof value !== "object") return null;
-  const a = value as Record<string, unknown>;
-  const str = (key: string) => (typeof a[key] === "string" ? (a[key] as string) : "");
-  const address: CustomerShippingAddress = {
-    firstName: str("firstName"),
-    lastName: str("lastName"),
-    address: str("address"),
-    city: str("city"),
-    country: str("country"),
-    zip: str("zip"),
-  };
-  const hasAnyValue = Object.values(address).some((v) => v.trim().length > 0);
-  return hasAnyValue ? address : null;
 }
 
 const isTransientDbError = (error: unknown) => {

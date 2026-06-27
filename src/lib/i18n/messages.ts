@@ -222,6 +222,9 @@ export const messages: Record<Locale, Messages> = {
       "Unable to redirect to Stripe checkout. Please try again.",
     "cart.error.outOfStock": "Sorry, no more stock available for this item.",
     "cart.error.stockExceeded": "You cannot add more units (Stock limited to {stock}).",
+    "cart.error.invalidQuantity": "Please choose a valid quantity.",
+    "cart.error.notFound": "This item is no longer in your cart.",
+    "cart.error.notInitialized": "Your cart isn't ready yet. Please refresh and try again.",
     "checkout.contactInfo": "Contact information",
     "checkout.shippingAddress": "Shipping address",
     "checkout.firstName": "First name",
@@ -868,6 +871,10 @@ export const messages: Record<Locale, Messages> = {
     "cart.error.outOfStock": "Désolé, plus de stock disponible pour cet article.",
     "cart.error.stockExceeded":
       "Vous ne pouvez pas ajouter plus d'unités (Stock limité à {stock}).",
+    "cart.error.invalidQuantity": "Veuillez choisir une quantité valide.",
+    "cart.error.notFound": "Cet article n'est plus dans votre panier.",
+    "cart.error.notInitialized":
+      "Votre panier n'est pas encore prêt. Actualisez la page et réessayez.",
     "cart.title": "votre panier",
     "cart.empty": "Votre panier est vide.",
     "cart.shop": "Boutique",

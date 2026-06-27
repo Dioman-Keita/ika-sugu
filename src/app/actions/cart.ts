@@ -75,6 +75,7 @@ export type CartDTO = {
 export type CartMutationError =
   | { code: "outOfStock" }
   | { code: "stockExceeded"; stock: number }
+  | { code: "invalidQuantity" }
   | { code: "notFound" }
   | { code: "notInitialized" };
 
@@ -238,6 +239,10 @@ export async function addToCartAction(
   variantId: string,
   quantity: number = 1,
 ): Promise<CartMutationResult> {
+  if (!Number.isInteger(quantity) || quantity < 1) {
+    return { success: false, error: { code: "invalidQuantity" } };
+  }
+
   const cart = await getCartAction();
 
   const variant = await db.productVariant.findUnique({
@@ -298,8 +303,8 @@ export async function updateCartQuantityAction(
 
   if (quantity < 1) return removeFromCartAction(itemId);
 
-  const cartItem = await db.cartItem.findUnique({
-    where: { id: itemId },
+  const cartItem = await db.cartItem.findFirst({
+    where: { id: itemId, cartId: cart.id },
     include: { variant: { select: { stock: true } } },
   });
 

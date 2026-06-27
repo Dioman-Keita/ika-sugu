@@ -269,7 +269,7 @@ export default function AdminOverviewContent({ locale }: { locale: Locale }) {
               <div className="flex items-center justify-between border-t border-border px-5 py-3">
                 <button
                   type="button"
-                  onClick={() => setOrdersPage((p) => Math.max(1, p - 1))}
+                  onClick={() => setOrdersPage(Math.max(1, currentOrdersPage - 1))}
                   disabled={currentOrdersPage === 1}
                   className="flex items-center gap-1 h-8 px-2 rounded-lg text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:bg-surface-section disabled:pointer-events-none disabled:opacity-40"
                 >
@@ -284,7 +284,7 @@ export default function AdminOverviewContent({ locale }: { locale: Locale }) {
                 <button
                   type="button"
                   onClick={() =>
-                    setOrdersPage((p) => Math.min(totalOrderPages, p + 1))
+                    setOrdersPage(Math.min(totalOrderPages, currentOrdersPage + 1))
                   }
                   disabled={currentOrdersPage === totalOrderPages}
                   className="flex items-center gap-1 h-8 px-2 rounded-lg text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:bg-surface-section disabled:pointer-events-none disabled:opacity-40"

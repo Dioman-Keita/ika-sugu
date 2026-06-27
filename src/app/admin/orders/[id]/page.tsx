@@ -27,14 +27,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
     notFound();
   }
 
-  const shipping = order.shippingAddress as {
-    firstName: string;
-    lastName: string;
-    address: string;
-    city: string;
-    zip: string;
-    country: string;
-  } | null;
+  const shipping = order.shippingAddress;
 
   const formatCurrency = (value: number, currency: string = order.currency) =>
     new Intl.NumberFormat(locale, { style: "currency", currency }).format(value);
