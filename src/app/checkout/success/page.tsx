@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { cookies } from "next/headers";
 import { LOCALE_COOKIE_KEY } from "@/lib/ui-preferences-keys";
 import { parseLocale } from "@/lib/i18n/locale";
@@ -12,18 +13,21 @@ export default async function CheckoutSuccessPage({
   const { session_id: sessionId } = await searchParams;
 
   // Safety net: if the Stripe webhook is delayed or was never delivered, fulfill
-  // the order here too. fulfillCheckoutSession is idempotent — it no-ops when the
-  // order already exists and swallows the unique-constraint race with the webhook.
-  // Any failure here must never break the success page, so it is fully isolated.
+  // the order here too. This runs AFTER the response is sent (next/after) so the
+  // slow Stripe + DB work never blocks the success page render. fulfillCheckoutSession
+  // is idempotent — it no-ops when the order already exists and swallows the
+  // unique-constraint race with the webhook.
   if (sessionId) {
-    try {
-      const { getStripeInstance } = await import("@/lib/stripe");
-      const { fulfillCheckoutSession } = await import("@/lib/payments/fulfillment");
-      await fulfillCheckoutSession(getStripeInstance(), sessionId);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      console.error(`💥 [CHECKOUT SUCCESS] Fallback fulfillment failed: ${message}`);
-    }
+    after(async () => {
+      try {
+        const { getStripeInstance } = await import("@/lib/stripe");
+        const { fulfillCheckoutSession } = await import("@/lib/payments/fulfillment");
+        await fulfillCheckoutSession(getStripeInstance(), sessionId);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Unknown error";
+        console.error(`💥 [CHECKOUT SUCCESS] Fallback fulfillment failed: ${message}`);
+      }
+    });
   }
 
   const cookieStore = await cookies();

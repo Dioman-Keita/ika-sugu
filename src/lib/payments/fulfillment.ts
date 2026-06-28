@@ -1,6 +1,11 @@
 import type Stripe from "stripe";
 import db from "@/lib/db";
 import { OrderStatus, Prisma } from "@/generated/prisma/client";
+import {
+  DEFAULT_TARGET_CURRENCY,
+  normalizeCurrencyCode,
+  roundMoney,
+} from "@/lib/currency/shared";
 import { fromStripeMinorAmount } from "@/lib/payments/stripe-money";
 import { vatAmountFromNetPrice } from "@/lib/pricing/vat";
 
@@ -8,6 +13,33 @@ export type FulfillmentResult =
   | { status: "fulfilled" }
   | { status: "alreadyFulfilled" }
   | { status: "skipped"; reason: string };
+
+/** Require a non-empty string snapshot field; throw (fail closed) otherwise. */
+function requireStringMetadata(
+  raw: string | undefined,
+  field: string,
+  lineId: string,
+): string {
+  if (raw == null || raw.trim() === "") {
+    throw new Error(`Missing ${field} on Stripe line item ${lineId} during fulfillment`);
+  }
+  return raw;
+}
+
+/** Require a finite numeric snapshot field; throw (fail closed) otherwise. */
+function requireMoneyMetadata(
+  raw: string | undefined,
+  field: string,
+  lineId: string,
+): number {
+  const value = Number(requireStringMetadata(raw, field, lineId));
+  if (!Number.isFinite(value)) {
+    throw new Error(
+      `Invalid ${field}="${raw}" on Stripe line item ${lineId} during fulfillment`,
+    );
+  }
+  return value;
+}
 
 /**
  * Idempotently turns a paid Stripe Checkout Session into an Order (+ items),
@@ -47,37 +79,75 @@ export async function fulfillCheckoutSession(
     return { status: "skipped", reason: "missing userId metadata" };
   }
 
-  // 2. Retrieve detailed line items (expand to get pricing and metadata).
-  const lineItems = await stripe.checkout.sessions.listLineItems(sessionId, {
-    expand: ["data.price.product"],
-  });
+  const targetCurrency =
+    normalizeCurrencyCode(session.currency) ?? DEFAULT_TARGET_CURRENCY;
 
-  const itemsData = lineItems.data.map((li) => {
-    const product = li.price?.product as Stripe.Product;
-    const prodMetadata = product.metadata;
+  // 2. Collect ALL line items. listLineItems is paginated, so auto-page through
+  // every result; otherwise larger carts (>100 lines) would be truncated and
+  // fulfillment, stock, and cart cleanup would run against an incomplete set.
+  const lineItems: Stripe.LineItem[] = [];
+  for await (const lineItem of stripe.checkout.sessions.listLineItems(sessionId, {
+    expand: ["data.price.product"],
+  })) {
+    lineItems.push(lineItem);
+  }
+
+  // 3. Build the priced snapshot, failing closed on missing/invalid metadata so
+  // we never persist zero-priced or drifting amounts, and rounding every
+  // persisted value with the shared money helpers.
+  const itemsData = lineItems.map((li) => {
+    const product = li.price?.product;
+    const prodMetadata =
+      product && typeof product === "object" && !("deleted" in product)
+        ? product.metadata
+        : null;
+    if (!prodMetadata) {
+      throw new Error(
+        `Missing product metadata on Stripe line item ${li.id} during fulfillment`,
+      );
+    }
+
+    const productId = requireStringMetadata(prodMetadata.productId, "productId", li.id);
+    const variantId = requireStringMetadata(prodMetadata.variantId, "variantId", li.id);
     const quantity = li.quantity || 1;
-    const unitPrice = Number(prodMetadata.unitPrice || 0);
-    const vatRate = Number(prodMetadata.vatRate || 0);
-    const totalPrice = unitPrice * quantity;
+    const unitPrice = requireMoneyMetadata(prodMetadata.unitPrice, "unitPrice", li.id);
+    const vatRate = requireMoneyMetadata(prodMetadata.vatRate, "vatRate", li.id);
+    const sourceUnitGrossPrice = requireMoneyMetadata(
+      prodMetadata.sourceUnitGrossPrice,
+      "sourceUnitGrossPrice",
+      li.id,
+    );
+    const sourceCurrency =
+      normalizeCurrencyCode(prodMetadata.sourceCurrency) ?? DEFAULT_TARGET_CURRENCY;
+
+    const totalPrice = roundMoney(unitPrice * quantity, targetCurrency);
     const vatAmount = vatAmountFromNetPrice(totalPrice, vatRate);
-    const sourceUnitGrossPrice = Number(prodMetadata.sourceUnitGrossPrice || 0);
 
     return {
-      productId: prodMetadata.productId,
-      variantId: prodMetadata.variantId,
+      productId,
+      variantId,
       quantity,
       unitPrice,
       totalPrice,
       vatRate,
       vatAmount,
-      sourceCurrency: prodMetadata.sourceCurrency || "USD",
-      targetCurrency: session.currency?.toUpperCase() || "USD",
+      sourceCurrency,
+      targetCurrency,
       sourceUnitGrossPrice,
-      sourceTotalGrossPrice: sourceUnitGrossPrice * quantity,
+      sourceTotalGrossPrice: roundMoney(sourceUnitGrossPrice * quantity, sourceCurrency),
     };
   });
 
-  // 3. Atomic Transaction: Order + Items + Stock + Cart.
+  const subtotal = roundMoney(
+    itemsData.reduce((acc, i) => acc + i.totalPrice, 0),
+    targetCurrency,
+  );
+  const taxTotal = roundMoney(
+    itemsData.reduce((acc, i) => acc + i.vatAmount, 0),
+    targetCurrency,
+  );
+
+  // 4. Atomic Transaction: Order + Items + Stock + Cart.
   try {
     await db.$transaction(
       async (tx) => {
@@ -86,7 +156,7 @@ export async function fulfillCheckoutSession(
             userId,
             stripeSessionId: session.id,
             status: OrderStatus.PAID,
-            currency: session.currency?.toUpperCase() || "USD",
+            currency: targetCurrency,
             customerEmail: metadata?.email || session.customer_details?.email,
             customerPhone: metadata?.phone || session.customer_details?.phone || null,
             shippingAddress: {
@@ -97,44 +167,38 @@ export async function fulfillCheckoutSession(
               country: metadata?.country || "",
               zip: metadata?.zip || "",
             },
-            subtotal: itemsData.reduce((acc, i) => acc + i.totalPrice, 0),
-            taxTotal: itemsData.reduce((acc, i) => acc + i.vatAmount, 0),
+            subtotal,
+            taxTotal,
             total: fromStripeMinorAmount(session.amount_total, session.currency),
             items: { create: itemsData },
           },
         });
 
-        // Update inventory levels.
+        // Update inventory levels. variantId is guaranteed present (validated above).
         for (const item of itemsData) {
-          if (item.variantId) {
-            const updateResult = await tx.productVariant.updateMany({
-              where: {
-                id: item.variantId,
-                stock: { gte: item.quantity },
-              },
-              data: { stock: { decrement: item.quantity } },
-            });
+          const updateResult = await tx.productVariant.updateMany({
+            where: {
+              id: item.variantId,
+              stock: { gte: item.quantity },
+            },
+            data: { stock: { decrement: item.quantity } },
+          });
 
-            if (updateResult.count !== 1) {
-              throw new Error(
-                `Insufficient stock for variant ${item.variantId} during Stripe fulfillment`,
-              );
-            }
+          if (updateResult.count !== 1) {
+            throw new Error(
+              `Insufficient stock for variant ${item.variantId} during Stripe fulfillment`,
+            );
           }
         }
 
-        // Clear purchased lines from the user's cart.
+        // Clear ONLY the purchased lines from the user's cart — never collapse to
+        // a cartId-only predicate that would wipe unpurchased items.
         if (metadata?.cartId) {
-          const purchasedVariantIds = itemsData
-            .map((item) => item.variantId)
-            .filter((variantId): variantId is string => Boolean(variantId));
-
+          const purchasedVariantIds = itemsData.map((item) => item.variantId);
           await tx.cartItem.deleteMany({
             where: {
               cartId: metadata.cartId,
-              ...(purchasedVariantIds.length > 0
-                ? { variantId: { in: purchasedVariantIds } }
-                : {}),
+              variantId: { in: purchasedVariantIds },
             },
           });
         }
