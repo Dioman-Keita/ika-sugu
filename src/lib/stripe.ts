@@ -14,7 +14,7 @@ const requireEnv = (name: "STRIPE_SECRET_KEY" | "STRIPE_WEBHOOK_SECRET") => {
  */
 export const getStripeInstance = (apiKey?: string) => {
   return new Stripe(apiKey || requireEnv("STRIPE_SECRET_KEY"), {
-    apiVersion: "2024-12-18.acacia",
+    apiVersion: "2026-03-25.dahlia",
     typescript: true,
     httpClient: Stripe.createFetchHttpClient(),
   });
